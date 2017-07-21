@@ -1,0 +1,52 @@
+.component-reske-browser .-toolbar {
+    border-bottom: 1px silver solid;
+}
+
+.mini-button {
+    padding: 2px;
+    border: 2px transparent solid;
+    cursor: pointer;
+}
+
+.mini-button:hover {
+    border: 2px silver solid;
+}
+
+.mini-button:active {
+    border: 2px silver solid;
+    background-color: #555;
+    color: #FFF;
+}
+
+.component-reske-browser .-row .-table {
+    border: 1px #DDD solid;
+    width: 100%;
+    max-width: 40em;
+}
+
+.component-reske-browser .-row .-table tr {}
+
+.component-reske-browser .-row .-table th {
+    padding: 4px;
+    font-weight: normal;
+    font-style: italic;
+    width: 10em;
+}
+
+.component-reske-browser .-row .-table td {
+    padding: 4px;
+    font-weight: normal;
+    border-bottom: 1px #DDD solid;
+    width: 30em;
+}
+
+.component-reske-browser .-row .-number {
+    font-family: monospace;
+    text-align: right;
+    display: inline-block;
+    width: 10em;
+}
+
+.fa {
+    text-indent: 0;
+}

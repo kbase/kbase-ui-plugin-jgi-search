@@ -1,0 +1,19 @@
+{
+  "name": "kbase-ui-plugin-jgi-search",
+  "version": "0.1.0",
+  "description": "JGI Search and Import Tool",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kbase/kbase-ui-plugin-jgi-search.git"
+  },
+  "author": "",
+  "license": "SEE LICENSE IN LICENSE",
+  "bugs": {
+    "url": "https://github.com/kbase/kbase-ui-plugin-jgi-search/issues"
+  },
+  "homepage": "https://github.com/kbase/kbase-ui-plugin-jgi-search#readme"
+}

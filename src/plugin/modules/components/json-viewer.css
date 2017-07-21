@@ -1,0 +1,17 @@
+.mini-button {
+    padding: 2px;
+    border: 2px transparent solid;
+    cursor: pointer;
+    display: inline-block;
+    background-color: rgba(249, 231, 157, 1);
+}
+
+.mini-button:hover {
+    border: 2px silver solid;
+}
+
+.mini-button:active {
+    border: 2px gray solid;
+    background-color: rgba(249, 231, 157, 0.3);
+    /* color: #FFF; */
+}

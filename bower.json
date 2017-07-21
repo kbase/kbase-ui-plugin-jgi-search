@@ -1,0 +1,17 @@
+{
+  "name": "kbase-ui-plugin-jgi-search",
+  "description": "JGI Search and Import Tool",
+  "main": "index.js",
+  "authors": [
+    "Erik Pearson <eapearson@lbl.gov>"
+  ],
+  "license": "SEE LICENSE IN LICENSE",
+  "homepage": "",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}

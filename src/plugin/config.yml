@@ -1,0 +1,61 @@
+# JGI Search Plugin Configuration
+---
+package:
+  author: Erik Pearson
+  name: jgi-search
+  description: Search and Import Tool for JGI Data
+source:
+  modules:
+  styles: 
+install:
+  widgets:
+    -
+      module: panel2
+      id: kb_jgi_search2_panel
+      type: factory
+    -
+      module: panel
+      id: kb_jgi_search_panel
+      type: factory
+  ko-components:
+    # none yet
+    -
+      name: 'jgisearch/search'
+      module: components/search
+      type: factory  
+    -
+      name: 'jgisearch/browser'
+      module: components/browser
+      type: factory
+    -
+      name: 'jgisearch/search-result'
+      module: components/search-result
+      css: true
+      type: factory
+    -
+      name: 'jgisearch/json-viewer'
+      module: 'components/json-viewer'
+      css: true
+      type: factory
+  routes:
+    -
+      path: ['jgi', 'search']
+      widget: kb_jgi_search_panel
+      authorization: true
+    - 
+      path: ['jgi', 'search2']
+      widget: 'kb_jgi_search2_panel'
+      authorization: true
+  menu:
+    -
+      name: jgi-search
+      definition:
+        path: jgi/search
+        label: JGI Search
+        icon: search-plus
+    -
+      name: jgi-search2
+      definition:
+        path: jgi/search2
+        label: JGI Search2
+        icon: search-plus

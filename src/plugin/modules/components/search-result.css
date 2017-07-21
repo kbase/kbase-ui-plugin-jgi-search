@@ -1,0 +1,37 @@
+.component-jgi-search-search-result {}
+
+.component-jgi-search-search-result .-header {
+    border-bottom: 1px silver solid;
+    padding: 2px;
+}
+
+.component-jgi-search-search-result .-result {
+    margin: 4px 0;
+}
+
+.component-jgi-search-search-result .-result .-summary-row {
+    padding: 4px;
+}
+
+.component-jgi-search-search-result .-result .-summary-row:hover {
+    background-color: silver;
+    cursor: pointer;
+}
+
+.component-jgi-search-search-result .-result .-detail {
+    border: 1px silver solid;
+    background-color: aqua;
+    font-family: monospace;
+    white-space: pre-wrap;
+    max-height: 20em;
+    overflow-y: auto;
+}
+
+.component-jgi-search-search-result .-result .-detail-row {
+    border: 1px silver solid;
+    padding: 4px;
+}
+
+.component-jgi-search-search-result .-result .-active {
+    background-color: orange;
+}
