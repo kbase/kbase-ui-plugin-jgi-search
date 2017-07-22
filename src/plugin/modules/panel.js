@@ -122,6 +122,19 @@ define([
             cancelled: false
         };
 
+        function doClearSearch() {
+            if (currentSearch.search) {
+                currentSearch.search.cancel();
+                currentSearch.cancelled = true;
+            }
+            searchVM.searchResults.removeAll();
+            searchVM.searchTotal(0);
+            currentSearch = {
+                search: null,
+                cancelled: false
+            };
+        }
+
         function doSearch() {
             if (currentSearch.search) {
                 currentSearch.search.cancel();
@@ -197,6 +210,8 @@ define([
         searchVM.searchInput.subscribe(function(newValue) {
             if (newValue.length > 1) {
                 doSearch();
+            } else {
+                doClearSearch();
             }
         });
         searchVM.page.subscribe(function() {
