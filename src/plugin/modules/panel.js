@@ -71,11 +71,27 @@ define([
             function doRemoveError(data) {
                 vm.errors.remove(data);
             }
+            var searchResults = ko.observableArray();
+
+            var searchInput = ko.observable();
+
+            var searching = ko.observable(false);
+
+            var showResults = ko.pureComputed(function() {
+                return (searching() ||
+                    (searchInput() && searchInput().length > 1));
+            });
+            var noSearch = ko.pureComputed(function() {
+                return (!searchInput() || searchInput().length < 2);
+            });
             var vm = {
-                searchInput: ko.observable(),
-                searchResults: ko.observableArray(),
+                searchInput: searchInput,
+                searchResults: searchResults,
                 searchTotal: ko.observableArray(),
-                searching: ko.observable(false),
+                searching: searching,
+                showResults: showResults,
+                noSearch: noSearch,
+
                 // Defaults to 10, but the search component may sync this
                 // with a page setting control
                 pageSize: ko.observable(10),

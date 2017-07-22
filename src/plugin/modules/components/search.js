@@ -40,6 +40,7 @@ define([
             // The top level searchVM is included so that it can be
             // propagated.
             searchVM: params.searchVM,
+            search: params.searchVM,
             // And we break out fields here for more natural usage (or not??)
             searchInput: searchInput,
             searchResults: searchResults,
@@ -107,7 +108,24 @@ define([
     function template() {
         return div({}, [
             buildInputArea(),
-            buildResultsArea()
+            '<!-- ko if: search.showResults() -->',
+            // '<!-- ko if: search.searchStatus() === "results" || search.searchStatus() === "searching" -->',
+            buildResultsArea(),
+            '<!-- /ko -->',
+            '<!-- ko if: search.noSearch() -->',
+            // '<!-- ko if: search.searchStatus() === "nosearch" -->',
+            'please search above',
+            '<!-- /ko -->',
+            // '<!-- ko if: search.searchStatus() === "noresults" -->',
+            // 'Sorry, no results',
+            // '<!-- /ko -->',
+            // '<!-- ko if: search.searchStatus() === "searching" -->',
+            // 'searching',
+            // '<!-- /ko -->',
+            // '<!-- ko if: search.searchStatus() === "error" -->',
+            // 'ERROR',
+            // '<!-- /ko -->'
+
         ]);
     }
 
