@@ -91,25 +91,6 @@ define([
         ]));
     }
 
-    function buildSummaryArea() {
-        return div({
-            class: 'well'
-        }, [
-            div({
-                dataBind: {
-                    text: 'searchInput'
-                }
-            }),
-            div([
-                span({
-                    dataBind: {
-                        text: 'searchTotal'
-                    }
-                }), ' hits'
-            ])
-        ]);
-    }
-
     function buildResultsArea() {
         return div({
             dataBind: {
@@ -126,7 +107,6 @@ define([
     function template() {
         return div({}, [
             buildInputArea(),
-            // buildSummaryArea(),
             buildResultsArea()
         ]);
     }

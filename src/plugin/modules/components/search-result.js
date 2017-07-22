@@ -23,75 +23,6 @@ define([
         };
     }
 
-    function template() {
-        return div({
-            class: 'well'
-        }, [
-            div({}, [
-                table({
-                    class: 'table table-striped'
-                }, [
-                    tr([
-                        th({
-                            style: {
-                                width: '5%'
-                            }
-                        }, '#'),
-                        th({
-                            style: {
-                                width: '5%'
-                            }
-                        }, 'Score'),
-                        th({
-                            style: {
-                                width: '60%'
-                            }
-                        }, 'Title'),
-                        th({
-                            style: {
-                                width: '15%'
-                            }
-                        }, 'Modified'),
-                        th({
-                            style: {
-                                width: '15%'
-                            }
-                        }, 'File type')
-                    ]),
-                    '<!-- ko foreach: searchResults -->',
-                    tr([
-                        td({
-                            dataBind: {
-                                text: 'rowNumber'
-                            }
-                        }),
-                        td({
-                            dataBind: {
-                                text: 'score'
-                            }
-                        }),
-                        td({
-                            dataBind: {
-                                text: 'title'
-                            }
-                        }),
-                        td({
-                            dataBind: {
-                                text: 'date'
-                            }
-                        }),
-                        td({
-                            dataBind: {
-                                text: 'fileType'
-                            }
-                        })
-                    ]),
-                    '<!-- /ko -->'
-                ])
-            ])
-        ]);
-    }
-
     function buildImportView() {
         return div({
             class: 'container-fluid'
@@ -155,7 +86,7 @@ define([
         ]);
     }
 
-    function template2() {
+    function template() {
         return div({
             class: 'component-jgi-search-search-result'
         }, [
@@ -342,7 +273,7 @@ define([
     function component() {
         return {
             viewModel: viewModel,
-            template: template2()
+            template: template()
         };
     }
 
