@@ -129,17 +129,20 @@ define([
             }
         });
         pageInput.subscribe(function(newValue) {
+            // If bad input, don't do anything.
             if (newValue === '' || newValue === undefined || newValue === null) {
-                newValue = '1';
+                return;
+                // newValue = '1';
             } else if (isNaN(newValue)) {
-                newValue = '1';
+                return;
+                // newValue = '1';
             }
             var value = parseInt(newValue);
             if (value > totalPages()) {
                 value = totalPages();
             }
             if (value !== page()) {
-                page(parseInt(newValue));
+                page(value);
             }
         });
         page.subscribe(function(newValue) {
@@ -255,7 +258,7 @@ define([
             div({
                 style: {
                     display: 'inline-block',
-                    width: '25%',
+                    width: '33.33%',
                     verticalAlign: 'top'
                 }
             }, [
@@ -294,45 +297,7 @@ define([
                             },
                             class: 'btn btn-default'
                         }, buildIcon('step-forward')),
-                        span({
-                            style: {
-                                marginLeft: '6px'
-                            }
-                        }, 'page:'),
-                        '<!-- ko if: totalPages() <= 100 -->',
-                        select({
-                            dataBind: {
-                                value: 'pageInput',
-                                options: 'pageValues',
-                                optionsValue: '"value"',
-                                optionsText: '"label"'
-                            },
-                            class: 'form-control'
-                        }),
-                        '<!-- /ko -->',
-                        '<!-- ko if: totalPages() > 100 -->',
-                        input({
-                            dataBind: {
-                                textInput: 'pageInput'
-                            },
-                            class: 'form-control',
-                            style: {
-                                width: '5em'
-                            }
-                        }),
-                        '<!-- /ko -->',
-                        span({
-                            dataBind: {
-                                style: {
-                                    visibility: 'searching() ? "visible" : "hidden"'
-                                }
-                            },
-                            style: {
-                                fontSize: '50%',
-                            }
-                        }, html.loading()),
-                    ]),
-                    div([
+
                         span({
                             style: {
                                 display: 'inline-block',
@@ -340,7 +305,6 @@ define([
                                 textAlign: 'center',
                                 margin: '6px 0 0 4px',
                                 float: 'none',
-                                width: '100%',
                                 height: '20px'
                             },
                             dataBind: {
@@ -349,15 +313,6 @@ define([
                                 }
                             }
                         }, [
-                            // '<!-- ko if: searching -->',
-                            // span({
-                            //     style: {
-                            //         fontSize: '50%',
-                            //     }
-                            // }, html.loading()),
-                            // '<!-- /ko -->',
-                            // '<!-- ko ifnot: isNaN(totalPages()) -->',
-                            // '<!-- ko ifnot: searching -->',
                             span({
                                 dataBind: {
                                     text: '(page() - 1) * pageSize() + 1'
@@ -378,27 +333,69 @@ define([
                                     marginRight: '10px',
                                     verticalAlign: 'middle'
                                 }
-                            }),
-                            '(',
-                            span({
-                                dataBind: {
-                                    text: 'totalPages()'
-                                }
-                            }),
-                            ' pages)',
-                            // '<!-- /ko -->',
-
+                            })
                         ])
                     ])
                 ]),
 
             ]),
             div({
+                style: {
+                    display: 'inline-block',
+                    width: '33.33%',
+                    verticalAlign: 'top',
+                    textAlign: 'center'
+                }
+            }, [
+                span({
+                    style: {
+                        marginLeft: '6px'
+                    }
+                }, 'page '),
+                '<!-- ko if: totalPages() <= 100 -->',
+                select({
+                    dataBind: {
+                        value: 'pageInput',
+                        options: 'pageValues',
+                        optionsValue: '"value"',
+                        optionsText: '"label"'
+                    },
+                    class: 'form-control',
+                    style: {
+                        display: 'inline-block',
+                        width: '5em'
+                    }
+                }),
+                '<!-- /ko -->',
+                '<!-- ko if: totalPages() > 100 -->',
+                input({
+                    dataBind: {
+                        textInput: 'pageInput'
+                    },
+                    class: 'form-control',
+                    style: {
+                        display: 'inline-block',
+                        width: '5em'
+                    }
+                }),
+                '<!-- /ko -->',
+                span({
+                    style: {
+                        marginLeft: '6px'
+                    }
+                }, ' of '),
+                span({
+                    dataBind: {
+                        text: 'totalPages()'
+                    }
+                })
+            ]),
+            div({
                 class: 'btn-group form-inline',
                 style: {
-                    width: '20%',
+                    width: '33.33%',
                     margin: '0',
-                    textAlign: 'center',
+                    textAlign: 'right',
                     float: 'none',
                     verticalAlign: 'top'
                 }
@@ -422,46 +419,46 @@ define([
                     ' items per page'
                 ])
             ]),
-            div({
-                class: 'btn-group form-inline',
-                style: {
-                    width: '55%',
-                    margin: '0',
-                    textAlign: 'right',
-                    float: 'none',
-                    verticalAlign: 'top'
-                }
-            }, [
-                label({
-                    style: {
-                        // for bootstrap
-                        marginBottom: '0',
-                        fontWeight: 'normal'
-                    }
-                }, [
-                    'Sort by ',
-                    select({
-                        dataBind: {
-                            value: 'sortBy',
-                            options: 'sortFields',
-                            optionsText: '"label"',
-                            optionsValue: '"key"',
-                            optionsCaption: '"Natural"'
-                        },
-                        class: 'form-control'
-                    }),
-                    select({
-                        dataBind: {
-                            value: 'sortDirection',
-                            options: 'sortDirections',
-                            optionsText: '"label"',
-                            optionsValue: '"value"',
-                            disable: '!sortBy()'
-                        },
-                        class: 'form-control'
-                    }),
-                ])
-            ])
+            // div({
+            //     class: 'btn-group form-inline',
+            //     style: {
+            //         width: '55%',
+            //         margin: '0',
+            //         textAlign: 'right',
+            //         float: 'none',
+            //         verticalAlign: 'top'
+            //     }
+            // }, [
+            //     label({
+            //         style: {
+            //             // for bootstrap
+            //             marginBottom: '0',
+            //             fontWeight: 'normal'
+            //         }
+            //     }, [
+            //         'Sort by ',
+            //         select({
+            //             dataBind: {
+            //                 value: 'sortBy',
+            //                 options: 'sortFields',
+            //                 optionsText: '"label"',
+            //                 optionsValue: '"key"',
+            //                 optionsCaption: '"Natural"'
+            //             },
+            //             class: 'form-control'
+            //         }),
+            //         select({
+            //             dataBind: {
+            //                 value: 'sortDirection',
+            //                 options: 'sortDirections',
+            //                 optionsText: '"label"',
+            //                 optionsValue: '"value"',
+            //                 disable: '!sortBy()'
+            //             },
+            //             class: 'form-control'
+            //         }),
+            //     ])
+            // ])
         ]);
     }
 
@@ -472,7 +469,8 @@ define([
             div({
                 style: {
                     padding: '4px',
-                    marginTop: '10px'
+                    marginTop: '10px',
+                    marginBottom: '6px'
                 }
             }, buildPagingControls()),
             div({

@@ -33,6 +33,10 @@ define([
         var pageSize = params.searchVM.pageSize;
         var page = params.searchVM.page;
 
+        function doHelp() {
+            alert('helpful hints here');
+        }
+
         // Simple state used for ui-busy state. Set true when a search api call is begin, 
         // false when it is finished (finally).
 
@@ -46,9 +50,11 @@ define([
             searchResults: searchResults,
             searchTotal: searchTotal,
             searching: searching,
-            doSearch: doSearch,
             pageSize: pageSize,
-            page: page
+            page: page,
+            // ACTIONS
+            doHelp: doHelp,
+            doSearch: doSearch
         };
     }
 
@@ -78,16 +84,32 @@ define([
                     click: 'doSearch'
                 }
             }, span({
-                class: 'fa fa-search',
+                class: 'fa',
                 style: {
                     fontSize: '125%',
-                    color: '#000'
+                    color: '#000',
+                    width: '2em'
                 },
                 dataBind: {
-                    style: {
-                        color: 'searching() ? "green" : "#000"'
+                    // style: {
+                    //     color: 'searching() ? "green" : "#000"'
+                    // }
+                    css: {
+                        'fa-search': '!searching()',
+                        'fa-spinner fa-pulse': 'searching()',
                     }
                 }
+            })),
+            div({
+                class: 'input-group-addon',
+                style: {
+                    cursor: 'pointer'
+                },
+                dataBind: {
+                    click: 'doHelp'
+                }
+            }, span({
+                class: 'fa fa-info'
             }))
         ]));
     }
@@ -114,7 +136,15 @@ define([
             '<!-- /ko -->',
             '<!-- ko if: search.noSearch() -->',
             // '<!-- ko if: search.searchStatus() === "nosearch" -->',
-            'please search above',
+            div({
+                style: {
+                    margin: '10px',
+                    border: '1px silver solid',
+                    padding: '8px',
+                    backgroundColor: 'silver',
+                    textAlign: 'center'
+                }
+            }, 'No active search; to search for files, enter terms above'),
             '<!-- /ko -->',
             // '<!-- ko if: search.searchStatus() === "noresults" -->',
             // 'Sorry, no results',

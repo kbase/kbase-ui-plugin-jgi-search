@@ -14,7 +14,7 @@
 }
 
 .component-jgi-search-search-result .-result .-summary-row:hover {
-    background-color: silver;
+    background-color: #CCC;
     cursor: pointer;
 }
 
@@ -34,4 +34,19 @@
 
 .component-jgi-search-search-result .-result .-active {
     background-color: orange;
+}
+
+.component-jgi-search-search-result .-result .-summary-row:hover .-search-link {
+    text-decoration: underline;
+}
+
+.component-jgi-search-search-result .-result .-summary-row:hover .-search-link:hover {
+    text-decoration: underline;
+    background-color: #EEE;
+}
+
+.component-jgi-search-search-result .-header .-cell,
+.component-jgi-search-search-result .-result .-cell {
+    display: inline-block;
+    vertical-align: top;
 }

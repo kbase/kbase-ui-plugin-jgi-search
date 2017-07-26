@@ -2,14 +2,20 @@ define([
     'bluebird',
     'knockout-plus',
     'numeral',
+    'marked',
     'kb_common/html',
-    'kb_common/jsonRpc/dynamicServiceClient'
+    'kb_common/jsonRpc/dynamicServiceClient',
+    'yaml!./import.yml',
+    'text!./jgiTerms.md'
 ], function(
     Promise,
     ko,
     numeral,
+    marked,
     html,
-    GenericClient
+    GenericClient,
+    Import,
+    JGITerms
 ) {
     'use strict';
 
@@ -17,6 +23,8 @@ define([
         span = t('span'),
         button = t('button'),
         div = t('div');
+
+    var jgiTermsText = marked(JGITerms);
 
     function normalizeFileType(fileType) {
         if (!fileType) {
@@ -39,6 +47,10 @@ define([
 
 
     function getProp(obj, props, defaultValue) {
+        if (typeof props === 'string') {
+            props = [props];
+        }
+
         function getit(o, p) {
             if (p.length === 0) {
                 return;
@@ -66,11 +78,36 @@ define([
         var runtime = config.runtime;
         var hostNode, container;
 
+        function JGITerms() {
+            var text = jgiTermsText;
+            var agreed = ko.observable(false);
+
+            function doAgree() {
+                agreed(true);
+            }
+
+            function doView() {
+                // show viewer here
+                alert('I will show you the agreement, just give me a sec...');
+            }
+
+            return {
+                text: text,
+                agreed: agreed,
+                doAgree: doAgree,
+                doView: doView
+            };
+        }
+
         // VM
+
+
+
         function SearchVM() {
             function doRemoveError(data) {
                 vm.errors.remove(data);
             }
+
             var searchResults = ko.observableArray();
 
             var searchInput = ko.observable();
@@ -84,6 +121,26 @@ define([
             var noSearch = ko.pureComputed(function() {
                 return (!searchInput() || searchInput().length < 2);
             });
+
+            function doAddToSearch(data, field) {
+                var newSearchInput = data[field];
+                if (!data[field]) {
+                    return;
+                }
+                switch (typeof newSearchInput) {
+                    case 'string':
+                        // normal, nothing to do.
+                        break;
+                    case 'number':
+                        newSearchInput = String(newSearchInput);
+                        break;
+                    default:
+                        errors.push('Search type not supported: ' + typeof newSearchInput);
+
+                }
+                searchInput(newSearchInput);
+            }
+
             var vm = {
                 searchInput: searchInput,
                 searchResults: searchResults,
@@ -91,6 +148,7 @@ define([
                 searching: searching,
                 showResults: showResults,
                 noSearch: noSearch,
+                doAddToSearch: doAddToSearch,
 
                 // Defaults to 10, but the search component may sync this
                 // with a page setting control
@@ -98,7 +156,9 @@ define([
                 // Note, starts with 1.
                 page: ko.observable(1),
                 errors: ko.observableArray(),
-                doRemoveError: doRemoveError
+                doRemoveError: doRemoveError,
+
+                jgiTerms: JGITerms()
             };
             return vm;
         }
@@ -151,6 +211,118 @@ define([
             };
         }
 
+        var extensionToType = {};
+        Import.fileTypes.forEach(function(fileType) {
+            fileType.extensions.forEach(function(extension) {
+                extensionToType[extension] = fileType;
+            });
+        });
+
+        /*
+        getFileType determines the file type as we need to know it. 
+        A file has a fundamental type, a specific format, and an encoding.
+        e.g.:
+        {
+            type: 'fastq',
+            encoding: 'gzip'
+        }
+        */
+        var typeToRepresentation = {
+            fastq: 'fastq'
+        };
+
+        function grokFileType(extension, fileTypes) {
+            // console.log('grok', extension, fileTypes);
+            if (!fileTypes) {
+                fileTypes = [];
+            } else if (typeof fileTypes === 'string') {
+                fileTypes = [fileTypes];
+            }
+
+            // Rely on the indexed file type to determine the data representation.
+            // TODO: how is this determined?
+            // Here we find the canonical types, and hopefully condensed down to one...
+            var dataTypes = {};
+            var encodings = {};
+            fileTypes.forEach(function(type) {
+                var indexedType = Import.indexedTypes[type];
+                if (indexedType) {
+                    if (indexedType.dataType) {
+                        dataTypes[indexedType.dataType] = true;
+                    }
+                    if (indexedType.encoding) {
+                        encodings[indexedType.encoding] = true;
+                    }
+                }
+            });
+            if (Object.keys(dataTypes).length > 1) {
+                throw new Error('Too many types matched: ' + dataTypes.join(', '));
+            }
+            if (Object.keys(encodings).length > 1) {
+                throw new Error('Too many encodings matched: ' + encodings.joins(', '));
+            }
+            var dataType = Object.keys(dataTypes)[0];
+            var encoding = Object.keys(encodings)[0];
+
+            return {
+                dataType: dataType,
+                encoding: encoding
+            };
+        }
+
+        function doStage(importStagingSpec) {
+            console.log('about to stage ...', importStagingSpec);
+            var JGISearch = new GenericClient({
+                url: runtime.config('services.service_wizard.url'),
+                token: runtime.service('session').getAuthToken(),
+                module: 'jgi_gateway'
+            });
+            return JGISearch.callFunc('stage_objects', [{
+                    ids: [importStagingSpec.stagingSpec.indexId]
+                }])
+                .then(function(result) {
+                    console.log('staged?', result);
+                    if (result[0] && result[0][importStagingSpec.stagingSpec.indexId]) {
+                        var status = result[0][importStagingSpec.stagingSpec.indexId];
+                        importStagingSpec.stagingSpec.stagingStatus(status);
+                    } else {
+                        importStagingSpec.stagingSpec.stagingStatus('unknown - see console');
+                    }
+                    return result[0];
+                })
+                .catch(function(err) {
+                    console.error('ERROR', err, importStagingSpec);
+                    throw err;
+                });
+        }
+
+        function getImportInfo(fileType, indexId) {
+            if (!fileType) {
+                return [];
+            }
+            // get the import spec
+            // for now a simple filter
+            var specs = Import.import.filter(function(item) {
+                return (item.fileType === fileType);
+            }).map(function(spec) {
+                return {
+                    importSpec: spec,
+                    stagingSpec: {
+                        indexId: indexId,
+                        doStage: function(data) {
+                            doStage(data);
+                        },
+                        stagingStatus: ko.observable()
+                    }
+                };
+            });
+
+            // do some transformation
+
+            // return it...
+            return specs;
+        }
+
         function doSearch() {
             if (currentSearch.search) {
                 currentSearch.search.cancel();
@@ -180,6 +352,19 @@ define([
                         }
                         var title = getProp(hit._source.metadata, ['sequencing_project.sequencing_project_name'], hit._source.file_name);
 
+                        // actual file suffix.
+                        var fileExtension;
+                        var reExtension = /^(.*)\.(.*)$/;
+                        var fileName = hit._source.file_name;
+                        var m = reExtension.exec(fileName);
+                        if (m) {
+                            fileExtension = m[2];
+                        } else {
+                            fileExtension = null;
+                        }
+                        var fileType = grokFileType(fileExtension, hit._source.file_type);
+
+                        var pi = getProp(hit._source.metadata, 'proposal.pi.last_name');
                         searchVM.searchResults.push({
                             rowNumber: rowNumber,
                             score: numeral(hit._score).format('00.00'),
@@ -187,15 +372,30 @@ define([
                             title: title,
                             date: usDate(hit._source.file_date),
                             modified: usDate(hit._source.modified),
+                            fileExtension: fileExtension,
                             fileType: normalizeFileType(hit._source.file_type),
                             projectId: projectId,
+                            pi: pi,
                             file: {
                                 name: hit._source.file_name,
-                                size: numeral(hit._source.file_size).format('0,0'),
+                                extension: fileExtension,
+                                dataType: fileType.dataType,
+                                encoding: fileType.encoding,
+                                indexedType: normalizeFileType(hit._source.file_type),
+                                size: numeral(hit._source.file_size).format('0.0 b'),
                                 added: usDate(hit._source.added_date),
                                 status: hit._source.file_status,
-                                type: normalizeFileType(hit._source.file_type)
+                                types: normalizeFileType(hit._source.file_type)
                             },
+                            proposal: hit._source.metadata.proposal,
+                            project: {
+                                name: getProp(hit._source.metadata, 'sequencing_project.sequencing_project_name'),
+                                id: getProp(hit._source.metadata, 'sequencing_project.sequencing_project_id'),
+                                status: getProp(hit._source.metadata, 'sequencing_project.current_status'),
+                                statusDate: getProp(hit._source.metadata, 'sequencing_project.status_date'),
+                                comments: getProp(hit._source.metadata, 'sequencing_project.comments')
+                            },
+                            importSpecs: getImportInfo(fileType, hit._id),
                             // projectId: project.projects.map(function(project) {
                             // return String(project.projectId);
                             // // }),
@@ -206,6 +406,7 @@ define([
                             detailFormatted: JSON.stringify(hit._source, null, 4),
                             detail: hit._source,
                             data: hit
+                                // doAddToSearch: doAddToSearch
                         });
                     });
                 })
