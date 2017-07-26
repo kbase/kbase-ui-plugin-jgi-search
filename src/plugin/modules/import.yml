@@ -12,9 +12,11 @@ indexedTypes:
   fastq.gz:
     dataType: fastq
     encoding: gzip
+  fasta:
+    dataType: fasta
 import:
   -
-    fileType: fasta
+    dataType: fasta
     kbaseType:
       module: KBaseGenomeAnnotations
       name: Assembly
