@@ -101,8 +101,6 @@ define([
 
         // VM
 
-
-
         function SearchVM() {
             function doRemoveError(data) {
                 vm.errors.remove(data);
@@ -246,6 +244,7 @@ define([
             var encodings = {};
             fileTypes.forEach(function(type) {
                 var indexedType = Import.indexedTypes[type];
+                console.log('grokking...', type, indexedType);
                 if (indexedType) {
                     if (indexedType.dataType) {
                         dataTypes[indexedType.dataType] = true;
@@ -296,14 +295,15 @@ define([
                 });
         }
 
-        function getImportInfo(fileType, indexId) {
-            if (!fileType) {
+        function getImportInfo(dataType, indexId) {
+            console.log('getting import info:', dataType, indexId);
+            if (!dataType) {
                 return [];
             }
             // get the import spec
             // for now a simple filter
             var specs = Import.import.filter(function(item) {
-                return (item.fileType === fileType);
+                return (item.dataType === dataType);
             }).map(function(spec) {
                 return {
                     importSpec: spec,
@@ -395,7 +395,7 @@ define([
                                 statusDate: getProp(hit._source.metadata, 'sequencing_project.status_date'),
                                 comments: getProp(hit._source.metadata, 'sequencing_project.comments')
                             },
-                            importSpecs: getImportInfo(fileType, hit._id),
+                            importSpecs: getImportInfo(fileType.dataType, hit._id),
                             // projectId: project.projects.map(function(project) {
                             // return String(project.projectId);
                             // // }),

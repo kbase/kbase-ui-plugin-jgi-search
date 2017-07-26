@@ -1,9 +1,11 @@
 define([
     'knockout-plus',
-    'kb_common/html'
+    'kb_common/html',
+    'kb_common/ui'
 ], function(
     ko,
-    html
+    html,
+    ui
 ) {
     'use strict';
 
@@ -34,7 +36,10 @@ define([
         var page = params.searchVM.page;
 
         function doHelp() {
-            alert('helpful hints here');
+            ui.showDialog({
+                title: 'Help',
+                body: 'Helpful hints here...'
+            });
         }
 
         // Simple state used for ui-busy state. Set true when a search api call is begin, 
