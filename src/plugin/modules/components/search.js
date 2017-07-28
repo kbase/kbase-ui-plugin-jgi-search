@@ -1,18 +1,134 @@
 define([
     'knockout-plus',
+    'bluebird',
     'kb_common/html',
-    'kb_common/ui'
+    'kb_common/ui',
+    'yaml!../helpData.yml'
 ], function(
     ko,
+    Promise,
     html,
-    ui
+    ui,
+    helpData
 ) {
     'use strict';
 
     var t = html.tag,
+        p = t('p'),
         div = t('div'),
         span = t('span'),
+        button = t('button'),
         input = t('input');
+
+    function buildHelpDialog(title) {
+        return div({
+            class: 'modal fade',
+            tabindex: '-1',
+            role: 'dialog'
+        }, [
+            div({ class: 'modal-dialog' }, [
+                div({ class: 'modal-content' }, [
+                    div({ class: 'modal-header' }, [
+                        button({
+                            type: 'button',
+                            class: 'close',
+                            // dataDismiss: 'modal',
+                            ariaLabel: 'Done',
+                            dataBind: {
+                                click: 'close'
+                            }
+                        }, [
+                            span({ ariaHidden: 'true' }, '&times;')
+                        ]),
+                        span({ class: 'modal-title' }, title)
+                    ]),
+                    div({ class: 'modal-body' }, [
+                        div({
+                            dataBind: {
+                                component: {
+                                    name: '"help"',
+                                    params: {
+                                        helpDb: 'helpDb'
+                                    }
+                                }
+                            }
+                        })
+                    ]),
+                    div({ class: 'modal-footer' }, [
+                        button({
+                            type: 'button',
+                            class: 'btn btn-default',
+                            // dataDismiss: 'modal',
+                            // dataElement: 'ok',
+                            dataBind: {
+                                click: 'close'
+                            }
+                        }, 'Done')
+                    ])
+                ])
+            ])
+        ]);
+    }
+
+    function helpVM(node) {
+        // var helpTopics = helpData.topics.map(function(topic) {
+        //     return {
+        //         id: topic.id,
+        //         title: topic.title,
+        //         content: topic.content
+        //             // content: topic.content.map(function(paragraph) {
+        //             //     return p(paragraph);
+        //             // }).join('\n')
+        //     };
+        // });
+
+        function close() {
+            var backdrop = document.querySelector('.modal-backdrop');
+            backdrop.parentElement.removeChild(backdrop);
+            node.parentElement.removeChild(node);
+        }
+        return {
+            helpDb: helpData,
+            close: close
+        };
+    }
+
+    function showHelpDialog() {
+        var dialog = buildHelpDialog('JGI Search Help'),
+            dialogId = html.genId(),
+            helpNode = document.createElement('div'),
+            kbaseNode, modalNode, modalDialogNode;
+
+        helpNode.id = dialogId;
+        helpNode.innerHTML = dialog;
+
+        // top level element for kbase usage
+        kbaseNode = document.querySelector('[data-element="kbase"]');
+        if (!kbaseNode) {
+            kbaseNode = document.createElement('div');
+            kbaseNode.setAttribute('data-element', 'kbase');
+            document.body.appendChild(kbaseNode);
+        }
+
+        // a node upon which to place Bootstrap modals.
+        modalNode = kbaseNode.querySelector('[data-element="modal"]');
+        if (!modalNode) {
+            modalNode = document.createElement('div');
+            modalNode.setAttribute('data-element', 'modal');
+            kbaseNode.appendChild(modalNode);
+        }
+
+        modalNode.appendChild(helpNode);
+
+        var backdropNode = document.createElement('div');
+        backdropNode.classList.add('modal-backdrop', 'fade', 'in');
+        document.body.appendChild(backdropNode);
+
+        ko.applyBindings(helpVM(modalNode), helpNode);
+        modalDialogNode = modalNode.querySelector('.modal');
+        modalDialogNode.classList.add('in');
+        modalDialogNode.style.display = 'block';
+    }
 
     /*
     This view model establishes the primary search context, including the 
@@ -36,10 +152,7 @@ define([
         var page = params.searchVM.page;
 
         function doHelp() {
-            ui.showDialog({
-                title: 'Help',
-                body: 'Helpful hints here...'
-            });
+            showHelpDialog();
         }
 
         // Simple state used for ui-busy state. Set true when a search api call is begin, 

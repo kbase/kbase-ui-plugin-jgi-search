@@ -5,6 +5,7 @@ define([
     'marked',
     'kb_common/html',
     'kb_common/jsonRpc/dynamicServiceClient',
+    './policyViewerDialog',
     'yaml!./import.yml',
     'text!./jgiTerms.md'
 ], function(
@@ -14,6 +15,7 @@ define([
     marked,
     html,
     GenericClient,
+    PolicyViewerDialog,
     Import,
     JGITerms
 ) {
@@ -55,7 +57,16 @@ define([
             if (p.length === 0) {
                 return;
             }
-            var value = o[p.pop()];
+            var value;
+            if (o instanceof Array) {
+                var index = parseInt(o.pop());
+                if (isNaN(index)) {
+                    return;
+                }
+                value = o[index];
+            } else {
+                value = o[p.pop()];
+            }
             if (p.length === 0) {
                 return value;
             }
@@ -88,7 +99,13 @@ define([
 
             function doView() {
                 // show viewer here
-                alert('I will show you the agreement, just give me a sec...');
+                PolicyViewerDialog.showDialog({
+                    agreed: agreed
+                });
+                // showAgreementDialog()
+                //     .then(function(answer) {
+                //         console.log('answer is', answer);
+                //     });
             }
 
             return {
@@ -143,6 +160,8 @@ define([
                 searchInput: searchInput,
                 searchResults: searchResults,
                 searchTotal: ko.observableArray(),
+                searchElapsed: ko.observable(),
+                searchServiceElapsed: ko.observable(),
                 searching: searching,
                 showResults: showResults,
                 noSearch: noSearch,
@@ -174,7 +193,7 @@ define([
             var JGISearch = new GenericClient({
                 url: runtime.config('services.service_wizard.url'),
                 token: runtime.service('session').getAuthToken(),
-                module: 'jgi_gateway'
+                module: 'jgi_gateway_eap'
             });
             return JGISearch.callFunc('search_jgi', [{
                     search_string: query,
@@ -244,7 +263,7 @@ define([
             var encodings = {};
             fileTypes.forEach(function(type) {
                 var indexedType = Import.indexedTypes[type];
-                console.log('grokking...', type, indexedType);
+                // console.log('grokking...', type, indexedType);
                 if (indexedType) {
                     if (indexedType.dataType) {
                         dataTypes[indexedType.dataType] = true;
@@ -274,7 +293,7 @@ define([
             var JGISearch = new GenericClient({
                 url: runtime.config('services.service_wizard.url'),
                 token: runtime.service('session').getAuthToken(),
-                module: 'jgi_gateway'
+                module: 'jgi_gateway_eap'
             });
             return JGISearch.callFunc('stage_objects', [{
                     ids: [importStagingSpec.stagingSpec.indexId]
@@ -282,8 +301,8 @@ define([
                 .then(function(result) {
                     console.log('staged?', result);
                     if (result[0] && result[0][importStagingSpec.stagingSpec.indexId]) {
-                        var status = result[0][importStagingSpec.stagingSpec.indexId];
-                        importStagingSpec.stagingSpec.stagingStatus(status);
+                        var stagingResponse = result[0][importStagingSpec.stagingSpec.indexId];
+                        importStagingSpec.stagingSpec.stagingStatus('Staging submitted with job id ' + stagingResponse.id);
                     } else {
                         importStagingSpec.stagingSpec.stagingStatus('unknown - see console');
                     }
@@ -296,7 +315,7 @@ define([
         }
 
         function getImportInfo(dataType, indexId) {
-            console.log('getting import info:', dataType, indexId);
+            // console.log('getting import info:', dataType, indexId);
             if (!dataType) {
                 return [];
             }
@@ -334,14 +353,20 @@ define([
                 cancelled: false
             };
             var thisSearch = currentSearch;
+            var searchStart = new Date().getTime();
             return currentSearch.search = fetchData(searchVM.searchInput(), searchVM.page(), searchVM.pageSize())
                 .then(function(data) {
                     if (thisSearch.cancelled) {
                         return;
                     }
+                    var searchElapsed = new Date().getTime() - searchStart;
+                    console.log('search results', data);
+                    console.log('search service elapsed', searchElapsed);
                     searchVM.searchResults.removeAll();
-                    searchVM.searchTotal(data.total);
-                    data.hits.forEach(function(hit, index) {
+                    searchVM.searchElapsed(data.search_elapsed_time);
+                    searchVM.searchServiceElapsed(searchElapsed);
+                    searchVM.searchTotal(data.results.total);
+                    data.results.hits.forEach(function(hit, index) {
                         // var project = hit._source.metadata;
                         var rowNumber = (searchVM.page() - 1) * searchVM.pageSize() + 1 + index;
                         var projectId;
@@ -364,6 +389,36 @@ define([
                         }
                         var fileType = grokFileType(fileExtension, hit._source.file_type);
 
+                        // scientific name may be in different places.
+                        var genus = getProp(hit._source.metadata, [
+                            'genus',
+                            'sow_segment.genus'
+                        ]);
+                        var species = getProp(hit._source.metadata, [
+                            'species',
+                            'sow_segment.species'
+                        ]);
+                        var scientificName = genus + ' ' + species;
+
+                        // By type metadata.
+                        var metadata = '';
+                        switch (fileType.dataType) {
+                            case 'fasta':
+                                metadata += 'lib: ' + getProp(hit._source.metadata, [
+                                    'library_names.0',
+                                    'sow_segment.library_name'
+                                ]);
+                                break;
+                            case 'fastq':
+                                metadata += 'lib: ' + getProp(hit._source.metadata, [
+                                    'library_name',
+                                    'sow_segment.library_name'
+                                ]);
+                                break;
+                            default:
+                                metadata += normalizeFileType(hit._source.file_type);
+                        }
+
                         var pi = getProp(hit._source.metadata, 'proposal.pi.last_name');
                         searchVM.searchResults.push({
                             rowNumber: rowNumber,
@@ -374,8 +429,12 @@ define([
                             modified: usDate(hit._source.modified),
                             fileExtension: fileExtension,
                             fileType: normalizeFileType(hit._source.file_type),
+                            // TODO: these should all be in just one place.
+                            dataType: fileType.dataType,
                             projectId: projectId,
                             pi: pi,
+                            metadata: metadata,
+                            scientificName: scientificName,
                             file: {
                                 name: hit._source.file_name,
                                 extension: fileExtension,

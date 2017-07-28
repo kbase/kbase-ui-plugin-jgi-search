@@ -37,6 +37,16 @@ install:
       module: 'components/json-viewer'
       css: true
       type: factory
+    -
+      name: 'help'
+      module: 'components/help'
+      css: true
+      type: factory
+    -
+      name: 'policy-viewer'
+      module: 'components/policyViewer'
+      css: true
+      type: factory      
   routes:
     -
       path: ['jgi', 'search']

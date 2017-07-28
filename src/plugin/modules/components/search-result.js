@@ -11,6 +11,7 @@ define([
 
     var t = html.tag,
         div = t('div'),
+        p = t('p'),
         button = t('button'),
         table = t('table'),
         tr = t('tr'),
@@ -65,28 +66,26 @@ define([
     function buildImporter() {
         return [
             '<!-- ko if: !$component.searchVM.jgiTerms.agreed() -->',
+            p([
+                'To import public JGI data files into KBase, you must agree to the JGI Data Usage and Download Policy.'
+            ]),
             div({
                 style: {
                     margin: '4px',
                     border: '1px silver solid',
-                    padding: '4px'
+                    padding: '4px',
+                    textAlign: 'center'
                 },
                 dataBind: {
                     with: '$component.searchVM.jgiTerms'
                 }
             }, [
                 button({
-                    class: 'btn btn-default',
+                    class: 'btn btn-primary',
                     dataBind: {
                         click: 'doView'
                     }
-                }, 'View'),
-                button({
-                    class: 'btn btn-primary',
-                    dataBind: {
-                        click: 'doAgree'
-                    }
-                }, 'Agree')
+                }, 'View and (Possibly) Agree')
             ]),
             '<!-- /ko -->',
             '<!-- ko if: $component.searchVM.jgiTerms.agreed() -->',
@@ -365,15 +364,15 @@ define([
                     },
                     class: '-cell'
                 }),
-                div({
-                    dataBind: {
-                        text: 'score'
-                    },
-                    style: {
-                        width: '5%'
-                    },
-                    class: '-cell'
-                }),
+                // div({
+                //     dataBind: {
+                //         text: 'score'
+                //     },
+                //     style: {
+                //         width: '5%'
+                //     },
+                //     class: '-cell'
+                // }),
                 div({
                     dataBind: {
                         text: 'projectId',
@@ -390,7 +389,7 @@ define([
                         text: 'title'
                     },
                     style: {
-                        width: '40%'
+                        width: '30%'
                     },
                     class: '-cell'
                 }),
@@ -417,7 +416,7 @@ define([
                 }),
                 div({
                     dataBind: {
-                        text: 'fileExtension'
+                        text: 'dataType'
                     },
                     style: {
                         width: '5%'
@@ -426,7 +425,16 @@ define([
                 }),
                 div({
                     dataBind: {
-                        text: 'fileType'
+                        text: 'scientificName'
+                    },
+                    style: {
+                        width: '15%'
+                    },
+                    class: '-cell'
+                }),
+                div({
+                    dataBind: {
+                        text: 'metadata'
                     },
                     style: {
                         width: '15%'
@@ -525,12 +533,12 @@ define([
                             },
                             class: '-cell'
                         }, '#'),
-                        div({
-                            style: {
-                                width: '5%'
-                            },
-                            class: '-cell'
-                        }, 'Score'),
+                        // div({
+                        //     style: {
+                        //         width: '5%'
+                        //     },
+                        //     class: '-cell'
+                        // }, 'Score'),
                         div({
                             style: {
                                 width: '10%'
@@ -539,7 +547,7 @@ define([
                         }, 'Project ID'),
                         div({
                             style: {
-                                width: '40%'
+                                width: '30%'
                             },
                             class: '-cell'
                         }, 'Title'),
@@ -554,19 +562,25 @@ define([
                                 width: '10%'
                             },
                             class: '-cell'
-                        }, 'Modified'),
+                        }, 'Date'),
                         div({
                             style: {
                                 width: '5%'
                             },
                             class: '-cell'
-                        }, 'Ext.'),
+                        }, 'Type'),
                         div({
                             style: {
                                 width: '15%'
                             },
                             class: '-cell'
-                        }, 'File type')
+                        }, 'Scientific name'),
+                        div({
+                            style: {
+                                width: '15%'
+                            },
+                            class: '-cell'
+                        }, 'Metadata')
                     ]),
                     '<!-- ko if: searchResults().length > 0 -->',
                     '<!-- ko foreach: searchResults -->',

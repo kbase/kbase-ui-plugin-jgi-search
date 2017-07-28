@@ -1,0 +1,20 @@
+# JGI Search Help Topics
+---
+topics:
+  -
+    id: overview
+    title: Overview
+    content:
+      - This is JGI Search, a tool which allows you to search through public JGI archived data and import
+        it into a KBase Narrative.
+      - To get started, simply type your search terms into the search box
+  -
+    id: how-indexed
+    title: What data is indexed?
+    content:
+      - We are still trying to sort that out...
+references:
+  -
+    url: http://kbase.us/help/jgi-search-and-import/
+    title: Help Page for JGI Search and Import
+    external: true
