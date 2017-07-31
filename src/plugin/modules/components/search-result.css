@@ -50,3 +50,39 @@
     display: inline-block;
     vertical-align: top;
 }
+
+
+/* put in central location  */
+
+.info-tooltip {
+    padding: 0 4px;
+}
+
+.info-tooltip:hover {
+    background-color: rgba(200, 200, 200, 0.5);
+}
+
+.info-tooltip:active {
+    background-color: rgba(200, 200, 200, 1);
+    color: #FFF;
+}
+
+.info-tooltip::before {
+    /* stolen from blue color for toolbar icons */
+    color: #2196F3;
+}
+
+.kb-tooltip {
+    display: block;
+    position: absolute;
+    right: -10em;
+    top: 0;
+    border: 1px silver solid;
+    width: 10em;
+    padding: 4px;
+    background-color: #FFF;
+}
+
+.kb-tooltip.-hidden {
+    display: none;
+}
