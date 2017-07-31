@@ -280,7 +280,7 @@ define([
                 throw new Error('Too many encodings matched: ' + encodings.joins(', '));
             }
             var dataType = Object.keys(dataTypes)[0];
-            var encoding = Object.keys(encodings)[0];
+            var encoding = Object.keys(encodings)[0] || 'none';
 
             return {
                 dataType: dataType,
@@ -288,33 +288,33 @@ define([
             };
         }
 
-        function doStage(importStagingSpec) {
-            console.log('about to stage ...', importStagingSpec);
+        function doStage(stagingSpec) {
+            console.log('about to stage ...', stagingSpec);
             var JGISearch = new GenericClient({
                 url: runtime.config('services.service_wizard.url'),
                 token: runtime.service('session').getAuthToken(),
                 module: 'jgi_gateway_eap'
             });
             return JGISearch.callFunc('stage_objects', [{
-                    ids: [importStagingSpec.stagingSpec.indexId]
+                    ids: [stagingSpec.indexId]
                 }])
                 .then(function(result) {
                     console.log('staged?', result);
-                    if (result[0] && result[0][importStagingSpec.stagingSpec.indexId]) {
-                        var stagingResponse = result[0][importStagingSpec.stagingSpec.indexId];
-                        importStagingSpec.stagingSpec.stagingStatus('Staging submitted with job id ' + stagingResponse.id);
+                    if (result[0] && result[0][stagingSpec.indexId]) {
+                        var stagingResponse = result[0][stagingSpec.indexId];
+                        stagingSpec.stagingStatus('Staging submitted with job id ' + stagingResponse.id);
                     } else {
-                        importStagingSpec.stagingSpec.stagingStatus('unknown - see console');
+                        stagingSpec.stagingStatus('unknown - see console');
                     }
                     return result[0];
                 })
                 .catch(function(err) {
-                    console.error('ERROR', err, importStagingSpec);
+                    console.error('ERROR', err, stagingSpec);
                     throw err;
                 });
         }
 
-        function getImportInfo(dataType, indexId) {
+        function getImportInfo(dataType, indexId, fileName) {
             // console.log('getting import info:', dataType, indexId);
             if (!dataType) {
                 return [];
@@ -331,7 +331,8 @@ define([
                         doStage: function(data) {
                             doStage(data);
                         },
-                        stagingStatus: ko.observable()
+                        stagingStatus: ko.observable(),
+                        fileName: ko.observable(fileName)
                     }
                 };
             });
@@ -365,8 +366,8 @@ define([
                     searchVM.searchResults.removeAll();
                     searchVM.searchElapsed(data.search_elapsed_time);
                     searchVM.searchServiceElapsed(searchElapsed);
-                    searchVM.searchTotal(data.results.total);
-                    data.results.hits.forEach(function(hit, index) {
+                    searchVM.searchTotal(data.search_result.total);
+                    data.search_result.hits.forEach(function(hit, index) {
                         // var project = hit._source.metadata;
                         var rowNumber = (searchVM.page() - 1) * searchVM.pageSize() + 1 + index;
                         var projectId;
@@ -454,7 +455,7 @@ define([
                                 statusDate: getProp(hit._source.metadata, 'sequencing_project.status_date'),
                                 comments: getProp(hit._source.metadata, 'sequencing_project.comments')
                             },
-                            importSpecs: getImportInfo(fileType.dataType, hit._id),
+                            importSpecs: getImportInfo(fileType.dataType, hit._id, hit._source.file_name),
                             // projectId: project.projects.map(function(project) {
                             // return String(project.projectId);
                             // // }),
