@@ -355,7 +355,16 @@ define([
             };
             var thisSearch = currentSearch;
             var searchStart = new Date().getTime();
-            return currentSearch.search = fetchData(searchVM.searchInput(), searchVM.page(), searchVM.pageSize())
+
+            // Massage search input:
+            // For now, we just support terms, possibly double-quoted, which are all
+            // anded together.
+            var searchExpression = searchVM.searchInput().split(/\s+/).map(function(term) {
+                return '+' + term;
+            }).join(' ');
+
+
+            return currentSearch.search = fetchData(searchExpression, searchVM.page(), searchVM.pageSize())
                 .then(function(data) {
                     if (thisSearch.cancelled) {
                         return;
@@ -391,16 +400,16 @@ define([
                         var fileType = grokFileType(fileExtension, hit._source.file_type);
 
                         // scientific name may be in different places.
+                        var na = span({ style: { color: 'gray' } }, 'n/a');
                         var genus = getProp(hit._source.metadata, [
                             'genus',
                             'sow_segment.genus'
-                        ]);
+                        ], '-');
                         var species = getProp(hit._source.metadata, [
                             'species',
                             'sow_segment.species'
-                        ]);
+                        ], '-');
                         var scientificName = genus + ' ' + species;
-
                         // By type metadata.
                         var metadata = '';
                         switch (fileType.dataType) {
