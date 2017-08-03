@@ -201,6 +201,14 @@ define([
                 })
             ]),
             tr([
+                th('Extension'),
+                td({
+                    dataBind: {
+                        text: 'extension'
+                    }
+                })
+            ]),
+            tr([
                 th('Data type'),
                 td({
                     dataBind: {
@@ -264,6 +272,14 @@ define([
                 td({
                     dataBind: {
                         text: 'title'
+                    }
+                })
+            ]),
+            tr([
+                th('Id'),
+                td({
+                    dataBind: {
+                        text: 'id'
                     }
                 })
             ]),
