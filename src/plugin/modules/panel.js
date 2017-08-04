@@ -310,6 +310,10 @@ define([
                     enconding: null
                 };
             }
+            return {
+                dataType: null,
+                encoding: null
+            };
         }
 
         function doStage(stagingSpec) {
