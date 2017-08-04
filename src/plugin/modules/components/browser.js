@@ -321,7 +321,7 @@ define([
                             ' to ',
                             span({
                                 dataBind: {
-                                    text: 'page() * pageSize()'
+                                    text: 'Math.min(page() * pageSize(), totalCount())'
                                 }
                             }),
                             ' of ',

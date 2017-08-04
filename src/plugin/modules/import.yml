@@ -25,6 +25,19 @@ dataTypes:
         label: Assembly name
         description: An object name for this assembly which will be created by the upload
   -
+    name: fastq
+    extensions: [fastq]
+    description: A fastq file
+    kbaseType:
+      module: KBaseAssembly
+      name: PairedEndLibrary
+      version: 2.0
+    parameters:
+      -
+        name: objectName
+        label: Library object name
+        description: An object name for this library object which will be created by the upload        
+  -
     name: genbank
     extensions: [gbk, gb]
     description: A genbank gbk file

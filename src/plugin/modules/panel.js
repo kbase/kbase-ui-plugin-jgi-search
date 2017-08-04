@@ -248,12 +248,13 @@ define([
             fastq: 'fastq'
         };
 
-        function grokFileType(extension, fileTypes) {
-            // console.log('grok', extension, fileTypes);
-            if (!fileTypes) {
-                fileTypes = [];
-            } else if (typeof fileTypes === 'string') {
-                fileTypes = [fileTypes];
+        function grokFileType(extension, indexedFileTypes) {
+            // The file type provided by the metadata may be a string, 
+            // array, or missing.
+            if (!indexedFileTypes) {
+                indexedFileTypes = [];
+            } else if (typeof indexedFileTypes === 'string') {
+                indexedFileTypes = [indexedFileTypes];
             }
 
             // Rely on the indexed file type to determine the data representation.
@@ -270,7 +271,7 @@ define([
             // In some cases there is a base data type (e.g. fasta) and a 
             // encoded data type (e.g. fasta.gz) in the file types list provided
             // by jgi.
-            fileTypes.forEach(function(type) {
+            indexedFileTypes.forEach(function(type) {
                 var indexedType = Import.indexedTypes[type];
                 // console.log('grokking...', type, indexedType);
                 if (indexedType) {
@@ -288,7 +289,7 @@ define([
             if (Object.keys(encodings).length > 1) {
                 throw new Error('Too many encodings matched: ' + encodings.joins(', '));
             }
-            if (dataTypes.length === 1) {
+            if (Object.keys(dataTypes).length === 1) {
                 var dataType = Object.keys(dataTypes)[0];
                 var encoding = Object.keys(encodings)[0] || 'none';
                 return {
@@ -371,6 +372,67 @@ define([
             return specs;
         }
 
+        function grokTitle(hit, fileType) {
+            switch (fileType.dataType) {
+                case 'genbank':
+                    return getProp(hit._source.metadata, ['pmo_project.name'], hit._source.file_name);
+                case 'fasta':
+                case 'fastq':
+                default:
+                    return getProp(hit._source.metadata, ['sequencing_project.sequencing_project_name'], hit._source.file_name);
+            }
+        }
+
+        function grokScientificName(hit, fileType) {
+            // var na = span({ style: { color: 'gray' } }, 'n/a');
+            var genus = getProp(hit._source.metadata, [
+                'genus',
+                'sow_segment.genus',
+                'pmo_project.genus'
+            ], '-');
+            var species = getProp(hit._source.metadata, [
+                'species',
+                'sow_segment.species',
+                'pmo_project.species'
+            ], '-');
+            return genus + ' ' + species;
+        }
+
+        function grokPI(hit, fileType) {
+            var lastName = getProp(hit._source.metadata, 'proposal.pi.last_name');
+            var firstName = getProp(hit._source.metadata, 'proposal.pi.first_name');
+            if (lastName) {
+                return lastName + ', ' + firstName;
+            }
+            var piName = getProp(hit._source.metadata, 'pmo_project.pi_name');
+            if (piName) {
+                var names = piName.split(/\s+/);
+                if (names) {
+                    return names[1] + ', ' + names[0];
+                }
+            }
+            return '-';
+        }
+
+        function grokMetadata(hit, fileType) {
+            switch (fileType.dataType) {
+                case 'fasta':
+                    return 'lib: ' + getProp(hit._source.metadata, [
+                        'library_names.0',
+                        'sow_segment.library_name'
+                    ]);
+                case 'fastq':
+                    return 'lib: ' + getProp(hit._source.metadata, [
+                        'library_name',
+                        'sow_segment.library_name'
+                    ]);
+                case 'genbank':
+                    return 'file: ' + getProp(hit._source, ['file_name'], '-');
+                default:
+                    return normalizeFileType(hit._source.file_type);
+            }
+        }
+
         function doSearch() {
             if (currentSearch.search) {
                 currentSearch.search.cancel();
@@ -390,7 +452,6 @@ define([
             var searchExpression = searchVM.searchInput().split(/\s+/).map(function(term) {
                 return '+' + term;
             }).join(' ');
-
 
             return currentSearch.search = fetchData(searchExpression, searchVM.page(), searchVM.pageSize())
                 .then(function(data) {
@@ -416,8 +477,6 @@ define([
 
                         var proposalId = getProp(hit._source.metadata, ['proposal_id'], '-');
 
-                        var title = getProp(hit._source.metadata, ['sequencing_project.sequencing_project_name'], hit._source.file_name);
-
                         // actual file suffix.
                         var fileExtension;
                         var reExtension = /^(.*)\.(.*)$/;
@@ -430,37 +489,18 @@ define([
                         }
                         var fileType = grokFileType(fileExtension, hit._source.file_type);
 
-                        // scientific name may be in different places.
-                        var na = span({ style: { color: 'gray' } }, 'n/a');
-                        var genus = getProp(hit._source.metadata, [
-                            'genus',
-                            'sow_segment.genus'
-                        ], '-');
-                        var species = getProp(hit._source.metadata, [
-                            'species',
-                            'sow_segment.species'
-                        ], '-');
-                        var scientificName = genus + ' ' + species;
-                        // By type metadata.
-                        var metadata = '';
-                        switch (fileType.dataType) {
-                            case 'fasta':
-                                metadata += 'lib: ' + getProp(hit._source.metadata, [
-                                    'library_names.0',
-                                    'sow_segment.library_name'
-                                ]);
-                                break;
-                            case 'fastq':
-                                metadata += 'lib: ' + getProp(hit._source.metadata, [
-                                    'library_name',
-                                    'sow_segment.library_name'
-                                ]);
-                                break;
-                            default:
-                                metadata += normalizeFileType(hit._source.file_type);
-                        }
+                        // Title
+                        var title = grokTitle(hit, fileType);
 
-                        var pi = getProp(hit._source.metadata, 'proposal.pi.last_name');
+                        var scientificName = grokScientificName(hit, fileType);
+
+                        // scientific name may be in different places.
+
+                        // By type metadata.
+                        var metadata = grokMetadata(hit, fileType);
+
+                        var pi = grokPI(hit, fileType);
+
                         searchVM.searchResults.push({
                             rowNumber: rowNumber,
                             score: numeral(hit._score).format('00.00'),
@@ -601,7 +641,6 @@ define([
                         })
                     ])
                 ]),
-
             ]);
         }
 
