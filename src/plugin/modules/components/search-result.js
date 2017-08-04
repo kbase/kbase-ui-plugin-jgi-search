@@ -647,12 +647,23 @@ define([
                 // }),
                 div({
                     dataBind: {
+                        text: 'proposalId',
+                        clickBubble: false,
+                        click: '$component.searchVM.doAddToSearch.bind($data, $data, "proposalId")'
+                    },
+                    style: {
+                        width: '5%'
+                    },
+                    class: '-cell -search-link'
+                }),
+                div({
+                    dataBind: {
                         text: 'projectId',
                         clickBubble: false,
                         click: '$component.searchVM.doAddToSearch.bind($data, $data, "projectId")'
                     },
                     style: {
-                        width: '10%'
+                        width: '5%'
                     },
                     class: '-cell -search-link'
                 }),
@@ -813,10 +824,16 @@ define([
                         // }, 'Score'),
                         div({
                             style: {
-                                width: '10%'
+                                width: '5%'
                             },
                             class: '-cell'
-                        }, 'Project ID'),
+                        }, 'Prop. ID'),
+                        div({
+                            style: {
+                                width: '5%'
+                            },
+                            class: '-cell'
+                        }, 'Proj. ID'),
                         div({
                             style: {
                                 width: '30%'

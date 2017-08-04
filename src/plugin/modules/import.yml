@@ -1,11 +1,6 @@
 # Import configuration
 # mapping from file extension(s) to type(s) and with import options.
 ---
-fileTypes:
-  -
-    name: fasta
-    description: A fasta file
-    extensions: [fasta, fna, fa]
 indexedTypes:
   fastq:
     dataType: fastq
@@ -14,9 +9,12 @@ indexedTypes:
     encoding: gzip
   fasta:
     dataType: fasta
-import:
+  # genbank files are indexed as "text" file type; not too helpful here.
+dataTypes:
   -
-    dataType: fasta
+    name: fasta
+    extensions: [fasta, fna, fa]
+    description: A fasta file
     kbaseType:
       module: KBaseGenomeAnnotations
       name: Assembly
@@ -26,3 +24,16 @@ import:
         name: objectName
         label: Assembly name
         description: An object name for this assembly which will be created by the upload
+  -
+    name: genbank
+    extensions: [gbk, gb]
+    description: A genbank gbk file
+    kbaseType:
+      module: KBaseGenomes
+      name: Genome
+      version: 12.3
+    parameters:
+      -
+        name: objectName
+        label: Genome name
+        description: An object name for this genome which will be created by the upload

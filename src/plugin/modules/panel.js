@@ -228,10 +228,10 @@ define([
             };
         }
 
-        var extensionToType = {};
-        Import.fileTypes.forEach(function(fileType) {
-            fileType.extensions.forEach(function(extension) {
-                extensionToType[extension] = fileType;
+        var extensionToDataType = {};
+        Import.dataTypes.forEach(function(dataType) {
+            dataType.extensions.forEach(function(extension) {
+                extensionToDataType[extension] = dataType;
             });
         });
 
@@ -259,8 +259,17 @@ define([
             // Rely on the indexed file type to determine the data representation.
             // TODO: how is this determined?
             // Here we find the canonical types, and hopefully condensed down to one...
+
             var dataTypes = {};
             var encodings = {};
+
+            // First we inspect the indexed file types as provided by JGI. If just 
+            // all matching ones resolve to the same data type, we have a 
+            // match.
+            // At the same time, we get the encoding by the same method.
+            // In some cases there is a base data type (e.g. fasta) and a 
+            // encoded data type (e.g. fasta.gz) in the file types list provided
+            // by jgi.
             fileTypes.forEach(function(type) {
                 var indexedType = Import.indexedTypes[type];
                 // console.log('grokking...', type, indexedType);
@@ -279,13 +288,28 @@ define([
             if (Object.keys(encodings).length > 1) {
                 throw new Error('Too many encodings matched: ' + encodings.joins(', '));
             }
-            var dataType = Object.keys(dataTypes)[0];
-            var encoding = Object.keys(encodings)[0] || 'none';
+            if (dataTypes.length === 1) {
+                var dataType = Object.keys(dataTypes)[0];
+                var encoding = Object.keys(encodings)[0] || 'none';
+                return {
+                    dataType: dataType,
+                    encoding: encoding
+                };
+            }
 
-            return {
-                dataType: dataType,
-                encoding: encoding
-            };
+            // If we get here, the file type matching strategy didn't work.
+            // Some file types are too generic (e.g. text for genbank).
+            // In this case, we just trust the file extension.
+            // TODO: we can also inspect other properties of the metadata to 
+            // be sure, or to filter for certain properties which tell us we
+            // can't import it.
+            dataType = extensionToDataType[extension];
+            if (dataType) {
+                return {
+                    dataType: dataType.name,
+                    enconding: null
+                };
+            }
         }
 
         function doStage(stagingSpec) {
@@ -321,11 +345,11 @@ define([
             }
             // get the import spec
             // for now a simple filter
-            var specs = Import.import.filter(function(item) {
-                return (item.dataType === dataType);
-            }).map(function(spec) {
+            var specs = Import.dataTypes.filter(function(dataTypeDef) {
+                return (dataTypeDef.name === dataType);
+            }).map(function(dataTypeDef) {
                 return {
-                    importSpec: spec,
+                    importSpec: dataTypeDef,
                     stagingSpec: {
                         indexId: indexId,
                         doStage: function(data) {
@@ -385,6 +409,9 @@ define([
                         } else {
                             projectId = 'n/a';
                         }
+
+                        var proposalId = getProp(hit._source.metadata, ['proposal_id'], '-');
+
                         var title = getProp(hit._source.metadata, ['sequencing_project.sequencing_project_name'], hit._source.file_name);
 
                         // actual file suffix.
@@ -441,6 +468,7 @@ define([
                             fileType: normalizeFileType(hit._source.file_type),
                             // TODO: these should all be in just one place.
                             dataType: fileType.dataType,
+                            proposalId: proposalId,
                             projectId: projectId,
                             pi: pi,
                             metadata: metadata,
