@@ -126,5 +126,5 @@ define([
             template: template()
         };
     }
-    ko.components.register('help', component());
+    return component;
 });

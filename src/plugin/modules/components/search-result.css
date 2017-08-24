@@ -7,6 +7,7 @@
 
 .component-jgi-search-search-result .-result {
     margin: 4px 0;
+    border: 4px transparent solid;
 }
 
 .component-jgi-search-search-result .-result .-summary-row {
@@ -18,7 +19,7 @@
     cursor: pointer;
 }
 
-.component-jgi-search-search-result .-result .-detail {
+.component-jgi-search-search-result .-result .-raw-data {
     border: 1px silver solid;
     background-color: aqua;
     font-family: monospace;
@@ -32,8 +33,8 @@
     padding: 4px;
 }
 
-.component-jgi-search-search-result .-result .-active {
-    background-color: orange;
+.component-jgi-search-search-result .-result.-active {
+    background-color: #DDD;
 }
 
 .component-jgi-search-search-result .-result .-summary-row:hover .-search-link {
@@ -43,6 +44,7 @@
 .component-jgi-search-search-result .-result .-summary-row:hover .-search-link:hover {
     text-decoration: underline;
     background-color: #EEE;
+    cursor: pointer;
 }
 
 .component-jgi-search-search-result .-header .-cell,
@@ -85,4 +87,23 @@
 
 .kb-tooltip.-hidden {
     display: none;
+}
+
+.component-jgi-search-search-result .section-header {
+    padding: 4px;
+    font-weight: bold;
+    color: #FFF;
+    background-color: #888;
+}
+
+.component-jgi-search-search-result .section-header+p,
+.component-jgi-search-search-result .section-header+.button-group {
+    margin-top: 6px
+}
+
+
+/* tab tweaks */
+
+.component-jgi-search-search-result .-result .-detail {
+    background-color: #FFF;
 }

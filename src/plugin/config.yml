@@ -17,6 +17,10 @@ install:
       module: panel
       id: kb_jgi_search_panel
       type: factory
+    -
+      module: listJobs
+      id: kb_jgi_search_list_jobs
+      type: factory
   ko-components:
     # none yet
     -
@@ -46,7 +50,7 @@ install:
       name: 'policy-viewer'
       module: 'components/policyViewer'
       css: true
-      type: factory      
+      type: factory
   routes:
     -
       path: ['jgi', 'search']
@@ -56,6 +60,10 @@ install:
       path: ['jgi', 'search2']
       widget: 'kb_jgi_search2_panel'
       authorization: true
+    - 
+      path: ['jgi', 'listjobs']
+      widget: 'kb_jgi_search_list_jobs'
+      authorization: true      
   menu:
     -
       name: jgi-search

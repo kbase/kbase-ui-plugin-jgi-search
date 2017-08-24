@@ -5,15 +5,17 @@ define([
     'marked',
     'kb_common/html',
     'kb_common/jsonRpc/dynamicServiceClient',
+    'kb_common/jsonRpc/genericClient',
     './policyViewerDialog',
     'yaml!./import.yml',
     'text!./jgiTerms.md'
-], function(
+], function (
     Promise,
     ko,
     numeral,
     marked,
     html,
+    DynamicService,
     GenericClient,
     PolicyViewerDialog,
     Import,
@@ -129,11 +131,11 @@ define([
 
             var searching = ko.observable(false);
 
-            var showResults = ko.pureComputed(function() {
+            var showResults = ko.pureComputed(function () {
                 return (searching() ||
                     (searchInput() && searchInput().length > 1));
             });
-            var noSearch = ko.pureComputed(function() {
+            var noSearch = ko.pureComputed(function () {
                 return (!searchInput() || searchInput().length < 2);
             });
 
@@ -143,14 +145,14 @@ define([
                     return;
                 }
                 switch (typeof newSearchInput) {
-                    case 'string':
-                        // normal, nothing to do.
-                        break;
-                    case 'number':
-                        newSearchInput = String(newSearchInput);
-                        break;
-                    default:
-                        errors.push('Search type not supported: ' + typeof newSearchInput);
+                case 'string':
+                    // normal, nothing to do.
+                    break;
+                case 'number':
+                    newSearchInput = String(newSearchInput);
+                    break;
+                default:
+                    errors.push('Search type not supported: ' + typeof newSearchInput);
 
                 }
                 searchInput(newSearchInput);
@@ -189,21 +191,36 @@ define([
             }
         });
 
+        function serviceCall(moduleName, functionName, params) {
+            var override = runtime.config(['services', moduleName, 'url'].join('.'));
+            console.log('overriding?', moduleName, override);
+            var token = runtime.service('session').getAuthToken();
+            var client;
+            if (override) {
+                client = new GenericClient({
+                    module: moduleName,
+                    url: override,
+                    token: token
+                });
+            } else {
+                client = new DynamicService({
+                    url: runtime.config('services.service_wizard.url'),
+                    token: token,
+                    module: moduleName
+                });
+            }
+            return client.callFunc(functionName, [
+                params
+            ]);
+        }
+
         function fetchData(query, page, pageSize) {
-            var JGISearch = new GenericClient({
-                url: runtime.config('services.service_wizard.url'),
-                token: runtime.service('session').getAuthToken(),
-                module: 'jgi_gateway_eap'
-            });
-            return JGISearch.callFunc('search_jgi', [{
+            return serviceCall('jgi_gateway_eap', 'search_jgi', {
                     search_string: query,
                     limit: pageSize,
                     page: page - 1
-                }])
-                .then(function(result) {
-                    return result[0];
                 })
-                .catch(function(err) {
+                .catch(function (err) {
                     console.error('ERROR', err, query, typeof page, typeof pageSize);
                     throw err;
                 });
@@ -229,8 +246,9 @@ define([
         }
 
         var extensionToDataType = {};
-        Import.dataTypes.forEach(function(dataType) {
-            dataType.extensions.forEach(function(extension) {
+        Object.keys(Import.dataTypes).forEach(function (dataTypeId) {
+            var dataType = Import.dataTypes[dataTypeId];
+            dataType.extensions.forEach(function (extension) {
                 extensionToDataType[extension] = dataType;
             });
         });
@@ -271,7 +289,7 @@ define([
             // In some cases there is a base data type (e.g. fasta) and a 
             // encoded data type (e.g. fasta.gz) in the file types list provided
             // by jgi.
-            indexedFileTypes.forEach(function(type) {
+            indexedFileTypes.forEach(function (type) {
                 var indexedType = Import.indexedTypes[type];
                 // console.log('grokking...', type, indexedType);
                 if (indexedType) {
@@ -317,85 +335,317 @@ define([
             };
         }
 
+        /*
+            staging status is currently returned as a message string. 
+            We unpack that here.
+            {
+                status: 'queued' || 'restoring' || 'copying' || 'complete'
+            }
+        */
+
+        function grokStageStats(message) {
+            // NOTE: yes the strings are quoted!
+            var queuedRe = /^"In_Queue"$/;
+            var progressRe = /^"In Progress\. Total files = ([\d]+)\. Copy complete = ([\d]+)\. Restore in progress = ([\d]+)\. Copy in progress = ([\d]+)"$/;
+            var completedRe = /^"Transfer Complete\. Transfered ([\d]+) files\."$/;
+
+            // console.log('progress?', message, typeof message, queuedRe.exec(message), completedRe.exec(message), progressRe.exec(message));
+
+            if (queuedRe.exec(message)) {
+                return {
+                    status: 'queued'
+                };
+            }
+
+            if (completedRe.exec(message)) {
+                return {
+                    status: 'completed'
+                };
+            }
+
+            var m = progressRe.exec(message);
+            // console.log('m', m, message, message.length, typeof message);
+            if (!m) {
+                return {
+                    status: 'unknown(1)'
+                };
+            }
+
+            // For now we just support one file at a time.
+            // If we support more than one file, this logic will need to change to
+            // support that.
+            var totalFiles = parseInt(m[1]);
+            var completed = parseInt(m[2]);
+            var restoring = parseInt(m[3]);
+            var copying = parseInt(m[4]);
+
+            if (completed) {
+                return {
+                    status: 'completed'
+                };
+            }
+            if (restoring) {
+                return {
+                    status: 'restoring'
+                };
+            }
+            if (copying) {
+                return {
+                    status: 'copying'
+                };
+            }
+
+            return {
+                status: 'unknown(2)'
+            };
+
+        }
+
+        var statusConfig = {
+            queued: {
+                color: 'orange',
+                label: 'Queued'
+            },
+            restoring: {
+                label: 'Restoring',
+                color: 'gray'
+            },
+            copying: {
+                label: 'Copying',
+                color: 'green'
+            },
+            completed: {
+                label: 'Completed',
+                color: 'blue'
+            }
+        };
+
+        function monitorProgress(jobId, progress, color) {
+            function checkProgress() {
+                return serviceCall('jgi_gateway_eap', 'stage_status', {
+                        job_id: jobId
+                    })
+                    .spread(function (result, stats) {
+                        // hmph, value comes back as a simple string.
+                        var stageStats = grokStageStats(result.message);
+                        if (!result) {
+                            progress('hmm, no progress.');
+                            return;
+                        }
+                        progress(stageStats.status);
+
+                        color(statusConfig[stageStats.status].color);
+
+                        if (stageStats.status === 'completed') {
+                            return;
+                        }
+
+                        window.setTimeout(checkProgress, 1000);
+                    })
+                    .catch(function (err) {
+                        progress(err.message);
+                    });
+            }
+            checkProgress();
+        }
+
         function doStage(stagingSpec) {
-            console.log('about to stage ...', stagingSpec);
-            var JGISearch = new GenericClient({
-                url: runtime.config('services.service_wizard.url'),
-                token: runtime.service('session').getAuthToken(),
-                module: 'jgi_gateway_eap'
-            });
-            return JGISearch.callFunc('stage_objects', [{
+            return serviceCall('jgi_gateway_eap', 'stage_objects', {
                     ids: [stagingSpec.indexId]
-                }])
-                .then(function(result) {
-                    console.log('staged?', result);
-                    if (result[0] && result[0][stagingSpec.indexId]) {
-                        var stagingResponse = result[0][stagingSpec.indexId];
-                        stagingSpec.stagingStatus('Staging submitted with job id ' + stagingResponse.id);
+                })
+                .spread(function (result) {
+                    if (result) {
+                        stagingSpec.stagingStatus('Staging submitted with job id ' + result.job_id);
+                        monitorProgress(result.job_id, stagingSpec.stagingProgress, stagingSpec.stagingProgressColor);
                     } else {
                         stagingSpec.stagingStatus('unknown - see console');
                     }
-                    return result[0];
+                    return result;
                 })
-                .catch(function(err) {
+                .catch(function (err) {
                     console.error('ERROR', err, stagingSpec);
+                    stagingSpec.stagingStatus('error - ' + err.message);
                     throw err;
                 });
         }
 
-        function getImportInfo(dataType, indexId, fileName) {
+        function grokFastq(dataTypeDef, hit) {
+
+            // determine the actual target type.
+            var kbaseType;
+            var error = null;
+            var sequencingTech = getProp(hit._source.metadata, ['physical_run.platform_name', 'sow_segment.platform']);
+            if (sequencingTech) {
+                switch (sequencingTech) {
+                case 'Illumina':
+                    var multiplexType = getProp(hit._source.metadata, ['physical_run_unit.multiplex_type']);
+                    switch (multiplexType) {
+                    case 'Multiplex Paired-End':
+                        kbaseType = dataTypeDef.kbaseTypes.pairedEnd;
+                        break;
+                    case 'Multiplex Single-Read':
+                        kbaseType = dataTypeDef.kbaseTypes.singleEnd;
+                        break;
+                    default:
+                        error = 'cannot determine kbase type - from Illumina metadata';
+                    }
+                    break;
+                case 'PacBio':
+                    kbaseType = dataTypeDef.kbaseTypes.singleEnd;
+                    break;
+                default:
+                    error = 'cannot determine - unhandled tech: ' + sequencingTech;
+                }
+
+            } else {
+                error = 'cannot determine - no sequencing tech provided';
+            }
+
+
+            // maybe it won't even work.
+            return {
+                metadata: [{
+                    key: 'sequencing_technology',
+                    value: getProp(hit._source.metadata, ['physical_run.platform_name', 'sow_segment.platform'])
+                }, {
+                    key: 'actual_insert_size_kb',
+                    value: getProp(hit._source.metadata, ['sow_segment.actual_insert_size_kb'], 'n/a')
+                }, {
+                    key: 'mean_insert_size_kb',
+                    value: getProp(hit._source.metadata, ['rqc.read_qc.illumina_read_insert_size_avg_insert'], 'n/a')
+                }, {
+                    key: 'stdev_insert_size_kb',
+                    value: getProp(hit._source.metadata, ['rqc.read_qc.illumina_read_insert_size_std_insert'], 'n/a')
+                }],
+                kbaseType: kbaseType,
+                error: error
+            };
+        }
+
+        function grokImportMetadata(dataTypeDef, hit) {
+            // do as switch, need to modularize this into objects...
+            switch (dataTypeDef.name) {
+            case 'fastq':
+                return grokFastq(dataTypeDef, hit);
+            case 'genbank':
+                return (function () {
+                    var scientificName = grokScientificName(hit);
+                    var metadata = [{
+                        key: 'scientific_name',
+                        value: scientificName.scientificName
+                    }];
+                    return {
+                        metadata: metadata,
+                        kbaseType: dataTypeDef.kbaseType,
+                        error: null
+                    };
+                }());
+            case 'genefeatures':
+                return (function () {
+                    var scientificName = grokScientificName(hit);
+                    var metadata = [{
+                        key: 'scientific_name',
+                        value: scientificName.scientificName
+                    }];
+                    return {
+                        metadata: metadata,
+                        kbaseType: dataTypeDef.kbaseType,
+                        error: null
+                    };
+                }());
+            case 'fasta':
+                return (function () {
+                    var scientificName = grokScientificName(hit);
+                    var metadata = [{
+                        key: 'scientific_name',
+                        value: scientificName.scientificName
+                    }];
+                    return {
+                        metadata: metadata,
+                        kbaseType: dataTypeDef.kbaseType,
+                        error: null
+                    };
+                }());
+            default:
+                var metadata = [{
+                    key: 'someday',
+                    value: 'it will work'
+                }];
+                return {
+                    metadata: metadata,
+                    // kbaseType: dataTypeDef.kbaseType,
+                    kbaseType: null,
+                    error: 'no import available'
+                };
+            }
+        }
+
+        function getImportInfo(dataType, indexId, fileName, hit) {
             // console.log('getting import info:', dataType, indexId);
             if (!dataType) {
-                return [];
+                return null;
             }
             // get the import spec
             // for now a simple filter
-            var specs = Import.dataTypes.filter(function(dataTypeDef) {
-                return (dataTypeDef.name === dataType);
-            }).map(function(dataTypeDef) {
-                return {
-                    importSpec: dataTypeDef,
-                    stagingSpec: {
-                        indexId: indexId,
-                        doStage: function(data) {
-                            doStage(data);
-                        },
-                        stagingStatus: ko.observable(),
-                        fileName: ko.observable(fileName)
-                    }
-                };
-            });
-
-            // do some transformation
-
-            // return it...
-            return specs;
+            var dataTypeDef = Import.dataTypes[dataType];
+            if (!dataTypeDef) {
+                throw new Error('unsupported data type: ' + dataType);
+            }
+            var importMetadata = grokImportMetadata(dataTypeDef, hit);
+            // console.log('grokked?', importMetadata);
+            return {
+                importSpec: dataTypeDef,
+                kbaseType: importMetadata.kbaseType,
+                error: importMetadata.error,
+                importMetadata: importMetadata.metadata,
+                stagingSpec: {
+                    indexId: indexId,
+                    doStage: function (data) {
+                        doStage(data);
+                    },
+                    stagingStatus: ko.observable(),
+                    stagingProgress: ko.observable(),
+                    stagingProgressColor: ko.observable(),
+                    fileName: ko.observable(fileName)
+                }
+            };
         }
 
         function grokTitle(hit, fileType) {
             switch (fileType.dataType) {
-                case 'genbank':
-                    return getProp(hit._source.metadata, ['pmo_project.name'], hit._source.file_name);
-                case 'fasta':
-                case 'fastq':
-                default:
-                    return getProp(hit._source.metadata, ['sequencing_project.sequencing_project_name'], hit._source.file_name);
+            case 'genbank':
+                return getProp(hit._source.metadata, ['pmo_project.name'], hit._source.file_name);
+            case 'fasta':
+            case 'fastq':
+            default:
+                return getProp(hit._source.metadata, ['sequencing_project.sequencing_project_name'], hit._source.file_name);
             }
         }
 
-        function grokScientificName(hit, fileType) {
+        function grokScientificName(hit) {
             // var na = span({ style: { color: 'gray' } }, 'n/a');
             var genus = getProp(hit._source.metadata, [
                 'genus',
                 'sow_segment.genus',
                 'pmo_project.genus'
-            ], '-');
+            ]);
             var species = getProp(hit._source.metadata, [
                 'species',
                 'sow_segment.species',
                 'pmo_project.species'
-            ], '-');
-            return genus + ' ' + species;
+            ]);
+            var strain = getProp(hit._source.metadata, [
+                'strain',
+                'sow_segment.strain',
+                'pmo_project.strain'
+            ]);
+            var scientificName = (genus || '?') + ' ' + (species || '?') + (strain ? ' ' + strain : '');
+            return {
+                genus: genus,
+                species: species,
+                strain: strain,
+                scientificName: scientificName
+            };
         }
 
         function grokPI(hit, fileType) {
@@ -416,20 +666,23 @@ define([
 
         function grokMetadata(hit, fileType) {
             switch (fileType.dataType) {
-                case 'fasta':
-                    return 'lib: ' + getProp(hit._source.metadata, [
-                        'library_names.0',
-                        'sow_segment.library_name'
-                    ]);
-                case 'fastq':
-                    return 'lib: ' + getProp(hit._source.metadata, [
+            case 'fasta':
+                return 'lib: ' + getProp(hit._source.metadata, [
+                    'library_names.0',
+                    'sow_segment.library_name'
+                ]);
+            case 'fastq':
+                return div([
+                    div('lib: ' + getProp(hit._source.metadata, [
                         'library_name',
                         'sow_segment.library_name'
-                    ]);
-                case 'genbank':
-                    return 'file: ' + getProp(hit._source, ['file_name'], '-');
-                default:
-                    return normalizeFileType(hit._source.file_type);
+                    ])),
+                    div('type: ' + getProp(hit._source.metadata, ['fastq_type']))
+                ]);
+            case 'genbank':
+                return 'file: ' + getProp(hit._source, ['file_name'], '-');
+            default:
+                return normalizeFileType(hit._source.file_type);
             }
         }
 
@@ -449,23 +702,27 @@ define([
             // Massage search input:
             // For now, we just support terms, possibly double-quoted, which are all
             // anded together.
-            var searchExpression = searchVM.searchInput().split(/\s+/).map(function(term) {
-                return '+' + term;
+            var searchExpression = searchVM.searchInput().split(/\s+/).map(function (term) {
+                if (term.length > 0) {
+                    if (!/[\+\-]/.test(term.charAt(0))) {
+                        return '+' + term;
+                    }
+                }
             }).join(' ');
 
             return currentSearch.search = fetchData(searchExpression, searchVM.page(), searchVM.pageSize())
-                .then(function(data) {
+                .spread(function (result, stats) {
                     if (thisSearch.cancelled) {
                         return;
                     }
                     var searchElapsed = new Date().getTime() - searchStart;
-                    console.log('search results', data);
+                    console.log('search results', result);
                     console.log('search service elapsed', searchElapsed);
                     searchVM.searchResults.removeAll();
-                    searchVM.searchElapsed(data.search_elapsed_time);
+                    searchVM.searchElapsed(stats.request_elapsed_time);
                     searchVM.searchServiceElapsed(searchElapsed);
-                    searchVM.searchTotal(data.search_result.total);
-                    data.search_result.hits.forEach(function(hit, index) {
+                    searchVM.searchTotal(result.search_result.total);
+                    result.search_result.hits.forEach(function (hit, index) {
                         // var project = hit._source.metadata;
                         var rowNumber = (searchVM.page() - 1) * searchVM.pageSize() + 1 + index;
                         var projectId;
@@ -516,7 +773,7 @@ define([
                             projectId: projectId,
                             pi: pi,
                             metadata: metadata,
-                            scientificName: scientificName,
+                            scientificName: scientificName.scientificName,
                             file: {
                                 name: hit._source.file_name,
                                 extension: fileExtension,
@@ -536,7 +793,7 @@ define([
                                 statusDate: getProp(hit._source.metadata, 'sequencing_project.status_date'),
                                 comments: getProp(hit._source.metadata, 'sequencing_project.comments')
                             },
-                            importSpecs: getImportInfo(fileType.dataType, hit._id, hit._source.file_name),
+                            importSpec: getImportInfo(fileType.dataType, hit._id, hit._source.file_name, hit),
                             // projectId: project.projects.map(function(project) {
                             // return String(project.projectId);
                             // // }),
@@ -551,12 +808,12 @@ define([
                         });
                     });
                 })
-                .catch(function(err) {
+                .catch(function (err) {
                     searchVM.errors.push({
                         message: err.message
                     });
                 })
-                .finally(function() {
+                .finally(function () {
                     currentSearch = {
                         search: null,
                         cancelled: false
@@ -565,14 +822,14 @@ define([
                 });
         }
         searchVM.doSearch = doSearch;
-        searchVM.searchInput.subscribe(function(newValue) {
+        searchVM.searchInput.subscribe(function (newValue) {
             if (newValue.length > 1) {
                 doSearch();
             } else {
                 doClearSearch();
             }
         });
-        searchVM.page.subscribe(function() {
+        searchVM.page.subscribe(function () {
             doSearch();
         });
 
@@ -645,7 +902,7 @@ define([
         }
 
         function render() {
-            return Promise.try(function() {
+            return Promise.try(function () {
                 container.innerHTML = buildLayout();
                 var vm = {
                     searchVM: searchVM
@@ -684,7 +941,7 @@ define([
     }
 
     return {
-        make: function(config) {
+        make: function (config) {
             return factory(config);
         }
     };

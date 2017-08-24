@@ -3,7 +3,7 @@ define([
     'jquery',
     'kb_common/html',
     'kb_common/bootstrapUtils'
-], function(
+], function (
     ko,
     $,
     html,
@@ -15,18 +15,16 @@ define([
         div = t('div'),
         span = t('span'),
         p = t('p'),
-        input = t('input'),
         button = t('button'),
         ul = t('ul'),
         li = t('li'),
         a = t('a'),
         table = t('table'),
-        ul = t('ul'),
         tr = t('tr'),
         th = t('th'),
         td = t('td'),
         h3 = t('h3'),
-        h4 = t('h4');
+        br = t('br');
 
     function viewModel(params) {
         var searchResults = params.searchVM.searchResults;
@@ -52,7 +50,7 @@ define([
 
             tipNode.classList.remove('-hidden');
             var skip = true;
-            var fun = function() {
+            var fun = function () {
                 if (skip) {
                     skip = false;
                     return;
@@ -71,53 +69,124 @@ define([
         };
     }
 
+    function buildDestinationFileInfo() {
+        return div({
+            dataBind: {
+                with: 'importSpec'
+            }
+        }, [
+            div({
+                class: 'section-header'
+            }, 'File Info'),
+            p([
+                'After the files are copied, two files will appear in your Staging Directory. ',
+                'The original data file, prefixed with a unique id; and a "metadata file", ',
+                'containing the same metadata you can find in the metadata tab.'
+            ]),
+            table({
+                class: 'table form',
+                dataBind: {
+                    with: 'stagingSpec'
+                }
+            }, [
+                tr([
+                    th('Data file'),
+                    td([
+                        span({
+                            dataBind: {
+                                text: 'indexId'
+                            }
+                        }),
+                        '.',
+                        span({
+                            dataBind: {
+                                text: 'fileName'
+                            },
+                            style: {
+                                fontWeight: 'bold'
+                            }
+                        })
+                    ])
+                ]),
+                tr([
+                    th('Metadata file'),
+                    td([
+                        span({
+                            dataBind: {
+                                text: 'indexId'
+                            }
+                        }),
+                        '.metadata'
+                    ])
+                ])
+            ])
+        ]);
+    }
+
     function buildImportForm() {
-        return div({}, table({
-            class: 'table table-striped form',
+        return div({
             dataBind: {
                 with: 'stagingSpec'
             }
         }, [
-            tr([
-                th('File name'),
-                td(
-                    input({
+            div({
+                class: 'section-header'
+            }, 'Copy operation'),
+            div({
+                style: {
+                    width: '20em',
+                    margin: '10px auto'
+                }
+            }, [
+                div({
+                    class: 'button-group'
+                }, [
+                    button({
                         dataBind: {
-                            value: 'fileName'
+                            click: 'doStage'
                         },
-                        class: 'form-control'
-                    }))
-            ]),
-            tr([
-                th('Status'),
-                td({
-                    dataBind: {
-                        text: 'stagingStatus'
-                    }
-                })
-            ]),
-            tr([
-                th(''),
-                td(button({
-                    dataBind: {
-                        click: 'doStage'
-                    },
-                    class: 'btn btn-primary'
-                }, 'Copy to Staging Area'))
+                        class: 'btn btn-primary'
+                    }, 'Copy JGI File -> Your KBase Staging Area')
+                ]),
+                table({
+                    class: 'table table-striped form'
+                }, [
+                    tr([
+                        th('Status'),
+                        td({
+                            dataBind: {
+                                text: 'stagingStatus'
+                            }
+                        })
+                    ]),
+                    tr([
+                        th('Progress'),
+                        td({
+                            dataBind: {
+                                text: 'stagingProgress',
+                                style: {
+                                    color: 'stagingProgressColor'
+                                }
+                            }
+                        })
+                    ])
+                ])
             ])
-        ]));
+        ]);
     }
 
     function buildImporter() {
         return [
+            '<!-- ko if: !importSpec -->',
+            div('No import available for this file type'),
+            '<!-- /ko -->',
+            '<!-- ko if: importSpec -->',
+
             '<!-- ko if: !$component.searchVM.jgiTerms.agreed() -->',
-            p([
-                'To import public JGI data files into KBase, you must agree to the JGI Data Usage and Download Policy.'
-            ]),
             div({
                 style: {
-                    margin: '4px',
-                    border: '1px silver solid',
+                    margin: '4px 0 ',
+                    border: '2px red solid',
                     padding: '4px',
                     textAlign: 'center'
                 },
@@ -125,6 +194,11 @@ define([
                     with: '$component.searchVM.jgiTerms'
                 }
             }, [
+                p([
+                    'To copy or import public JGI data files into KBase, ',
+                    br(),
+                    'you must agree to the JGI Data Usage and Download Policy.'
+                ]),
                 button({
                     class: 'btn btn-primary',
                     dataBind: {
@@ -133,31 +207,45 @@ define([
                 }, 'View and (Possibly) Agree')
             ]),
             '<!-- /ko -->',
+
             '<!-- ko if: $component.searchVM.jgiTerms.agreed() -->',
-            '<!-- ko if: importSpecs.length === 0 -->',
-            div('No import available for this file type'),
-            '<!-- /ko -->',
-            '<!-- ko if: importSpecs.length > 0 -->',
             div({
                 dataBind: {
-                    foreach: 'importSpecs'
+                    with: 'importSpec'
                 }
             }, [
                 buildImportForm(),
+            ]),
+            '<!-- /ko -->',
+
+            '<!-- /ko -->'
+        ];
+    }
+
+    function buildDestImportInfo() {
+        return [
+            '<!-- ko if: !importSpec -->',
+            div('No import available for this file type'),
+            '<!-- /ko -->',
+            '<!-- ko if: importSpec -->',
+            div({
+                dataBind: {
+                    with: 'importSpec'
+                }
+            }, [
+                '<!-- ko if: kbaseType -->',
                 div({
-                    style: {
-                        fontWeight: 'bold'
-                    }
+                    class: 'section-header'
                 }, 'Import information'),
                 p([
-                    'After copying the file to staging, you will be able to import the file into a Narrative as a',
+                    'After copying the file to your Staging Folder, you will be able to import the file into a Narrative as a',
                     ' data object of type ',
                     span({
                         style: {
                             fontWeight: 'bold',
                         },
                         dataBind: {
-                            with: 'importSpec.kbaseType'
+                            with: 'kbaseType'
                         }
                     }, [
                         span({
@@ -178,84 +266,97 @@ define([
                             }
                         })
                     ])
-                ])
+                ]),
+                '<!-- /ko -->',
+                '<!-- ko if: error -->',
+                div({
+                    dataBind: {
+                        text: 'error'
+                    },
+                    class: 'text-danger'
+                }),
+                '<!-- /ko -->'
             ]),
             '<!-- /ko -->',
-            '<!-- /ko -->'
         ];
     }
 
-    function buildFileInfo() {
-        return table({
-            class: 'table table-striped',
-            dataBind: {
-                with: 'file'
-            }
-        }, [
-            tr([
-                th('Filename'),
-                td({
-                    dataBind: {
-                        text: 'name'
-                    }
-                })
-            ]),
-            tr([
-                th('Extension'),
-                td({
-                    dataBind: {
-                        text: 'extension'
-                    }
-                })
-            ]),
-            tr([
-                th('Data type'),
-                td({
-                    dataBind: {
-                        text: 'dataType'
-                    }
-                })
-            ]),
-            tr([
-                th('Encoding'),
-                td({
-                    dataBind: {
-                        text: 'encoding'
-                    }
-                })
-            ]),
-            tr([
-                th('Indexed Type'),
-                td({
-                    dataBind: {
-                        text: 'indexedType'
-                    }
-                })
-            ]),
-            tr([
-                th('Size'),
-                td({
-                    dataBind: {
-                        text: 'size'
-                    }
-                })
-            ]),
-            // tr([
-            //     th('Status'),
-            //     td({
-            //         dataBind: {
-            //             text: 'status'
-            //         }
-            //     })
-            // ]),
+    function buildSourceFileInfo() {
+        return div([
+            div({
+                class: 'section-header'
+            }, 'File info'),
+            table({
+                class: 'table table-striped',
+                dataBind: {
+                    with: 'file'
+                }
+            }, [
+                tr([
+                    th('Filename'),
+                    td({
+                        dataBind: {
+                            text: 'name'
+                        }
+                    })
+                ]),
+                // tr([
+                //     th('Extension'),
+                //     td({
+                //         dataBind: {
+                //             text: 'extension'
+                //         }
+                //     })
+                // ]),
+                tr([
+                    th('Data type'),
+                    td({
+                        dataBind: {
+                            text: 'dataType'
+                        }
+                    })
+                ]),
+                tr([
+                    th('Encoding'),
+                    td({
+                        dataBind: {
+                            text: 'encoding'
+                        }
+                    })
+                ]),
+                // tr([
+                //     th('Indexed Type'),
+                //     td({
+                //         dataBind: {
+                //             text: 'indexedType'
+                //         }
+                //     })
+                // ]),
+                tr([
+                    th('Size'),
+                    td({
+                        dataBind: {
+                            text: 'size'
+                        }
+                    })
+                ]),
+                // tr([
+                //     th('Status'),
+                //     td({
+                //         dataBind: {
+                //             text: 'status'
+                //         }
+                //     })
+                // ]),
 
-            tr([
-                th('Date added'),
-                td({
-                    dataBind: {
-                        text: 'added'
-                    }
-                })
+                tr([
+                    th('Date added'),
+                    td({
+                        dataBind: {
+                            text: 'added'
+                        }
+                    })
+                ])
             ])
         ]);
     }
@@ -406,6 +507,51 @@ define([
         ]);
     }
 
+    function buildSourceImportMetadata() {
+        return div({
+            dataBind: {
+                with: 'importSpec'
+            }
+        }, [
+
+            '<!-- ko if: kbaseType -->',
+            div({
+                class: 'section-header'
+            }, 'File import metadata'),
+            p([
+                'This information may be required when importing the data into KBase.'
+            ]),
+            table({
+                class: 'table',
+                dataBind: {
+                    foreach: 'importMetadata'
+                }
+            }, [
+                tr([
+                    th({
+                        dataBind: {
+                            text: 'key'
+                        }
+                    }),
+                    td({
+                        dataBind: {
+                            text: 'value'
+                        }
+                    })
+                ])
+            ]),
+
+            '<!-- /ko -->',
+            '<!-- ko if: !kbaseType -->',
+            div([
+                p([
+                    'Sorry, this file is not importable into KBase.'
+                ])
+            ]),
+            '<!-- /ko -->'
+        ]);
+    }
+
     function buildImportView() {
         return div({
             class: 'container-fluid'
@@ -425,10 +571,15 @@ define([
                                 fontSize: '120%',
                                 marginRight: '4px'
                             }
-                        }, 'From File'),
-                        buildInfoLink('fromFile')
+                        }, 'Source - JGI'),
+                        buildInfoLink('fromFile'),
                     ]),
-                    buildFileInfo()
+                    p([
+                        'The file is stored at the JGI Archive and Metadata Organizer (JAMO) and ',
+                        'may be copied into your KBase File Staging Area.'
+                    ]),
+                    buildSourceFileInfo(),
+                    buildSourceImportMetadata()
                 ]), div({
                     class: 'col-md-6'
                 }, [
@@ -441,12 +592,126 @@ define([
                                 fontSize: '120%',
                                 marginRight: '4px'
                             }
-                        }, 'To Staging'),
+                        }, 'Destination - KBase'),
                         buildInfoLink('toStaging')
+                    ]),
+                    p([
+                        'The JGI JAMO file will be copied into your KBase Staging Area ',
+                        'from where it may be imported into one or more KBase Narratives for ',
+                        'further analysis and inspection.'
                     ]),
                     buildImporter()
                 ])
             ])
+        ]);
+    }
+
+    function buildImportMegaView() {
+        return div({
+            class: 'container-fluid'
+        }, [
+            div({
+                class: 'row'
+            }, [
+                div({
+                    class: 'col-md-12'
+                }, [
+                    buildImporter()
+                ])
+            ]),
+            div({
+                class: 'row'
+            }, [
+                div({
+                    class: 'col-md-6'
+                }, [
+                    span({
+                        style: {
+                            fontWeight: 'bold',
+                            fontSize: '120%',
+                            marginRight: '4px'
+                        }
+                    }, 'Source - JGI'),
+                    buildInfoLink('fromFile')
+                ]),
+                div({
+                    class: 'col-md-6'
+                }, [
+                    span({
+                        style: {
+                            fontWeight: 'bold',
+                            fontSize: '120%',
+                            marginRight: '4px'
+                        }
+                    }, 'Destination - KBase'),
+                    buildInfoLink('toStaging')
+                ])
+            ]),
+
+            div({
+                class: 'row'
+            }, [
+                div({
+                    class: 'col-md-6'
+                }, [
+                    p([
+                        'The file is stored at the JGI Archive and Metadata Organizer (JAMO) and ',
+                        'may be copied into your KBase File Staging Area.'
+                    ])
+                ]),
+                div({
+                    class: 'col-md-6'
+                }, [
+                    p([
+                        'The JGI JAMO file will be copied into your KBase Staging Area ',
+                        'from where it may be imported into one or more KBase Narratives for ',
+                        'further analysis and inspection.'
+                    ])
+                ])
+            ]),
+            div({
+                class: 'row'
+            }, [
+                div({
+                    class: 'col-md-6'
+                }, [
+                    buildSourceFileInfo()
+                ]),
+                div({
+                    class: 'col-md-6'
+                }, [
+                    buildDestinationFileInfo()
+                ])
+            ]),
+            div({
+                class: 'row'
+            }, [
+                div({
+                    class: 'col-md-6'
+                }, [
+                    buildSourceImportMetadata()
+                ]),
+                div({
+                    class: 'col-md-6'
+                }, [
+                    buildDestImportInfo()
+                ])
+            ]),
+            div({
+                class: 'row'
+            }, [
+                div({
+                    class: 'col-md-6'
+                }, [
+
+                ]),
+                div({
+                    class: 'col-md-6'
+                }, [
+
+                ])
+            ]),
+
         ]);
     }
 
@@ -468,12 +733,12 @@ define([
             }
         }
         if (arg.classes) {
-            arg.classes.forEach(function(klass) {
+            arg.classes.forEach(function (klass) {
                 klasses.push(klass);
             });
         }
         if (arg.style) {
-            Object.keys(arg.style).forEach(function(key) {
+            Object.keys(arg.style).forEach(function (key) {
                 style[key] = arg.style[key];
             });
         }
@@ -495,7 +760,7 @@ define([
             tabClasses = ['nav', 'nav-tabs'],
             tabStyle = {},
             activeIndex, tabTabs,
-            tabs = arg.tabs.filter(function(tab) {
+            tabs = arg.tabs.filter(function (tab) {
                 return (tab ? true : false);
             }),
             selectedTab = arg.initialTab || 0,
@@ -512,7 +777,7 @@ define([
             tabsAttribs.id = tabsId;
         }
 
-        tabs.forEach(function(tab, index) {
+        tabs.forEach(function (tab, index) {
             tab.panelId = html.genId();
             tab.tabId = html.genId();
             if (tab.name) {
@@ -522,7 +787,7 @@ define([
                 selectedTab = index;
             }
             if (tab.events) {
-                tab.events.forEach(function(event) {
+                tab.events.forEach(function (event) {
                     events.push({
                         id: tab.tabId,
                         jquery: true,
@@ -546,7 +811,7 @@ define([
         }
         content = div(tabsAttribs, [
             ul({ class: tabClasses.join(' '), role: 'tablist' },
-                tabTabs.map(function(tab, index) {
+                tabTabs.map(function (tab, index) {
                     var tabAttribs = {
                             role: 'presentation'
                         },
@@ -584,7 +849,7 @@ define([
                     return li(tabAttribs, [a(linkAttribs, [icon, label].join(' '))]);
                 })),
             div({ class: 'tab-content' },
-                tabs.map(function(tab, index) {
+                tabs.map(function (tab, index) {
                     var attribs = {
                         role: 'tabpanel',
                         class: panelClasses.join(' '),
@@ -616,14 +881,19 @@ define([
 
     function buildResult() {
         return div({
-            class: '-result'
+            class: '-result',
+            dataBind: {
+                css: {
+                    '-active': 'showDetail'
+                }
+            }
         }, [
             div({
                 dataBind: {
                     click: 'function (data) {data.showDetail(!data.showDetail());}',
-                    css: {
-                        '-active': 'showDetail'
-                    }
+                    // css: {
+                    //     '-active': 'showDetail'
+                    // }
                 },
                 class: '-summary-row'
             }, [
@@ -657,22 +927,24 @@ define([
                     class: '-cell -search-link'
                 }),
                 div({
+                    style: {
+                        width: '10%'
+                    },
+                    class: '-cell'
+                }, span({
                     dataBind: {
                         text: 'projectId',
                         clickBubble: false,
                         click: '$component.searchVM.doAddToSearch.bind($data, $data, "projectId")'
                     },
-                    style: {
-                        width: '5%'
-                    },
-                    class: '-cell -search-link'
-                }),
+                    class: '-search-link'
+                })),
                 div({
                     dataBind: {
                         text: 'title'
                     },
                     style: {
-                        width: '30%'
+                        width: '25%'
                     },
                     class: '-cell'
                 }),
@@ -699,15 +971,6 @@ define([
                 }),
                 div({
                     dataBind: {
-                        text: 'dataType'
-                    },
-                    style: {
-                        width: '5%'
-                    },
-                    class: '-cell'
-                }),
-                div({
-                    dataBind: {
                         text: 'scientificName'
                     },
                     style: {
@@ -717,7 +980,17 @@ define([
                 }),
                 div({
                     dataBind: {
-                        text: 'metadata'
+                        text: 'dataType'
+                    },
+                    style: {
+                        width: '5%'
+                    },
+                    class: '-cell'
+                }),
+
+                div({
+                    dataBind: {
+                        html: 'metadata'
                     },
                     style: {
                         width: '15%'
@@ -726,14 +999,16 @@ define([
                 })
             ]),
             '<!-- ko if: showDetail -->',
-            buildTabs({
+            div({
+                class: '-detail'
+            }, buildTabs({
                 tabs: [{
                     name: 'project',
                     label: 'Project',
                     body: div({
                         style: {
                             margin: '4px',
-                            border: '1px silver solid',
+                            // border: '1px silver solid',
                             padding: '4px'
                         }
                     }, buildProjectView())
@@ -743,10 +1018,10 @@ define([
                     body: div({
                         style: {
                             margin: '4px',
-                            border: '1px silver solid',
+                            // border: '1px silver solid',
                             padding: '4px'
                         }
-                    }, buildImportView())
+                    }, buildImportMegaView())
                 }, {
                     name: 'metadata',
                     label: 'Metadata',
@@ -762,7 +1037,7 @@ define([
                         },
                         style: {
                             margin: '4px',
-                            border: '1px silver solid',
+                            // border: '1px silver solid',
                             padding: '4px'
                         }
                     })
@@ -780,7 +1055,7 @@ define([
                         },
                         style: {
                             margin: '4px',
-                            border: '1px silver solid',
+                            // border: '1px silver solid',
                             padding: '4px'
                         }
                     })
@@ -788,13 +1063,13 @@ define([
                     name: 'rawdata',
                     label: 'Raw Data',
                     body: div({
-                        class: '-detail',
+                        class: '-raw-data',
                         dataBind: {
                             text: 'detailFormatted'
                         }
                     })
                 }]
-            }).content,
+            }).content),
             '<!-- /ko -->'
         ]);
     }
@@ -830,13 +1105,13 @@ define([
                         }, 'Prop. ID'),
                         div({
                             style: {
-                                width: '5%'
+                                width: '10%'
                             },
                             class: '-cell'
                         }, 'Proj. ID'),
                         div({
                             style: {
-                                width: '30%'
+                                width: '25%'
                             },
                             class: '-cell'
                         }, 'Title'),
@@ -854,16 +1129,17 @@ define([
                         }, 'Date'),
                         div({
                             style: {
-                                width: '5%'
-                            },
-                            class: '-cell'
-                        }, 'Type'),
-                        div({
-                            style: {
                                 width: '15%'
                             },
                             class: '-cell'
                         }, 'Scientific name'),
+                        div({
+                            style: {
+                                width: '5%'
+                            },
+                            class: '-cell'
+                        }, 'Type'),
+
                         div({
                             style: {
                                 width: '15%'
@@ -913,5 +1189,5 @@ define([
         };
     }
 
-    ko.components.register('jgisearch/search-result', component());
+    return component;
 });

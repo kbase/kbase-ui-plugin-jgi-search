@@ -1,9 +1,11 @@
 define([
     'knockout',
-    'kb_common/html'
+    'kb_common/html',
+    'numeral'
 ], function(
     ko,
-    html
+    html,
+    numeral
 ) {
     'use strict';
 
@@ -11,13 +13,38 @@ define([
         div = t('div'),
         span = t('span');
 
-    function makeBrowsable(obj, forceOpen) {
+    function niceNumber(key, num) {
+        if (Number.isInteger(num)) {
+            if (!/_id$/.exec(key)) {
+                return numeral(num).format('0,0');
+            } else {
+                return num;
+            }
+        } else {
+            return num;
+        }
+    }
+
+    function makeBrowsable(key, obj, forceOpen) {
         switch (typeof obj) {
             case 'string':
+                return {
+                    type: typeof obj,
+                    key: key,
+                    value: obj,
+                    display: String(obj)
+                };
             case 'number':
+                return {
+                    type: typeof obj,
+                    key: key,
+                    value: niceNumber(key, obj),
+                    display: String(obj)
+                };
             case 'boolean':
                 return {
                     type: typeof obj,
+                    key: key,
                     value: obj,
                     display: String(obj)
                 };
@@ -25,12 +52,14 @@ define([
                 if (obj === null) {
                     return {
                         type: 'null',
+                        key: key,
                         value: obj,
                         display: 'null'
                     };
                 } else if (obj instanceof Array) {
                     return {
                         type: 'array',
+                        key: key,
                         show: ko.observable(forceOpen || false),
                         value: obj.map(function(element) {
                             // return makeBrowsable(element);
@@ -41,6 +70,7 @@ define([
                     return {
                         type: 'object',
                         show: ko.observable(forceOpen || false),
+                        key: key,
                         value: Object.keys(obj).map(function(key) {
                             return {
                                 key: key,
@@ -59,17 +89,19 @@ define([
             default:
                 return {
                     type: 'unknown',
+                    key: key,
                     value: 'type not handled: ' + (typeof obj),
                     display: 'type not handled: ' + (typeof obj)
-                }
+                };
         }
     }
 
     function viewModel(params) {
         var value = params.value;
-        var browsable = makeBrowsable(value, params.open);
+        var browsable = makeBrowsable(params.key, value, params.open);
         var open = params.open;
         return {
+            key: params.key,
             value: value,
             level: params.level || 0,
             browsable: browsable,
@@ -90,7 +122,7 @@ define([
         return div({
             dataBind: {
                 style: {
-                    'margin-left': 'String(level * 10) + "px"'
+                    'margin-left': 'String(level * 5) + "px"'
                 },
                 with: 'browsable'
             }
@@ -100,54 +132,70 @@ define([
 
             }, [
                 '<!-- ko if: value.length === 0 -->',
-                span({
+                div({
                     style: {
                         color: 'gray'
                     }
                 }, [
-                    icon('cube'),
-                    ' (empty)'
+                    span({
+                        class: 'mini-spacer'
+                    }),
+                    span({
+                        dataBind: {
+                            text: 'key'
+                        }
+                    }),
+                    ': (empty)'
                 ]),
                 '<!-- /ko -->',
                 '<!-- ko if: value.length !== 0 -->',
-                div(div({
-                    dataBind: {
-                        click: 'function (data) {show(!show());}',
-                        style: {
-                            color: 'show() ? "red" : "green"'
-                        }
-                    },
-                    class: 'mini-button'
-                }, [
-                    icon('cube'),
+
+                div([
+                    span({
+                        dataBind: {
+                            click: 'function (data) {show(!show());}',
+                            style: {
+                                color: 'show() ? "red" : "green"'
+                            }
+                        },
+                        class: 'mini-button'
+                    }, [
+                        span({
+                            dataBind: {
+                                ifnot: 'show'
+                            }
+                        }, icon('plus')),
+                        span({
+                            dataBind: {
+                                if: 'show'
+                            }
+                        }, icon('minus'))
+                    ]),
                     ' ',
                     span({
                         dataBind: {
-                            ifnot: 'show'
+                            text: 'key'
                         }
-                    }, icon('plus')),
-                    span({
-                        dataBind: {
-                            if: 'show'
-                        }
-                    }, icon('minus'))
-                ])),
+                    }),
+                    ':'
+                ]),
                 '<!-- ko if: show-->',
                 div({
                     dataBind: {
                         foreach: 'value'
                     }
                 }, [
-                    div({
-                        dataBind: {
-                            text: 'key'
-                        }
-                    }),
+                    // div({
+                    //     dataBind: {
+                    //         text: 'key'
+                    //     }
+                    // }),
                     div({
                         dataBind: {
                             component: {
                                 name: '"jgisearch/json-viewer"',
                                 params: {
+                                    key: 'key',
                                     value: 'value',
                                     level: '$component.level + 1'
                                 }
@@ -167,53 +215,68 @@ define([
                         color: 'gray'
                     }
                 }, [
-                    icon('list'),
-                    ' (empty)'
+                    span({
+                        class: 'mini-spacer'
+                    }),
+                    span({
+                        dataBind: {
+                            text: 'key'
+                        }
+                    }),
+                    ': (empty)'
                 ]),
                 '<!-- /ko -->',
                 '<!-- ko if: value.length !== 0 -->',
-                div(div({
-                    dataBind: {
-                        click: 'function (data) {show(!show());}',
-                        style: {
-                            color: 'show() ? "red" : "green"'
-                        }
-                    },
-                    class: 'mini-button'
-                }, [
-                    icon('list'),
-                    ' ',
+                div([
+                    div({
+                        dataBind: {
+                            click: 'function (data) {show(!show());}',
+                            style: {
+                                color: 'show() ? "red" : "green"'
+                            }
+                        },
+                        class: 'mini-button'
+                    }, [
+                        span({
+                            dataBind: {
+                                ifnot: 'show'
+                            }
+                        }, icon('plus')),
+                        span({
+                            dataBind: {
+                                if: 'show'
+                            }
+                        }, icon('minus'))
+                    ]),
                     span({
                         dataBind: {
-                            ifnot: 'show'
+                            text: 'key'
                         }
-                    }, icon('plus')),
-                    span({
-                        dataBind: {
-                            if: 'show'
-                        }
-                    }, icon('minus'))
-                ])),
+                    }),
+                    ':'
+                ]),
+
                 '<!-- ko if: show -->',
                 div({
                     dataBind: {
                         foreach: 'value'
                     }
                 }, [
-                    div([
-                        '[',
-                        span({
-                            dataBind: {
-                                text: '$index'
-                            }
-                        }),
-                        ']'
-                    ]),
+                    // div([
+                    //     '[',
+                    //     span({
+                    //         dataBind: {
+                    //             text: '$index'
+                    //         }
+                    //     }),
+                    //     ']'
+                    // ]),
                     div({
                         dataBind: {
                             component: {
                                 name: '"jgisearch/json-viewer"',
                                 params: {
+                                    key: '"[" + $index() + "]"',
                                     value: '$data',
                                     level: '$component.level + 1'
                                 }
@@ -226,60 +289,119 @@ define([
             ]),
             '<!-- /ko -->',
             '<!-- ko if: type === "string"-->',
-            div({
-                dataBind: {
-                    text: 'value'
-                },
-                style: {
-                    fontWeight: 'bold',
-                    color: 'green'
-                }
-            }),
+            div([
+                span({
+                    class: 'mini-spacer'
+                }),
+                span({
+                    dataBind: {
+                        text: 'key'
+                    }
+                }),
+                ': ',
+                span({
+                    dataBind: {
+                        text: 'value'
+                    },
+                    style: {
+                        fontWeight: 'bold',
+                        color: 'green'
+                    }
+                })
+            ]),
             '<!-- /ko -->',
             '<!-- ko if: type === "number"-->',
-            div({
-                dataBind: {
-                    text: 'String(value)'
-                },
-                style: {
-                    fontWeight: 'bold',
-                    color: 'blue'
-                }
-            }),
+            div([
+                span({
+                    class: 'mini-spacer'
+                }),
+                span({
+                    dataBind: {
+                        text: 'key'
+                    }
+                }),
+                ': ',
+                span({
+                    dataBind: {
+                        text: 'String(value)'
+                    },
+                    style: {
+                        fontWeight: 'bold',
+                        fontFamily: 'monospace',
+                        color: 'blue'
+                    }
+                })
+            ]),
             '<!-- /ko -->',
 
             '<!-- ko if: type === "boolean"-->',
-            div({
-                dataBind: {
-                    text: 'value ? "true" : "false"'
-                },
-                style: {
-                    fontWeight: 'bold',
-                    color: 'orange'
-                }
-            }),
+            div([
+                span({
+                    class: 'mini-spacer'
+                }),
+                span({
+                    dataBind: {
+                        text: 'key'
+                    }
+                }),
+                ': ',
+                span({
+                    dataBind: {
+                        text: 'value ? "true" : "false"'
+                    },
+                    style: {
+                        fontWeight: 'bold',
+                        color: 'orange'
+                    }
+                })
+            ]),
+
             '<!-- /ko -->',
             '<!-- ko if: type === "null"-->',
-            div({
-                dataBind: {
-                    text: 'display'
-                },
-                style: {
-                    fontWeight: 'bold',
-                    color: 'gray'
-                }
-            }),
+
+            div([
+                span({
+                    class: 'mini-spacer'
+                }),
+                span({
+                    dataBind: {
+                        text: 'key'
+                    }
+                }),
+                ': ',
+                span({
+                    dataBind: {
+                        text: 'display'
+                    },
+                    style: {
+                        fontWeight: 'bold',
+                        color: 'gray'
+                    }
+                })
+            ]),
+
             '<!-- /ko -->',
             '<!-- ko if: type === "unknown"-->',
-            div({
-                dataBind: {
-                    text: 'value'
-                },
-                style: {
-                    fontWeight: 'bold',
-                    color: 'red'
-                }
-            }),
+            div([
+                span({
+                    class: 'mini-spacer'
+                }),
+                span({
+                    dataBind: {
+                        text: 'key'
+                    }
+                }),
+                ': ',
+                span({
+                    dataBind: {
+                        text: 'value'
+                    },
+                    style: {
+                        fontWeight: 'bold',
+                        color: 'red'
+                    }
+                })
+            ]),
             '<!-- /ko -->',
 
         ]);
@@ -304,5 +426,5 @@ define([
             template: template()
         };
     }
-    ko.components.register('jgisearch/json-viewer', component());
+    return component;
 });

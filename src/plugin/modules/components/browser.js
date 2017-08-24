@@ -492,5 +492,5 @@ define([
             template: template()
         };
     }
-    ko.components.register('jgisearch/browser', component());
+    return component;
 });

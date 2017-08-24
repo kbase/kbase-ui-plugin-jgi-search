@@ -283,5 +283,5 @@ define([
             template: template()
         };
     }
-    ko.components.register('jgisearch/search', component());
+    return component;
 });

@@ -42,5 +42,5 @@ define([
             template: template()
         };
     }
-    ko.components.register('policy-viewer', component());
+    return component;
 });
