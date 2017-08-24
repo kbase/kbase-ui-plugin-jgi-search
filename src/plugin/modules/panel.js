@@ -125,6 +125,16 @@ define([
                 vm.errors.remove(data);
             }
 
+            function doRemoveMessage(data) {
+                vm.messages.remove(data);
+            }
+
+            function addMessage() {
+                // message already present by id?
+
+                // if not ,add it.
+            }
+
             var searchResults = ko.observableArray();
 
             var searchInput = ko.observable();
@@ -153,7 +163,6 @@ define([
                     break;
                 default:
                     errors.push('Search type not supported: ' + typeof newSearchInput);
-
                 }
                 searchInput(newSearchInput);
             }
@@ -162,6 +171,7 @@ define([
                 searchInput: searchInput,
                 searchResults: searchResults,
                 searchTotal: ko.observableArray(),
+                actualSearchTotal: ko.observableArray(),
                 searchElapsed: ko.observable(),
                 searchServiceElapsed: ko.observable(),
                 searching: searching,
@@ -175,7 +185,10 @@ define([
                 // Note, starts with 1.
                 page: ko.observable(1),
                 errors: ko.observableArray(),
+                messages: ko.observableArray(),
                 doRemoveError: doRemoveError,
+                doRemoveMessage: doRemoveMessage,
+                addMessage: addMessage,
 
                 jgiTerms: JGITerms()
             };
@@ -239,6 +252,7 @@ define([
             }
             searchVM.searchResults.removeAll();
             searchVM.searchTotal(0);
+            searchVM.actualSearchTotal(0);
             currentSearch = {
                 search: null,
                 cancelled: false
@@ -718,10 +732,25 @@ define([
                     var searchElapsed = new Date().getTime() - searchStart;
                     console.log('search results', result);
                     console.log('search service elapsed', searchElapsed);
+
+                    console.log('do we need to limit the search?', result.search_result.total);
+
+                    if (result.search_result.total > 10000) {
+                        searchVM.actualSearchTotal(result.search_result.total);
+                        searchVM.searchTotal(10000);
+                        searchVM.addMessage({
+                            type: 'warning',
+                            message: 'Too many search results (' + result.search_result.total + '), restricted to 10,000'
+                        });
+                    } else {
+                        searchVM.actualSearchTotal(result.search_result.total);
+                        searchVM.searchTotal(result.search_result.total);
+                    }
+
                     searchVM.searchResults.removeAll();
                     searchVM.searchElapsed(stats.request_elapsed_time);
                     searchVM.searchServiceElapsed(searchElapsed);
-                    searchVM.searchTotal(result.search_result.total);
+                    // searchVM.searchTotal(result.search_result.total);
                     result.search_result.hits.forEach(function (hit, index) {
                         // var project = hit._source.metadata;
                         var rowNumber = (searchVM.page() - 1) * searchVM.pageSize() + 1 + index;
@@ -857,6 +886,36 @@ define([
             ]);
         }
 
+        function buildMessageItem() {
+            return div({
+                class: 'alert',
+                role: 'alert',
+                dataBind: {
+                    css: {
+                        'alert-danger': 'type === "error"',
+                        'alert-warning': 'type === "warning"',
+                    }
+                }
+            }, [
+                span({
+                    dataBind: {
+                        text: 'message'
+                    }
+                }),
+                button({
+                    dataBind: {
+                        click: '$parent.searchVM.doRemoveMessage'
+                    },
+                    type: 'button',
+                    class: 'close',
+                    ariaLabel: 'Close'
+                }, span({
+                    class: 'fa fa-times',
+                    ariaHidden: 'true'
+                }))
+            ]);
+        }
+
         function buildLayout() {
             return div({
                 class: 'container-fluid'
@@ -873,6 +932,11 @@ define([
                         '<!-- ko if: searchVM.errors().length > 0 -->',
                         '<!-- ko foreach: searchVM.errors -->',
                         buildErrorItem(),
+                        '<!-- /ko -->',
+                        '<!-- /ko -->',
+                        '<!-- ko if: searchVM.messages().length > 0 -->',
+                        '<!-- ko foreach: searchVM.messages -->',
+                        buildMessageItem(),
                         '<!-- /ko -->',
                         '<!-- /ko -->',
                         div({

@@ -916,16 +916,19 @@ define([
                 //     class: '-cell'
                 // }),
                 div({
+
+                    style: {
+                        width: '5%'
+                    },
+                    class: '-cell'
+                }, span({
                     dataBind: {
                         text: 'proposalId',
                         clickBubble: false,
                         click: '$component.searchVM.doAddToSearch.bind($data, $data, "proposalId")'
                     },
-                    style: {
-                        width: '5%'
-                    },
-                    class: '-cell -search-link'
-                }),
+                    class: '-search-link'
+                })),
                 div({
                     style: {
                         width: '10%'
@@ -949,17 +952,19 @@ define([
                     class: '-cell'
                 }),
                 div({
+                    style: {
+                        width: '10%'
+                    },
+                    class: '-cell'
+                }, span({
                     dataBind: {
                         text: 'pi',
                         // click: 'function (data) {doAddToSearch(data, "pi"); return false;}',
                         click: '$component.searchVM.doAddToSearch.bind($data, $data, "pi")',
                         clickBubble: false
                     },
-                    style: {
-                        width: '10%'
-                    },
-                    class: '-cell -search-link'
-                }),
+                    class: ' -search-link'
+                })),
                 div({
                     dataBind: {
                         text: 'modified'
@@ -1021,7 +1026,18 @@ define([
                             // border: '1px silver solid',
                             padding: '4px'
                         }
-                    }, buildImportMegaView())
+                    }, [
+                        '<!-- ko if: importSpec -->',
+                        buildImportMegaView(),
+                        '<!-- /ko -->',
+                        '<!-- ko if: !importSpec -->',
+                        div({
+
+                        }, [
+                            p('Import not available for this file')
+                        ]),
+                        '<!-- /ko -->'
+                    ])
                 }, {
                     name: 'metadata',
                     label: 'Metadata',

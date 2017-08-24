@@ -83,6 +83,7 @@
     width: 10em;
     padding: 4px;
     background-color: #FFF;
+    z-index: 10;
 }
 
 .kb-tooltip.-hidden {

@@ -6,7 +6,7 @@ define([
     'kb_common/jsonRpc/genericClient',
     'kb_service/utils',
     'css!./browser.css'
-], function(
+], function (
     Promise,
     ko,
     marked,
@@ -24,7 +24,7 @@ define([
         input = t('input'),
         select = t('select');
 
-    ko.extenders.parsed = function(target, parseFun) {
+    ko.extenders.parsed = function (target, parseFun) {
         function parseit(newValue) {
             try {
                 target.parsed = parseFun(newValue);
@@ -32,7 +32,7 @@ define([
                 console.error('Error parsing : ' + ex.message);
             }
         }
-        target.subscribe(function(newValue) {
+        target.subscribe(function (newValue) {
             parseit(newValue);
         });
         parseit(target());
@@ -50,12 +50,13 @@ define([
         // From parent search component.
         var searchVM = params.searchVM;
         var totalCount = searchVM.searchTotal;
+        var actualTotalCount = searchVM.actualSearchTotal;
         var searching = searchVM.searching;
         var pageSize = searchVM.pageSize;
         var page = searchVM.page;
 
         var pageSizeInput = ko.observable(String(pageSize()));
-        pageSizeInput.subscribe(function(newValue) {
+        pageSizeInput.subscribe(function (newValue) {
             pageSize(parseInt(newValue));
         });
 
@@ -69,10 +70,10 @@ define([
         // var sortFields = typeDef.searchKeys;
         var sortFields = [];
         var sortFieldsMap = {};
-        sortFields.forEach(function(sortField) {
+        sortFields.forEach(function (sortField) {
             sortFieldsMap[sortField.key] = sortField;
         });
-        var currentSortField = ko.pureComputed(function() {
+        var currentSortField = ko.pureComputed(function () {
             // The "natural" sort order is simply an empty string which we translate
             // into a null.
             var sortKey = sortBy();
@@ -81,7 +82,7 @@ define([
             }
             return sortFieldsMap[sortBy()];
         });
-        currentSortField.subscribe(function() {
+        currentSortField.subscribe(function () {
             params.searchVM.doSearch();
         });
 
@@ -93,10 +94,10 @@ define([
             value: 'descending',
             label: 'Descending'
         }];
-        var sortDescending = ko.pureComputed(function() {
+        var sortDescending = ko.pureComputed(function () {
             return (sortDirection() === 'descending');
         });
-        sortDescending.subscribe(function() {
+        sortDescending.subscribe(function () {
             params.searchVM.doSearch();
         });
 
@@ -113,7 +114,7 @@ define([
         //     return Math.min(pageStart() + pageSize(), totalCount()) - 1;
         // });
 
-        var totalPages = ko.pureComputed(function() {
+        var totalPages = ko.pureComputed(function () {
             if (!searchVM.searchTotal()) {
                 return 0;
             }
@@ -128,7 +129,7 @@ define([
                 method: 'notifyWhenChangesStop'
             }
         });
-        pageInput.subscribe(function(newValue) {
+        pageInput.subscribe(function (newValue) {
             // If bad input, don't do anything.
             if (newValue === '' || newValue === undefined || newValue === null) {
                 return;
@@ -145,12 +146,12 @@ define([
                 page(value);
             }
         });
-        page.subscribe(function(newValue) {
+        page.subscribe(function (newValue) {
             if (newValue !== parseInt(pageInput())) {
                 pageInput(String(newValue));
             }
         });
-        var pageValues = ko.pureComputed(function() {
+        var pageValues = ko.pureComputed(function () {
             var values = [];
             if (totalPages() > 100) {
                 return values;
@@ -184,7 +185,7 @@ define([
             }
         }
 
-        var pageSizes = [5, 10, 20, 50, 100].map(function(value) {
+        var pageSizes = [5, 10, 20, 50, 100].map(function (value) {
             return {
                 label: String(value),
                 value: String(value)
@@ -192,7 +193,7 @@ define([
         });
 
         // todo: yeah, this should be in the top level...
-        pageSizeInput.subscribe(function() {
+        pageSizeInput.subscribe(function () {
             if (params.searchVM.searchTotal() > 0) {
                 params.searchVM.doSearch();
             }
@@ -215,6 +216,7 @@ define([
             // Search (shared)
             totalCount: totalCount,
             searching: searching,
+            actualTotalCount: actualTotalCount,
 
             // Paging
             page: page,
@@ -258,7 +260,7 @@ define([
             div({
                 style: {
                     display: 'inline-block',
-                    width: '33.33%',
+                    width: '50%',
                     verticalAlign: 'top'
                 }
             }, [
@@ -330,10 +332,25 @@ define([
                                     text: 'totalCount()'
                                 },
                                 style: {
-                                    marginRight: '10px',
                                     verticalAlign: 'middle'
                                 }
-                            })
+                            }),
+                            '<!-- ko if: actualTotalCount() > totalCount() -->',
+                            span({
+                                style: {
+                                    fontStyle: 'italic'
+                                }
+                            }, [
+                                ' (truncated from ',
+                                span({
+                                    dataBind: {
+                                        text: 'actualTotalCount'
+                                    }
+                                }),
+                                ')'
+                            ]),
+                            '<!-- /ko -->',
+                            '<!-- /ko -->'
                         ])
                     ])
                 ]),
@@ -342,7 +359,7 @@ define([
             div({
                 style: {
                     display: 'inline-block',
-                    width: '33.33%',
+                    width: '25%',
                     verticalAlign: 'top',
                     textAlign: 'center'
                 }
@@ -393,7 +410,7 @@ define([
             div({
                 class: 'btn-group form-inline',
                 style: {
-                    width: '33.33%',
+                    width: '25%',
                     margin: '0',
                     textAlign: 'right',
                     float: 'none',
