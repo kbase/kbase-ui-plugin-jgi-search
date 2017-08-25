@@ -4,7 +4,7 @@ define([
     'kb_common/html',
     'kb_common/ui',
     'yaml!../helpData.yml'
-], function(
+], function (
     ko,
     Promise,
     html,
@@ -87,6 +87,7 @@ define([
             backdrop.parentElement.removeChild(backdrop);
             node.parentElement.removeChild(node);
         }
+
         return {
             helpDb: helpData,
             close: close

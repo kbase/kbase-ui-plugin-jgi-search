@@ -1,8 +1,10 @@
 define([
     'knockout-plus',
+    'marked',
     'kb_common/html'
-], function(
+], function (
     ko,
+    marked,
     html
 ) {
     'use strict';
@@ -17,7 +19,7 @@ define([
         var helpDb = params.helpDb;
 
         var topicsIndex = {};
-        helpDb.topics.forEach(function(topic) {
+        helpDb.topics.forEach(function (topic) {
             topicsIndex[topic.id] = topic;
         });
 
@@ -25,7 +27,7 @@ define([
 
         var currentTopic = ko.observable();
 
-        currentTopicId.subscribe(function() {
+        currentTopicId.subscribe(function () {
             currentTopic(topicsIndex[currentTopicId()]);
         });
 
@@ -44,6 +46,15 @@ define([
             currentTopic: currentTopic
         };
     }
+
+    ko.bindingHandlers.htmlMarkdown = {
+        update: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
+            var markdown = marked(valueAccessor());
+            element.innerHTML = markdown;
+            // console.log(valueAccessor, bindingContext);
+            // element.innerHTML = 'hi!';
+        }
+    };
 
     function template() {
         return div({
@@ -86,14 +97,19 @@ define([
                 }),
                 div({
                     dataBind: {
-                        foreach: 'content'
-                    },
-                    class: '-content'
-                }, p({
-                    dataBind: {
-                        text: '$data'
+                        htmlMarkdown: 'content'
                     }
-                }))
+                })
+                // div({
+                //     dataBind: {
+                //         foreach: 'content'
+                //     },
+                //     class: '-content'
+                // }, p({
+                //     dataBind: {
+                //         text: '$data'
+                //     }
+                // }))
             ]),
             '<!-- ko if: $data.references && references.length > 0 -->',
             div({

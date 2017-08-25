@@ -700,6 +700,92 @@ define([
             }
         }
 
+        /*
+        A user input search expression is converted to an elasticsearch
+        simple query string.
+        - multiple terms in sequence are anded by inserting a + between them
+        - the term and and or are converted to + and |
+        - the term not is converted to -
+        - a +, |, or - as part of a word are esecaped, alone are ignored
+        - a ( or ) is preserved but split off and re-inserted
+        */
+        function parseSearchExpression(input) {
+            var terms = input.split(/\s+/);
+            var expression = [];
+            var termCount = 0;
+            // True if there is an operator already active (previously inserted)
+            var operator = null;
+            // True if there is a modifier applied to this term (previously inserted)
+            var modifier = null;
+            termsLoop: for (var i = 0; i < terms.length; i++) {
+                var term = terms[i].toLowerCase();
+
+                // convert word operators to real operators
+                switch (term) {
+                case 'and':
+                    //expression.push('+');
+                    // hasOperator = true;
+                    operator = '+';
+                    continue termsLoop;
+                case 'or':
+                    // expression.push('|');
+                    // hasOperator = true;
+                    operator = '|';
+                    continue termsLoop;
+                case 'not':
+                    // expression.push('-');
+                    // hasModifier = true;
+                    modifier = '-';
+                    continue termsLoop;
+                    // preserve standalone operators
+                case '+':
+                case '|':
+                    // expression.push(term);
+                    // hasOperator = true;
+                    operator = term;
+                    continue termsLoop;
+                case '-':
+                    // expression.push(term);
+                    // hasModifier = true;
+                    modifier = '-';
+                    continue termsLoop;
+                case '(':
+                case ')':
+                    expression.push(term);
+                    continue termsLoop;
+                }
+
+                // any very short word is tossed
+                if (term.length < 3) {
+                    continue;
+                }
+
+                // escape any special chars stuck to or within the word
+                term.replace(/[+-/|()]/g, '\\$&');
+
+                // TODO: split out an operator or modifier from the front of the term
+                // itself so we don't double them.
+
+                if (!operator) {
+                    operator = '+';
+                }
+                // Skip the operator if this is the first term inserted; pointless.
+                if (termCount > 0) {
+                    expression.push(operator);
+                }
+
+                if (modifier) {
+                    term = modifier + term;
+                }
+
+                expression.push(term);
+                termCount += 1;
+                modifier = null;
+                operator = null;
+            }
+            return expression.join(' ');
+        }
+
         function doSearch() {
             if (currentSearch.search) {
                 currentSearch.search.cancel();
@@ -716,13 +802,9 @@ define([
             // Massage search input:
             // For now, we just support terms, possibly double-quoted, which are all
             // anded together.
-            var searchExpression = searchVM.searchInput().split(/\s+/).map(function (term) {
-                if (term.length > 0) {
-                    if (!/[\+\-]/.test(term.charAt(0))) {
-                        return '+' + term;
-                    }
-                }
-            }).join(' ');
+            var searchExpression = parseSearchExpression(searchVM.searchInput());
+
+            console.log('search expression is: ' + searchExpression);
 
             return currentSearch.search = fetchData(searchExpression, searchVM.page(), searchVM.pageSize())
                 .spread(function (result, stats) {
