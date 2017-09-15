@@ -1,4 +1,4 @@
-.component-reske-browser .-toolbar {
+.component-jgi-search .-toolbar {
     border-bottom: 1px silver solid;
 }
 
@@ -18,29 +18,29 @@
     color: #FFF;
 }
 
-.component-reske-browser .-row .-table {
+.component-jgi-search .-row .-table {
     border: 1px #DDD solid;
     width: 100%;
     max-width: 40em;
 }
 
-.component-reske-browser .-row .-table tr {}
+.component-jgi-search .-row .-table tr {}
 
-.component-reske-browser .-row .-table th {
+.component-jgi-search .-row .-table th {
     padding: 4px;
     font-weight: normal;
     font-style: italic;
     width: 10em;
 }
 
-.component-reske-browser .-row .-table td {
+.component-jgi-search .-row .-table td {
     padding: 4px;
     font-weight: normal;
     border-bottom: 1px #DDD solid;
     width: 30em;
 }
 
-.component-reske-browser .-row .-number {
+.component-jgi-search .-row .-number {
     font-family: monospace;
     text-align: right;
     display: inline-block;
