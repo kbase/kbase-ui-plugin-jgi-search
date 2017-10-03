@@ -181,31 +181,11 @@ define([
                 searchFilter(filter);
             });
 
-
-
             // SEARCH FLAGS
 
             var searching = ko.observable(false);
 
             var userSearch = ko.observable(false);
-
-
-            // var showResults = ko.pureComputed(function () {
-            //     // return (searching() ||
-            //     //     (searchInput() && searchInput().length > 1));
-            //     if (searching() || searchInput()) {
-            //         return true;
-            //     }
-            //     return false;
-            // });
-            // var noSearch = ko.pureComputed(function () {
-            //     // return (!searchInput() || searchInput().length < 2);
-            //     if (searchInput()) {
-            //         return false;
-            //     }
-            //     return true;
-            //     // return (!searchInput());
-            // });
 
             function doAddToSearch(data, field) {
                 var newSearchInput = data[field];
@@ -220,7 +200,8 @@ define([
                     newSearchInput = String(newSearchInput);
                     break;
                 default:
-                    errors.push('Search type not supported: ' + typeof newSearchInput);
+                    // errors.push('Search type not supported: ' + typeof newSearchInput);
+                    console.error('Search type not supported: ' + typeof newSearchInput);
                 }
                 searchInput(newSearchInput);
             }
@@ -267,13 +248,6 @@ define([
             }
         });
 
-        // search.typeFilterInput.extend({
-        //     rateLimit: {
-        //         timeout: 150,
-        //         method: 'notifyWhenChangesStop'
-        //     }
-        // });
-
         function serviceCall(moduleName, functionName, params) {
             var override = runtime.config(['services', moduleName, 'url'].join('.'));
             console.log('overriding?', moduleName, override);
@@ -299,13 +273,11 @@ define([
 
         function fetchData(query, filter, page, pageSize) {
             var param = {
-                // search_string: { 'file_type': query },
                 query: query,
                 filter: filter,
                 limit: pageSize,
                 page: page - 1,
                 include_private: 1
-                    // username: runtime.service('session').getUsername()
             };
             return serviceCall('jgi_gateway_eap', 'search_jgi', param)
                 .catch(function (err) {

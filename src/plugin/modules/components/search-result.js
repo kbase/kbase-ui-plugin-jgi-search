@@ -930,7 +930,7 @@ define([
                     dataBind: {
                         text: 'proposalId',
                         clickBubble: false,
-                        click: '$component.search.doAddToSearch.bind($data, $data, "proposalId")'
+                        // click: '$component.search.doAddToSearch.bind($data, $data, "proposalId")'
                     },
                     class: '-search-link'
                 })),
@@ -944,7 +944,6 @@ define([
                         text: 'projectId',
                         clickBubble: false,
                         click: '$component.doAddProject'
-                            // click: '$component.search.doAddToSearch.bind($data, $data, "projectId")'
                     },
                     class: '-search-link'
                 })),
@@ -965,8 +964,7 @@ define([
                 }, span({
                     dataBind: {
                         text: 'pi',
-                        // click: 'function (data) {doAddToSearch(data, "pi"); return false;}',
-                        click: '$component.search.doAddToSearch.bind($data, $data, "pi")',
+                        // click: '$component.search.doAddToSearch.bind($data, $data, "pi")',
                         clickBubble: false
                     },
                     class: ' -search-link'
