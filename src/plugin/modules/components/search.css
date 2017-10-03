@@ -1,0 +1,39 @@
+.kb-btn-mini {
+    padding: 2px;
+    border: 2px transparent solid;
+    cursor: pointer;
+}
+
+.kb-btn-mini:hover {
+    border: 2px gray solid;
+    cursor: pointer;
+}
+
+.kb-btn-mini:active {
+    border: 2px gray solid;
+    background-color: #555;
+    color: #FFF;
+}
+
+.kb-btn-mini.-disabled {
+    cursor: normal;
+}
+
+.kb-btn-mini.-disabled:hover {
+    border: 2px transparent solid;
+    cursor: normal;
+}
+
+.kb-btn-mini.-disabled:active {
+    border: 2px transparent solid;
+    background-color: inherit;
+    color: inherit;
+}
+
+.component-jgisearch-search .form-group {
+    margin: 0 4px;
+}
+
+.component-jgisearch-search .form-control {
+    margin: 0 4px;
+}

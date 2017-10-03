@@ -15,10 +15,13 @@ define([
 
     var t = html.tag,
         p = t('p'),
+        select = t('select'),
+        option = t('option'),
         div = t('div'),
         span = t('span'),
         button = t('button'),
-        input = t('input');
+        input = t('input'),
+        label = t('label');
 
     function buildHelpDialog(title) {
         return div({
@@ -144,26 +147,57 @@ define([
     function viewModel(params) {
 
         // Unpack the Search VM.
-        var searchInput = params.searchVM.searchInput;
-        var doSearch = params.searchVM.doSearch;
-        var searchResults = params.searchVM.searchResults;
-        var searchTotal = params.searchVM.searchTotal;
-        var searching = params.searchVM.searching;
-        var pageSize = params.searchVM.pageSize;
-        var page = params.searchVM.page;
+        var searchInput = params.search.searchInput;
+        var searchResults = params.search.searchResults;
+        var searchTotal = params.search.searchTotal;
+        var searching = params.search.searching;
+        var pageSize = params.search.pageSize;
+        var page = params.search.page;
+
+        var typeFilterOptions = params.search.typeFilterOptions.map(function (option) {
+            return option;
+        });
+        typeFilterOptions.unshift({
+            label: 'Select one or more file types',
+            value: '_select_',
+            enabled: true
+        });
 
         function doHelp() {
             showHelpDialog();
         }
 
-        // Simple state used for ui-busy state. Set true when a search api call is begin, 
-        // false when it is finished (finally).
+        function doRemoveTypeFilter(data) {
+            params.search.typeFilter.remove(data);
+        }
+
+        function doSelectTypeFilter(data) {
+            if (data.typeFilterInput() === '_select_') {
+                return;
+            }
+            params.search.typeFilter.push(data.typeFilterInput());
+            data.typeFilterInput('_select_');
+        }
+
+        var newProject = ko.observable();
+
+        newProject.subscribe(function (newValue) {
+            newValue = newValue.trim(' ');
+            if (newValue.length === 0) {
+                return;
+            }
+            params.search.projectFilter.push(parseInt(newValue));
+            newProject('');
+        });
+
+        function doRemoveProject(data) {
+            params.search.projectFilter.remove(data);
+        }
 
         return {
-            // The top level searchVM is included so that it can be
+            // The top level search is included so that it can be
             // propagated.
-            searchVM: params.searchVM,
-            search: params.searchVM,
+            search: params.search,
             // And we break out fields here for more natural usage (or not??)
             searchInput: searchInput,
             searchResults: searchResults,
@@ -171,9 +205,19 @@ define([
             searching: searching,
             pageSize: pageSize,
             page: page,
+            // Type filter
+            typeFilterInput: ko.observable('_select_'),
+            typeFilterOptions: typeFilterOptions,
+            // Project filter
+            newProject: newProject,
+            projectFilter: params.search.projectFilter,
+            doRemoveProject: doRemoveProject,
+
             // ACTIONS
             doHelp: doHelp,
-            doSearch: doSearch
+            doSearch: params.search.doSearch,
+            doRemoveTypeFilter: doRemoveTypeFilter,
+            doSelectTypeFilter: doSelectTypeFilter
         };
     }
 
@@ -233,13 +277,131 @@ define([
         ]));
     }
 
+    function buildTypeFilter() {
+        return div({
+            class: 'form-group'
+        }, [
+            label('Type'),
+            select({
+                dataBind: {
+                    value: 'typeFilterInput',
+                    event: {
+                        change: '$component.doSelectTypeFilter'
+                    },
+                    foreach: 'typeFilterOptions'
+                },
+                class: 'form-control'
+            }, [
+                '<!-- ko if: enabled -->',
+                option({
+                    dataBind: {
+                        value: 'value',
+                        text: 'label',
+                        enable: 'enabled'
+                    }
+                }),
+                '<!-- /ko -->'
+            ]),
+
+            // selected types
+            div({
+                dataBind: {
+                    foreach: 'search.typeFilter'
+                },
+                style: {
+                    display: 'inline-block'
+                }
+            }, [
+                span({
+                    style: {
+                        border: '1px silver solid',
+                        borderRadius: '3px',
+                        padding: '3px'
+                    }
+                }, [
+                    span(({
+                        dataBind: {
+                            text: '$data'
+                        },
+                        style: {
+                            padding: '3px'
+                        }
+                    })),
+                    span({
+                        dataBind: {
+                            click: '$component.doRemoveTypeFilter'
+                        },
+                        class: 'kb-btn-mini'
+                    }, 'x')
+                ])
+            ])
+        ]);
+    }
+
+    function buildProjectFilter() {
+        return div({
+            class: 'form-group'
+        }, [
+            label({}, 'Projects'),
+            input({
+                dataBind: {
+                    value: 'newProject'
+                },
+                placeholder: 'Filter by project id'
+            }),
+            div({
+                style: {
+                    display: 'inline-block'
+                },
+                dataBind: {
+                    foreach: 'projectFilter'
+                }
+            }, [
+                span({
+                    style: {
+                        border: '1px silver solid',
+                        borderRadius: '3px',
+                        padding: '3px'
+                    }
+                }, [
+                    span(({
+                        dataBind: {
+                            text: '$data'
+                        },
+                        style: {
+                            padding: '3px'
+                        }
+                    })),
+                    span({
+                        dataBind: {
+                            click: '$component.doRemoveProject'
+                        },
+                        class: 'kb-btn-mini'
+                    }, 'x')
+                ])
+            ])
+        ]);
+    }
+
+    function buildFilterArea() {
+        return div({
+            class: 'form-inline',
+            style: {
+
+            }
+        }, [
+            buildTypeFilter(),
+            buildProjectFilter()
+        ]);
+    }
+
     function buildResultsArea() {
         return div({
             dataBind: {
                 component: {
                     name: '"jgisearch/browser"',
                     params: {
-                        searchVM: 'searchVM'
+                        search: 'search'
                     }
                 }
             }
@@ -247,13 +409,24 @@ define([
     }
 
     function template() {
-        return div({}, [
+        return div({
+            class: 'component-jgisearch-search'
+        }, [
             buildInputArea(),
-            '<!-- ko if: search.showResults() -->',
+            div({
+                style: {
+                    fontWeight: 'bold',
+                    color: 'gray',
+                    marginTop: '8px',
+                    fontSize: '80%'
+                }
+            }, 'FILTERS'),
+            buildFilterArea(),
+            '<!-- ko if: search.userSearch() -->',
             // '<!-- ko if: search.searchStatus() === "results" || search.searchStatus() === "searching" -->',
             buildResultsArea(),
             '<!-- /ko -->',
-            '<!-- ko if: search.noSearch() -->',
+            '<!-- ko ifnot: search.userSearch() -->',
             // '<!-- ko if: search.searchStatus() === "nosearch" -->',
             div({
                 style: {

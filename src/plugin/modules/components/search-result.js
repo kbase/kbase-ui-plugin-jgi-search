@@ -27,8 +27,8 @@ define([
         br = t('br');
 
     function viewModel(params) {
-        var searchResults = params.searchVM.searchResults;
-        var searching = params.searchVM.searching;
+        var searchResults = params.search.searchResults;
+        var searching = params.search.searching;
 
         var infoTopics = {
             fromFile: {
@@ -60,12 +60,17 @@ define([
             };
             document.body.addEventListener('click', fun);
         }
+
+        function doAddProject(data) {
+            params.search.projectFilter.push(data.projectId);
+        }
         return {
-            searchVM: params.searchVM,
+            search: params.search,
             searchResults: searchResults,
             searching: searching,
             infoTopics: infoTopics,
-            doShowTip: doShowTip
+            doShowTip: doShowTip,
+            doAddProject: doAddProject
         };
     }
 
@@ -182,7 +187,7 @@ define([
             '<!-- /ko -->',
             '<!-- ko if: importSpec -->',
 
-            '<!-- ko if: !$component.searchVM.jgiTerms.agreed() -->',
+            '<!-- ko if: !$component.search.jgiTerms.agreed() -->',
             div({
                 style: {
                     margin: '4px 0 ',
@@ -191,7 +196,7 @@ define([
                     textAlign: 'center'
                 },
                 dataBind: {
-                    with: '$component.searchVM.jgiTerms'
+                    with: '$component.search.jgiTerms'
                 }
             }, [
                 p([
@@ -208,7 +213,7 @@ define([
             ]),
             '<!-- /ko -->',
 
-            '<!-- ko if: $component.searchVM.jgiTerms.agreed() -->',
+            '<!-- ko if: $component.search.jgiTerms.agreed() -->',
             div({
                 dataBind: {
                     with: 'importSpec'
@@ -925,7 +930,7 @@ define([
                     dataBind: {
                         text: 'proposalId',
                         clickBubble: false,
-                        click: '$component.searchVM.doAddToSearch.bind($data, $data, "proposalId")'
+                        click: '$component.search.doAddToSearch.bind($data, $data, "proposalId")'
                     },
                     class: '-search-link'
                 })),
@@ -938,7 +943,8 @@ define([
                     dataBind: {
                         text: 'projectId',
                         clickBubble: false,
-                        click: '$component.searchVM.doAddToSearch.bind($data, $data, "projectId")'
+                        click: '$component.doAddProject'
+                            // click: '$component.search.doAddToSearch.bind($data, $data, "projectId")'
                     },
                     class: '-search-link'
                 })),
@@ -960,7 +966,7 @@ define([
                     dataBind: {
                         text: 'pi',
                         // click: 'function (data) {doAddToSearch(data, "pi"); return false;}',
-                        click: '$component.searchVM.doAddToSearch.bind($data, $data, "pi")',
+                        click: '$component.search.doAddToSearch.bind($data, $data, "pi")',
                         clickBubble: false
                     },
                     class: ' -search-link'

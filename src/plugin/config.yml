@@ -26,6 +26,7 @@ install:
     -
       name: 'jgisearch/search'
       module: components/search
+      css: true
       type: factory  
     -
       name: 'jgisearch/browser'

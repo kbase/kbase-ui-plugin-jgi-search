@@ -25,10 +25,14 @@ define([
         select = t('select');
 
     ko.extenders.parsed = function (target, parseFun) {
+        target.parsed = ko.observable();
+        target.parseError = ko.observable();
+
         function parseit(newValue) {
             try {
-                target.parsed = parseFun(newValue);
+                target.parsed(parseFun(newValue));
             } catch (ex) {
+                target.parseError(ex.message);
                 console.error('Error parsing : ' + ex.message);
             }
         }
@@ -48,12 +52,12 @@ define([
     // this component...
     function viewModel(params) {
         // From parent search component.
-        var searchVM = params.searchVM;
-        var totalCount = searchVM.searchTotal;
-        var actualTotalCount = searchVM.actualSearchTotal;
-        var searching = searchVM.searching;
-        var pageSize = searchVM.pageSize;
-        var page = searchVM.page;
+        var search = params.search;
+        var totalCount = search.searchTotal;
+        var actualTotalCount = search.actualSearchTotal;
+        var searching = search.searching;
+        var pageSize = search.pageSize;
+        var page = search.page;
 
         var pageSizeInput = ko.observable(String(pageSize()));
         pageSizeInput.subscribe(function (newValue) {
@@ -61,7 +65,7 @@ define([
         });
 
         // Our own, for now. Since these are overall properties of the
-        // search capabilities, they should be foisted up to the searchVM as well.
+        // search capabilities, they should be foisted up to the search as well.
 
         // SORTING
         var sortBy = ko.observable();
@@ -83,7 +87,7 @@ define([
             return sortFieldsMap[sortBy()];
         });
         currentSortField.subscribe(function () {
-            params.searchVM.doSearch();
+            params.search.doSearch();
         });
 
         var sortDirection = ko.observable('ascending');
@@ -98,11 +102,11 @@ define([
             return (sortDirection() === 'descending');
         });
         sortDescending.subscribe(function () {
-            params.searchVM.doSearch();
+            params.search.doSearch();
         });
 
         // PAGING
-        // var pageSize = ko.observable(searchVM.pageSize || 10).extend({
+        // var pageSize = ko.observable(search.pageSize || 10).extend({
         //     parsed: function(value) {
         //         return parseInt(value);
         //     }
@@ -115,10 +119,10 @@ define([
         // });
 
         var totalPages = ko.pureComputed(function () {
-            if (!searchVM.searchTotal()) {
+            if (!search.searchTotal()) {
                 return 0;
             }
-            var size = searchVM.searchTotal() / pageSize();
+            var size = search.searchTotal() / pageSize();
             return Math.ceil(size);
         });
 
@@ -194,14 +198,14 @@ define([
 
         // todo: yeah, this should be in the top level...
         pageSizeInput.subscribe(function () {
-            if (params.searchVM.searchTotal() > 0) {
-                params.searchVM.doSearch();
+            if (params.search.searchTotal() > 0) {
+                params.search.doSearch();
             }
         });
 
         // pageStart.subscribe(function() {
-        //     if (params.searchVM.searchResults().length > 0) {
-        //         params.searchVM.doSearch();
+        //     if (params.search.searchResults().length > 0) {
+        //         params.search.doSearch();
         //     }
         // });
 
@@ -212,7 +216,7 @@ define([
         }
 
         return {
-            searchVM: params.searchVM,
+            search: params.search,
             // Search (shared)
             totalCount: totalCount,
             searching: searching,
@@ -240,7 +244,7 @@ define([
             sortDirections: sortDirections,
 
             // Actions
-            doSearch: params.searchVM.doSearch,
+            doSearch: params.search.doSearch,
 
             // Knockout lifecycle
             dispose: dispose
@@ -495,7 +499,7 @@ define([
                     component: {
                         name: '"jgisearch/search-result"',
                         params: {
-                            searchVM: 'searchVM'
+                            search: 'search'
                         }
                     }
                 }
