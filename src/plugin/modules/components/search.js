@@ -15,6 +15,8 @@ define([
 
     var t = html.tag,
         p = t('p'),
+        a = t('a'),
+        blockquote = t('blockquote'),
         select = t('select'),
         option = t('option'),
         div = t('div'),
@@ -408,6 +410,59 @@ define([
         });
     }
 
+    function buildExample(text) {
+        return span({
+            style: {
+                fontFamily: 'monospace',
+                backgroundColor: 'rgba(247, 242, 225, 0.5)',
+                fontWeight: 'bold',
+                border: '1px gray solid',
+                padding: '4px'
+            }
+        }, text);
+    }
+
+    function buildNoActiveSearch() {
+        return div({
+            style: {
+                textAlign: 'left',
+                maxWidth: '50em',
+                margin: '0 auto'
+            }
+        }, [
+            p('Hi, you don\'t have an active search, so there isn\'t anything to show you.'),
+            p([
+                'To start a search, simply type into the search box above. '
+            ]),
+            p([
+                'To get back to this page any time, just remove all search conditions above!'
+            ]),
+            blockquote([
+                'Try a very simple search: ', buildExample('coli'), '.'
+            ]),
+            p([
+                'The search matches whole words against the entire ',
+                a({
+                    href: ''
+                }, 'JAMO'),
+                ' record. To search by just part of a word, use an asterisk wildcard (*) at the',
+                ' beginning or end (or both!).'
+            ]),
+            blockquote([
+                'Try ', buildExample('Escher'), '. No results? Just add an asterisk to the end ', buildExample('Escher*'), '.'
+            ]),
+            p([
+                'All search terms are applied to narrow your search.'
+            ]),
+            blockquote([
+                'Try ', buildExample('coli MG1655'),
+            ]),
+            p([
+                'You may use one or more filters to additionally narrow down the search'
+            ])
+        ]);
+    }
+
     function template() {
         return div({
             class: 'component-jgisearch-search'
@@ -436,7 +491,7 @@ define([
                     backgroundColor: 'silver',
                     textAlign: 'center'
                 }
-            }, 'No active search; to search for files, enter terms above'),
+            }, buildNoActiveSearch()),
             '<!-- /ko -->',
             // '<!-- ko if: search.searchStatus() === "noresults" -->',
             // 'Sorry, no results',

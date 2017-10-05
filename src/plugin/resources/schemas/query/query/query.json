@@ -1,0 +1,36 @@
+{
+    "title": "JGI Query Property",
+    "type": "object",
+    "properties": {
+        "project_id": {
+            "type": "integer"
+        },
+        "proposal_id": {
+            "type": "integer"
+        },
+        "title": {
+            "type": { "$ref": "#/jgiSearch/simpleQueryString" }
+        },
+        "file_type": {
+            "type": { "$ref": "#/jgiSearch/simpleQueryString" }
+        },
+        "file_name": {
+            "type": { "$ref": "#/jgiSearch/simpleQueryString" }
+        },
+        "genus": {
+            "type": { "$ref": "#/jgiSearch/simpleQueryString" }
+        },
+        "species": {
+            "type": { "$ref": "#/jgiSearch/simpleQueryString" }
+        },
+        "strain": {
+            "type": { "$ref": "#/jgiSearch/simpleQueryString" }
+        },
+        "operator": {
+            "type": "string",
+            "oneOf": ["OR", "AND", "NOT"]
+        }
+    },
+    "required": [],
+    "additionalProperties": true
+}

@@ -78,3 +78,16 @@ install:
         path: jgi/search2
         label: JGI Search2
         icon: search-plus
+  schema:
+    - 
+      name: jgi-search/query/input
+      path: schemas/query/input.json
+    # - 
+    #   name: jgi-search/query/output
+    #   path: schemas/queryOutput.json
+    # - 
+    #   name: jgi-search/fetch/input
+    #   path: schemas/fetchInput.json
+    # - 
+    #   name: jgi-search/fetch/output
+    #   path: schemas/fetchOutput.json      

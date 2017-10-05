@@ -1,0 +1,27 @@
+{
+    "title": "JGI JAMO Query",
+    "type": "object",
+    "properties": {
+        "query": {
+            "type": "object"
+        },
+        "filter": {
+            "type": "object"
+        },
+        "limit": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000
+        },
+        "page": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000
+        },
+        "userid": {
+            "type": "string"
+        }
+    },
+    "required": ["query"],
+    "additionalProperties": false
+}

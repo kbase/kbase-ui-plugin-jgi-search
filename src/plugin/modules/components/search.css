@@ -37,3 +37,8 @@
 .component-jgisearch-search .form-control {
     margin: 0 4px;
 }
+
+.component-jgisearch-search blockquote {
+    font-size: inherit;
+    font-style: italic;
+}

@@ -243,7 +243,7 @@ define([
 
         search.searchInput.extend({
             rateLimit: {
-                timeout: 150,
+                timeout: 300,
                 method: 'notifyWhenChangesStop'
             }
         });
@@ -272,14 +272,15 @@ define([
         }
 
         function fetchData(query, filter, page, pageSize) {
+            console.log('query', query, filter);
             var param = {
                 query: query,
                 filter: filter,
                 limit: pageSize,
-                page: page - 1,
+                page: page,
                 include_private: 1
             };
-            return serviceCall('jgi_gateway_eap', 'search_jgi', param)
+            return serviceCall('jgi_gateway_eap', 'search', param)
                 .catch(function (err) {
                     console.error('ERROR', err, query, typeof page, typeof pageSize);
                     throw err;
@@ -287,24 +288,7 @@ define([
         }
 
         // TODO: our fancy search cancellation business.
-        var currentSearch = {
-            search: null,
-            cancelled: false
-        };
 
-        function clearSearch() {
-            if (currentSearch.search) {
-                currentSearch.search.cancel();
-                currentSearch.cancelled = true;
-            }
-            search.searchResults.removeAll();
-            search.searchTotal(0);
-            search.actualSearchTotal(0);
-            currentSearch = {
-                search: null,
-                cancelled: false
-            };
-        }
 
         var extensionToDataType = {};
         Object.keys(Import.dataTypes).forEach(function (dataTypeId) {
@@ -513,7 +497,7 @@ define([
         }
 
         function doStage(stagingSpec) {
-            return serviceCall('jgi_gateway_eap', 'stage_objects', {
+            return serviceCall('jgi_gateway_eap', 'stage', {
                     ids: [stagingSpec.indexId]
                 })
                 .spread(function (result) {
@@ -537,11 +521,11 @@ define([
             // determine the actual target type.
             var kbaseType;
             var error = null;
-            var sequencingTech = getProp(hit._source.metadata, ['physical_run.platform_name', 'sow_segment.platform']);
+            var sequencingTech = getProp(hit.source.metadata, ['physical_run.platform_name', 'sow_segment.platform']);
             if (sequencingTech) {
                 switch (sequencingTech) {
                 case 'Illumina':
-                    var multiplexType = getProp(hit._source.metadata, ['physical_run_unit.multiplex_type']);
+                    var multiplexType = getProp(hit.source.metadata, ['physical_run_unit.multiplex_type']);
                     switch (multiplexType) {
                     case 'Multiplex Paired-End':
                         kbaseType = dataTypeDef.kbaseTypes.pairedEnd;
@@ -569,16 +553,16 @@ define([
             return {
                 metadata: [{
                     key: 'sequencing_technology',
-                    value: getProp(hit._source.metadata, ['physical_run.platform_name', 'sow_segment.platform'])
+                    value: getProp(hit.source.metadata, ['physical_run.platform_name', 'sow_segment.platform'])
                 }, {
                     key: 'actual_insert_size_kb',
-                    value: getProp(hit._source.metadata, ['sow_segment.actual_insert_size_kb'], 'n/a')
+                    value: getProp(hit.source.metadata, ['sow_segment.actual_insert_size_kb'], 'n/a')
                 }, {
                     key: 'mean_insert_size_kb',
-                    value: getProp(hit._source.metadata, ['rqc.read_qc.illumina_read_insert_size_avg_insert'], 'n/a')
+                    value: getProp(hit.source.metadata, ['rqc.read_qc.illumina_read_insert_size_avg_insert'], 'n/a')
                 }, {
                     key: 'stdev_insert_size_kb',
-                    value: getProp(hit._source.metadata, ['rqc.read_qc.illumina_read_insert_size_std_insert'], 'n/a')
+                    value: getProp(hit.source.metadata, ['rqc.read_qc.illumina_read_insert_size_std_insert'], 'n/a')
                 }],
                 kbaseType: kbaseType,
                 error: error
@@ -677,27 +661,27 @@ define([
         function grokTitle(hit, fileType) {
             switch (fileType.dataType) {
             case 'genbank':
-                return getProp(hit._source.metadata, ['pmo_project.name'], hit._source.file_name);
+                return getProp(hit.source.metadata, ['pmo_project.name'], hit.source.file_name);
             case 'fasta':
             case 'fastq':
             default:
-                return getProp(hit._source.metadata, ['sequencing_project.sequencing_project_name'], hit._source.file_name);
+                return getProp(hit.source.metadata, ['sequencing_project.sequencing_project_name'], hit.source.file_name);
             }
         }
 
         function grokScientificName(hit) {
             // var na = span({ style: { color: 'gray' } }, 'n/a');
-            var genus = getProp(hit._source.metadata, [
+            var genus = getProp(hit.source.metadata, [
                 'genus',
                 'sow_segment.genus',
                 'pmo_project.genus'
             ]);
-            var species = getProp(hit._source.metadata, [
+            var species = getProp(hit.source.metadata, [
                 'species',
                 'sow_segment.species',
                 'pmo_project.species'
             ]);
-            var strain = getProp(hit._source.metadata, [
+            var strain = getProp(hit.source.metadata, [
                 'strain',
                 'sow_segment.strain',
                 'pmo_project.strain'
@@ -712,12 +696,12 @@ define([
         }
 
         function grokPI(hit, fileType) {
-            var lastName = getProp(hit._source.metadata, 'proposal.pi.last_name');
-            var firstName = getProp(hit._source.metadata, 'proposal.pi.first_name');
+            var lastName = getProp(hit.source.metadata, 'proposal.pi.last_name');
+            var firstName = getProp(hit.source.metadata, 'proposal.pi.first_name');
             if (lastName) {
                 return lastName + ', ' + firstName;
             }
-            var piName = getProp(hit._source.metadata, 'pmo_project.pi_name');
+            var piName = getProp(hit.source.metadata, 'pmo_project.pi_name');
             if (piName) {
                 var names = piName.split(/\s+/);
                 if (names) {
@@ -730,22 +714,22 @@ define([
         function grokMetadata(hit, fileType) {
             switch (fileType.dataType) {
             case 'fasta':
-                return 'lib: ' + getProp(hit._source.metadata, [
+                return 'lib: ' + getProp(hit.source.metadata, [
                     'library_names.0',
                     'sow_segment.library_name'
                 ]);
             case 'fastq':
                 return div([
-                    div('lib: ' + getProp(hit._source.metadata, [
+                    div('lib: ' + getProp(hit.source.metadata, [
                         'library_name',
                         'sow_segment.library_name'
                     ])),
-                    div('type: ' + getProp(hit._source.metadata, ['fastq_type']))
+                    div('type: ' + getProp(hit.source.metadata, ['fastq_type']))
                 ]);
             case 'genbank':
-                return 'file: ' + getProp(hit._source, ['file_name'], '-');
+                return 'file: ' + getProp(hit.source, ['file_name'], '-');
             default:
-                return normalizeFileType(hit._source.file_type);
+                return normalizeFileType(hit.source.file_type);
             }
         }
 
@@ -783,7 +767,11 @@ define([
                     value: parseInt(value)
                 };
             case 'library':
-                return 'library_name';
+                return {
+                    type: 'filter',
+                    name: 'metadata.library_name',
+                    value: value
+                };
             default:
                 console.warn('Unsupported field: ' + fieldMatch[1]);
             }
@@ -903,7 +891,7 @@ define([
                 operator = null;
             }
             if (expression.length > 0) {
-                fieldTerms._all = expression.join(' ');
+                fieldTerms._all = expression.join(' + ');
             }
 
             return {
@@ -1038,9 +1026,29 @@ define([
             // searchFilter(newFilter);
         });
 
+        var currentSearch = {
+            search: null,
+            cancelled: false
+        };
+
+        function clearSearch() {
+            if (currentSearch.search) {
+                currentSearch.search.cancel();
+                currentSearch.cancelled = true;
+            }
+            search.searchResults.removeAll();
+            search.searchTotal(0);
+            search.actualSearchTotal(0);
+            currentSearch = {
+                search: null,
+                cancelled: false
+            };
+        }
+
 
         function doSearch() {
             if (currentSearch.search) {
+                console.log('cancelling search...');
                 currentSearch.search.cancel();
                 currentSearch.cancelled = true;
             }
@@ -1092,6 +1100,7 @@ define([
                 } else {
                     // nothing to do, just reset the search
                     search.userSearch(false);
+                    search.searching(false);
                     clearSearch();
                     return;
                 }
@@ -1122,55 +1131,62 @@ define([
                     }
                     return result;
                 })
-                .spread(function (result, stats) {
+                .spread(function (result, error, stats) {
                     if (thisSearch.cancelled) {
+                        console.log('search cancelled, ignoring results...');
                         return;
                     }
                     var searchElapsed = new Date().getTime() - searchStart;
                     // console.log('search results', result);
                     console.log('search service elapsed', searchElapsed);
+                    console.log('jgi search elapsed', stats.request_elapsed_time);
 
-                    // console.log('do we need to limit the search?', result.search_result.total);
+                    // TODO: handle better!
+                    if (error) {
+                        throw new Error(error.message);
+                    }
 
-                    if (result.search_result.total > 10000) {
-                        search.actualSearchTotal(result.search_result.total);
+                    // console.log('do we need to limit the search?', result.total);
+
+                    if (result.total > 10000) {
+                        search.actualSearchTotal(result.total);
                         search.searchTotal(10000);
                         search.addMessage({
                             type: 'warning',
-                            message: 'Too many search results (' + result.search_result.total + '), restricted to 10,000'
+                            message: 'Too many search results (' + result.total + '), restricted to 10,000'
                         });
                     } else {
-                        search.actualSearchTotal(result.search_result.total);
-                        search.searchTotal(result.search_result.total);
+                        search.actualSearchTotal(result.total);
+                        search.searchTotal(result.total);
                     }
 
                     search.searchResults.removeAll();
                     search.searchElapsed(stats.request_elapsed_time);
                     search.searchServiceElapsed(searchElapsed);
-                    // search.searchTotal(result.search_result.total);
-                    result.search_result.hits.forEach(function (hit, index) {
-                        // var project = hit._source.metadata;
+                    // search.searchTotal(result.total);
+                    result.hits.forEach(function (hit, index) {
+                        // var project = hit.source.metadata;
                         var rowNumber = (search.page() - 1) * search.pageSize() + 1 + index;
                         var projectId;
-                        if (hit._source.metadata.sequencing_project_id) {
-                            projectId = hit._source.metadata.sequencing_project_id;
+                        if (hit.source.metadata.sequencing_project_id) {
+                            projectId = hit.source.metadata.sequencing_project_id;
                         } else {
                             projectId = 'n/a';
                         }
 
-                        var proposalId = getProp(hit._source.metadata, ['proposal_id'], '-');
+                        var proposalId = getProp(hit.source.metadata, ['proposal_id'], '-');
 
                         // actual file suffix.
                         var fileExtension;
                         var reExtension = /^(.*)\.(.*)$/;
-                        var fileName = hit._source.file_name;
+                        var fileName = hit.source.file_name;
                         var m = reExtension.exec(fileName);
                         if (m) {
                             fileExtension = m[2];
                         } else {
                             fileExtension = null;
                         }
-                        var fileType = grokFileType(fileExtension, hit._source.file_type);
+                        var fileType = grokFileType(fileExtension, hit.source.file_type);
 
                         // Title
                         var title = grokTitle(hit, fileType);
@@ -1186,13 +1202,13 @@ define([
 
                         search.searchResults.push({
                             rowNumber: rowNumber,
-                            score: numeral(hit._score).format('00.00'),
-                            type: hit._type,
+                            score: numeral(hit.score).format('00.00'),
+                            type: hit.type,
                             title: title,
-                            date: usDate(hit._source.file_date),
-                            modified: usDate(hit._source.modified),
+                            date: usDate(hit.source.file_date),
+                            modified: usDate(hit.source.modified),
                             fileExtension: fileExtension,
-                            fileType: normalizeFileType(hit._source.file_type),
+                            fileType: normalizeFileType(hit.source.file_type),
                             // TODO: these should all be in just one place.
                             dataType: fileType.dataType,
                             proposalId: proposalId,
@@ -1201,25 +1217,25 @@ define([
                             metadata: metadata,
                             scientificName: scientificName.scientificName,
                             file: {
-                                name: hit._source.file_name,
+                                name: hit.source.file_name,
                                 extension: fileExtension,
                                 dataType: fileType.dataType,
                                 encoding: fileType.encoding,
-                                indexedType: normalizeFileType(hit._source.file_type),
-                                size: numeral(hit._source.file_size).format('0.0 b'),
-                                added: usDate(hit._source.added_date),
-                                status: hit._source.file_status,
-                                types: normalizeFileType(hit._source.file_type)
+                                indexedType: normalizeFileType(hit.source.file_type),
+                                size: numeral(hit.source.file_size).format('0.0 b'),
+                                added: usDate(hit.source.added_date),
+                                status: hit.source.file_status,
+                                types: normalizeFileType(hit.source.file_type)
                             },
-                            proposal: hit._source.metadata.proposal,
+                            proposal: hit.source.metadata.proposal,
                             project: {
-                                name: getProp(hit._source.metadata, 'sequencing_project.sequencing_project_name'),
-                                id: getProp(hit._source.metadata, 'sequencing_project.sequencing_project_id'),
-                                status: getProp(hit._source.metadata, 'sequencing_project.current_status'),
-                                statusDate: getProp(hit._source.metadata, 'sequencing_project.status_date'),
-                                comments: getProp(hit._source.metadata, 'sequencing_project.comments')
+                                name: getProp(hit.source.metadata, 'sequencing_project.sequencing_project_name'),
+                                id: getProp(hit.source.metadata, 'sequencing_project.sequencing_project_id'),
+                                status: getProp(hit.source.metadata, 'sequencing_project.current_status'),
+                                statusDate: getProp(hit.source.metadata, 'sequencing_project.status_date'),
+                                comments: getProp(hit.source.metadata, 'sequencing_project.comments')
                             },
-                            importSpec: getImportInfo(fileType.dataType, hit._id, hit._source.file_name, hit),
+                            importSpec: getImportInfo(fileType.dataType, hit.id, hit.source.file_name, hit),
                             // projectId: project.projects.map(function(project) {
                             // return String(project.projectId);
                             // // }),
@@ -1227,8 +1243,8 @@ define([
                             // genus: project.genus,
                             // species: project.species,
                             showDetail: ko.observable(false),
-                            detailFormatted: JSON.stringify(hit._source, null, 4),
-                            detail: hit._source,
+                            detailFormatted: JSON.stringify(hit.source, null, 4),
+                            detail: hit.source,
                             data: hit
                                 // doAddToSearch: doAddToSearch
                         });
