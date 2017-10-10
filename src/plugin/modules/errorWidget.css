@@ -1,0 +1,9 @@
+.modal-dialog .kb-error-dialog {}
+
+.modal-dialog .kb-error-dialog .modal-header {
+    background-color: rgb(151, 41, 41);
+    color: white;
+    font-weight: bold;
+}
+
+.modal-dialog .kb-error-dialog {}

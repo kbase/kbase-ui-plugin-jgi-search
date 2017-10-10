@@ -7,6 +7,7 @@ define([
     'kb_common/jsonRpc/dynamicServiceClient',
     'kb_common/jsonRpc/genericClient',
     './policyViewerDialog',
+    './errorWidget',
     'yaml!./import.yml',
     'text!./jgiTerms.md'
 ], function (
@@ -18,6 +19,7 @@ define([
     DynamicService,
     GenericClient,
     PolicyViewerDialog,
+    ErrorWidget,
     Import,
     JGITerms
 ) {
@@ -26,9 +28,12 @@ define([
     var t = html.tag,
         span = t('span'),
         button = t('button'),
+        p = t('p'),
+        a = t('a'),
         div = t('div');
 
     var jgiTermsText = marked(JGITerms);
+
 
     function normalizeFileType(fileType) {
         if (!fileType) {
@@ -1143,7 +1148,25 @@ define([
 
                     // TODO: handle better!
                     if (error) {
-                        throw new Error(error.message);
+                        ErrorWidget.show({
+                            title: 'Error',
+                            body: div([
+                               p('An error has occurred processing your JGI Search.') ,
+                               p('The search details are shown below. '),
+                                p([
+                                    'If this problem persists, you may consider ',
+                                    a({
+                                        href: runtime.config('resources.help.url'),
+                                        target: '_blank'
+                                    }, 'filing a bug report'),
+                                    '.'
+                                ])
+                            ]),
+                            error: error
+                                // body: error.message + '(' + error.type + ',' + error.code + ')'
+                        });
+                        return;
+                        // throw new Error(error.message + '(' + error.type + ',' + error.code + ')');
                     }
 
                     // console.log('do we need to limit the search?', result.total);

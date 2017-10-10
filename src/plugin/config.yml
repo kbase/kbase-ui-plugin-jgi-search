@@ -7,6 +7,8 @@ package:
 source:
   modules:
   styles: 
+    -
+      styles.css
 install:
   widgets:
     -
@@ -17,6 +19,7 @@ install:
       module: panel
       id: kb_jgi_search_panel
       type: factory
+      css: true
     -
       module: listJobs
       id: kb_jgi_search_list_jobs
