@@ -12,7 +12,7 @@ define([
         // TODO: this should go in to the ui services
         function call(moduleName, functionName, params) {
             var override = runtime.config(['services', moduleName, 'url'].join('.'));
-            console.log('overriding?', moduleName, override);
+            // console.log('overriding?', moduleName, override);
             var token = runtime.service('session').getAuthToken();
             var client;
             if (override) {

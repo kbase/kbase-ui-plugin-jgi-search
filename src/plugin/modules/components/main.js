@@ -180,7 +180,6 @@ define([
                 return;
             }
             function checkProgress() {
-                console.log('checking job progress...');
                 var jobChecks = stagingJobs().map(function (job) {
                     if (job.status === 'completed') {
                         return;
@@ -198,7 +197,6 @@ define([
                             })
                     ])
                         .spread(function (id, result) {
-                            console.log('about to grok', id, result);
                             var status = utils.grokStageStats(result.message);
                             job.status = status.status;
                             return status.status;
@@ -340,7 +338,6 @@ define([
         var searchTotal = ko.observable();
         var actualSearchTotal = ko.observable();
         var searchElapsed = ko.observable();
-        var searchServiceElapsed = ko.observable();
 
         var page = ko.observable();
         var errors = ko.observableArray();
@@ -681,7 +678,7 @@ define([
                 return;
             }
 
-            console.log('about to search', pageSize());
+            console.log('about to search', page(), pageSize());
             searching(true);
 
             return currentSearch.search = fetchQuery(query.query, query.filter, page(), pageSize())
@@ -698,7 +695,7 @@ define([
                         return;
                     }
 
-                    console.log('search results', result, error, stats);
+                    // console.log('search results', result, error, stats);
 
                     // TODO: handle better!
                     if (error) {
@@ -724,7 +721,7 @@ define([
                     }
 
                     var searchCallElapsed = new Date().getTime() - searchStart;
-                    console.log('ui search call elapsed', searchServiceElapsed());
+                    console.log('ui search call elapsed', searchCallElapsed);
                     console.log('jgi search elapsed', stats);
 
                     if (result.total > 10000) {
@@ -741,7 +738,6 @@ define([
 
                     searchResults.removeAll();
                     searchElapsed(stats.request_elapsed_time);
-                    searchServiceElapsed(searchCallElapsed);
 
                     result.hits.forEach(function (hit, index) {
                         // var project = hit.source.metadata;
@@ -963,7 +959,6 @@ define([
                 searchTotal: searchTotal,
                 actualSearchTotal: actualSearchTotal,
                 searchElapsed: searchElapsed,
-                searchServiceElapsed: searchServiceElapsed,
                 searching: searching,
                 userSearch: userSearch,
                 availableRowHeight: availableRowHeight,

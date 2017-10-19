@@ -97,13 +97,11 @@ define([
         document.body.appendChild(backdropNode);
 
         function close() {
-            console.log('closing?');
             var backdrop = document.querySelector('.modal-backdrop');
             backdrop.parentElement.removeChild(backdrop);
             modalNode.parentElement.removeChild(modalNode);
         }
 
-        console.log('paras', arg.params);
         ko.applyBindings(viewModel({
             close: close,
             imported: arg.params

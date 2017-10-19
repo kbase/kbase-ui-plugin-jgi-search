@@ -166,6 +166,9 @@ define([
             if (value > totalPages()) {
                 value = totalPages();
             }
+            if (value < 1) {
+                value = 1;
+            }
             if (value !== page()) {
                 page(value);
             }

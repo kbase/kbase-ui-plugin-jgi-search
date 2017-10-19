@@ -250,7 +250,6 @@ define([
         // for gold_data (and perhaps others) the species is actually Genus species.
         // handle the general case of the genus being a prefix of the species and fix
         // species.
-        console.log('species', species);
         if (species.indexOf(genus) === 0) {
             species = species.substr(genus.length + 1);
         }
@@ -483,8 +482,6 @@ define([
         var queuedRe = /^"In_Queue"$/;
         var progressRe = /^"In Progress\. Total files = ([\d]+)\. Copy complete = ([\d]+)\. Restore in progress = ([\d]+)\. Copy in progress = ([\d]+)"$/;
         var completedRe = /^"Transfer Complete\. Transfered ([\d]+) files\."$/;
-
-        console.log('progress?', message, typeof message, queuedRe.exec(message), completedRe.exec(message), progressRe.exec(message));
 
         if (queuedRe.test(message)) {
             return {

@@ -184,7 +184,6 @@ define([
     });
 
     function viewModel(params, componentInfo) {
-        console.log('search result vm', params, componentInfo);
         var search = params.search;
         var searchResults = search.searchResults;
         var searching = search.searching;
@@ -204,7 +203,6 @@ define([
         var height = ko.observable();
 
         height.subscribe(function (newValue) {
-            console.log('new height?', newValue);
             search.availableRowHeight(newValue);
         });
 
@@ -212,16 +210,13 @@ define([
         var resizerTimer = null;
 
         function calcHeight() {
-            console.log('body?', styles.classes.body);
             var tableHeight = componentInfo.element.querySelector('.' + styles.classes.body).clientHeight;
             // // TODO: switch to getBoundingClientRect()
             // var headerHeight = componentInfo.element.querySelector('.-header').offsetHeight;
             //
             // return tableHeight - headerHeight;
 
-            var headerHeight = 50;
 
-            console.log('table height', tableHeight);
 
             return tableHeight;
         }
@@ -248,7 +243,6 @@ define([
 
 
         function doShowInfo(data) {
-            console.log('show info with ', data);
             // select row. Row will stay selected when info is closed,
             // but will be removed when another row is selected.
             data.selected(true);
@@ -258,7 +252,6 @@ define([
             search.currentlySelected = data;
             search.getDetail(data.id)
                 .then(function (item) {
-                    console.log('detail', item);
                     ComponentDialog.showDialog({
                         title: 'Inspector',
                         component: 'jgi-search/quick-view',
