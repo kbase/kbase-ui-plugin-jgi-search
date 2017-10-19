@@ -74,6 +74,8 @@ define([
             runtime: runtime
         });
 
+        var maxSearchResults = 10000;
+
         // Fetch details for a given search result item.
         function fetchDetail(id) {
             var query = {
@@ -85,7 +87,7 @@ define([
                 fields: null,
                 limit: 1,
                 page: 1,
-                include_private: 1
+                include_private: 0
             };
             return rpc.call('jgi_gateway_eap', 'search', param)
                 .catch(function (err) {
@@ -302,7 +304,7 @@ define([
                 fields: fields,
                 limit: pageSize,
                 page: page,
-                include_private: 1
+                include_private: 0
             };
             return rpc.call('jgi_gateway_eap', 'search', param)
                 .catch(function (err) {
@@ -379,7 +381,9 @@ define([
             }
 
             if (!query.query.file_type) {
-                query.query.file_type = ['fastq', 'fasta', 'gbk', 'gff', 'bam'].join(' | ');
+                query.query.file_type = typeFilterOptions.map(function (option) {
+                    return option.value;
+                }).join(' | ');
             }
 
             // search.searchState('ready');
@@ -484,22 +488,24 @@ define([
         // var typeFilterInput = ko.observable();
         var typeFilter = ko.observableArray();
         var typeFilterOptions = [{
-            label: 'fastq',
+            label: 'FASTQ',
             value: 'fastq'
         }, {
-            label: 'fasta',
+            label: 'FASTA',
             value: 'fasta'
-        }, {
-            label: 'SRA',
-            value: 'sra'
-        }, {
-            label: 'genbank',
-            value: 'genbank'
-        }, {
-            label: 'genome feature format',
-            value: 'gff'
-        }, {
-            label: 'BAM',
+        },
+        // {
+        //     label: 'SRA',
+        //     value: 'sra'
+        // }, {
+        //     label: 'genbank',
+        //     value: 'genbank'
+        // }, {
+        //     label: 'genome feature format',
+        //     value: 'gff'
+        // },
+        {
+            label: 'BAM!',
             value: 'bam'
         }].map(function (item) {
             item.enabled = ko.pureComputed(function () {
@@ -724,9 +730,9 @@ define([
                     console.log('ui search call elapsed', searchCallElapsed);
                     console.log('jgi search elapsed', stats);
 
-                    if (result.total > 10000) {
+                    if (result.total > maxSearchResults) {
                         actualSearchTotal(result.total);
-                        searchTotal(10000);
+                        searchTotal(maxSearchResults);
                         addMessage({
                             type: 'warning',
                             message: 'Too many search results (' + result.total + '), restricted to 10,000'

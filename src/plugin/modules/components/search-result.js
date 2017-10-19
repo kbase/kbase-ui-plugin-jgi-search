@@ -121,19 +121,19 @@ define([
             textOverflow: 'ellipsis'
         },
         titleCell: {
-            flexBasis: '28%'
+            flexBasis: '29%'
         },
         piCell: {
             flexBasis: '10%'
         },
-        proposalId: {
-            flexBasis: '5%',
-            textAlign: 'right',
-            paddingRight: '3px'
-        },
+        // proposalId: {
+        //     flexBasis: '5%',
+        //     textAlign: 'right',
+        //     paddingRight: '3px'
+        // },
         sequencingProjectId: {
             css: {
-                flexBasis: '5%',
+                flexBasis: '7%',
                 textAlign: 'right',
                 paddingRight: '3px'
             },
@@ -146,7 +146,7 @@ define([
             }
         },
         analysisProjectId: {
-            flexBasis: '5%',
+            flexBasis: '7%',
             textAlign: 'right',
             paddingRight: '3px'
         },
@@ -829,12 +829,12 @@ define([
                 },
                 class: '-search-link'
             }))),
-            div({
-                dataBind: {
-                    text: 'proposalId'
-                },
-                class: [styles.classes.cell, styles.classes.proposalId]
-            }),
+            // div({
+            //     dataBind: {
+            //         text: 'proposalId'
+            //     },
+            //     class: [styles.classes.cell, styles.classes.proposalId]
+            // }),
             div({
                 dataBind: {
                     text: 'sequencingProjectId.value',
@@ -905,12 +905,14 @@ define([
     }
 
     function buildSortControl() {
-        return span({
-            class: 'fa fa-sort',
-            style: {
-                marginRight: '2px'
-            }
-        });
+        return '';
+        // disable for now since don't have sort on back end
+        // return span({
+        //     class: 'fa fa-sort',
+        //     style: {
+        //         marginRight: '2px'
+        //     }
+        // });
     }
 
     function buildExample(text) {
@@ -980,9 +982,9 @@ define([
                 div({
                     class: [styles.classes.headerCell, styles.classes.piCell]
                 }, [buildSortControl('pi'), 'PI']),
-                div({
-                    class: [styles.classes.headerCell, styles.classes.proposalId]
-                }, [buildSortControl('proposalId'), 'Prop.']),
+                // div({
+                //     class: [styles.classes.headerCell, styles.classes.proposalId]
+                // }, [buildSortControl('proposalId'), 'Prop.']),
                 div({
                     class: [styles.classes.headerCell, styles.classes.sequencingProjectId]
                 }, [buildSortControl('sequencingProjectId'), 'Seq.']),
