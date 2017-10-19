@@ -493,7 +493,7 @@ define([
                         }
                     }),
                     ' file',
-                    '<!-- ko if: saerch.stagingJobs().length > 1 -->',
+                    '<!-- ko if: search.stagingJobs().length > 1 -->',
                     's',
                     '<!-- /ko -->',
                     ' to your staging area'
@@ -618,9 +618,9 @@ define([
                     dataBind: {
                         text: 'search.stagingJobStates.completed',
                         style: {
-                            'font-weight': 'search.stagingJobStates.copying() > 0 ? "bold" : "normal"',
-                            color: 'search.stagingJobStates.copying() > 0 ? "green" : "black"',
-                            border: 'search.stagingJobStates.copying() > 0 ? "1px green solid" : "1px silver dashed"'
+                            'font-weight': 'search.stagingJobStates.completed() > 0 ? "bold" : "normal"',
+                            color: 'search.stagingJobStates.completed() > 0 ? "green" : "black"',
+                            border: 'search.stagingJobStates.completed() > 0 ? "1px green solid" : "1px silver dashed"'
                         }
                     },
                     style: {
