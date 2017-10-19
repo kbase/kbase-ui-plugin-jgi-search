@@ -1,0 +1,112 @@
+.modal-dialog .kb-error-dialog {}
+
+.modal-dialog.kb-error-dialog .modal-header {
+    background-color: rgb(151, 41, 41);
+    color: white;
+    font-weight: bold;
+}
+
+.modal-dialog .kb-error-dialog {}
+
+/* Important part */
+.modal-dialog{
+    overflow-y: initial !important
+}
+.modal-body{
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+}
+
+
+
+.kb-btn-mini {
+    padding: 2px;
+    border: 2px transparent solid;
+    cursor: pointer;
+}
+
+.kb-btn-mini:hover {
+    border: 2px gray solid;
+    cursor: pointer;
+}
+
+.kb-btn-mini:active {
+    border: 2px gray solid;
+    background-color: #555;
+    color: #FFF;
+}
+
+.kb-btn-mini.-disabled {
+    cursor: normal;
+}
+
+.kb-btn-mini.-disabled:hover {
+    border: 2px transparent solid;
+    cursor: normal;
+}
+
+.kb-btn-mini.-disabled:active {
+    border: 2px transparent solid;
+    background-color: inherit;
+    color: inherit;
+}
+
+
+
+.mini-button {
+    padding: 2px;
+    border: 2px transparent solid;
+    cursor: pointer;
+}
+
+.mini-button:hover {
+    border: 2px silver solid;
+}
+
+.mini-button:active {
+    border: 2px silver solid;
+    background-color: #555;
+    color: #FFF;
+}
+
+
+.fa {
+    text-indent: 0;
+}
+
+
+.kb-tooltip {
+    display: block;
+    position: absolute;
+    right: -10em;
+    top: 0;
+    border: 1px silver solid;
+    width: 10em;
+    padding: 4px;
+    background-color: #FFF;
+    z-index: 10;
+}
+
+.kb-tooltip.-hidden {
+    display: none;
+}
+
+/* put in central location  */
+
+.info-tooltip {
+    padding: 0 4px;
+}
+
+.info-tooltip:hover {
+    background-color: rgba(200, 200, 200, 0.5);
+}
+
+.info-tooltip:active {
+    background-color: rgba(200, 200, 200, 1);
+    color: #FFF;
+}
+
+.info-tooltip::before {
+    /* stolen from blue color for toolbar icons */
+    color: #2196F3;
+}

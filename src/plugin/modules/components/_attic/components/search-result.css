@@ -1,0 +1,110 @@
+.component-jgi-search-search-result {}
+
+.component-jgi-search-search-result .-header {
+    border-bottom: 1px silver solid;
+    padding: 2px;
+}
+
+.component-jgi-search-search-result .-result {
+    margin: 4px 0;
+    border: 4px transparent solid;
+}
+
+.component-jgi-search-search-result .-result .-summary-row {
+    padding: 4px;
+}
+
+.component-jgi-search-search-result .-result .-summary-row:hover {
+    background-color: #CCC;
+    cursor: pointer;
+}
+
+.component-jgi-search-search-result .-result .-raw-data {
+    border: 1px silver solid;
+    background-color: aqua;
+    font-family: monospace;
+    white-space: pre-wrap;
+    max-height: 20em;
+    overflow-y: auto;
+}
+
+.component-jgi-search-search-result .-result .-detail-row {
+    border: 1px silver solid;
+    padding: 4px;
+}
+
+.component-jgi-search-search-result .-result.-active {
+    background-color: #DDD;
+}
+
+.component-jgi-search-search-result .-result .-summary-row:hover .-search-link {
+    text-decoration: underline;
+}
+
+.component-jgi-search-search-result .-result .-summary-row:hover .-search-link:hover {
+    text-decoration: underline;
+    background-color: #EEE;
+    cursor: pointer;
+}
+
+.component-jgi-search-search-result .-header .-cell,
+.component-jgi-search-search-result .-result .-cell {
+    display: inline-block;
+    vertical-align: top;
+}
+
+
+/* put in central location  */
+
+.info-tooltip {
+    padding: 0 4px;
+}
+
+.info-tooltip:hover {
+    background-color: rgba(200, 200, 200, 0.5);
+}
+
+.info-tooltip:active {
+    background-color: rgba(200, 200, 200, 1);
+    color: #FFF;
+}
+
+.info-tooltip::before {
+    /* stolen from blue color for toolbar icons */
+    color: #2196F3;
+}
+
+.kb-tooltip {
+    display: block;
+    position: absolute;
+    right: -10em;
+    top: 0;
+    border: 1px silver solid;
+    width: 10em;
+    padding: 4px;
+    background-color: #FFF;
+    z-index: 10;
+}
+
+.kb-tooltip.-hidden {
+    display: none;
+}
+
+.component-jgi-search-search-result .section-header {
+    padding: 4px;
+    font-weight: bold;
+    color: #FFF;
+    background-color: #888;
+}
+
+.component-jgi-search-search-result .section-header+p,
+.component-jgi-search-search-result .section-header+.button-group {
+    margin-top: 6px
+}
+
+
+/* tab tweaks */
+
+.component-jgi-search-search-result .-result .-detail {
+    background-color: #FFF;
+}

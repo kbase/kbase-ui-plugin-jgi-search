@@ -1,0 +1,101 @@
+.component-tabset2 .kb-tabs li.tabs span.-button,
+.component-tabset2 .kb-tabs li.tabs span.-button {
+    padding: 0 4px;
+    margin-left: 8px;
+    /*background-color: rgba(150, 150, 150, 0.3);*/
+    color: black;
+    user-select: none;
+    cursor: pointer;
+}
+
+.component-tabset2 .kb-tabs li.tabs span.-button .fa::before {
+    color: #888;
+}
+
+.component-tabset2 .kb-tabs li.tabs span.-button {
+    text-decoration: none;
+    color: black;
+}
+
+.component-tabset2 .kb-tabs li.tabs span.-button:hover {
+    /*background-color: rgba(150, 150, 150, 0.5);*/
+}
+
+.component-tabset2 .kb-tabs li.tabs span.-button:hover .fa::before {
+    color: darkred;
+}
+
+.component-tabset2 .kb-tabs li.tabs span.-button:active {
+    /*background-color: rgba(150, 150, 150, 0.5);*/
+}
+
+.component-tabset2 .kb-tabs li.tabs span.-button:active .fa::before {
+    color: darkred;
+}
+
+
+/*Override nav nav-tabs*/
+
+ul.kb-tabs {
+    border-bottom: 1px solid #ddd;
+}
+
+ul.kb-tabs:after {
+    display: table;
+    content: " ";
+    clear: both;
+}
+
+ul.kb-tabs {
+    padding-left: 0;
+    margin-bottom: 0;
+    list-style: none;
+}
+
+ul.kb-tabs li {
+    float: left;
+    margin-bottom: -1px;
+    position: relative;
+    display: block;
+}
+
+ul.kb-tabs li a {
+    margin-right: 2px;
+    line-height: 1.42857143;
+    border: 1px solid transparent;
+    border-radius: 4px 4px 0 0;
+    position: relative;
+    padding: 10px 15px;
+    cursor: pointer;
+}
+
+ul.kb-tabs li.active a {
+    color: #555;
+    cursor: default;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-bottom-color: transparent;
+}
+
+ul.kb-tabs li a:hover {
+    border-color: #eee #eee #ddd;
+}
+
+ul.kb-tabs li a:hover,
+ul.kb-tabs li a:focus {
+    text-decoration: none;
+    background-color: #eee;
+}
+
+ul.kb-tabs li.active a:hover,
+ul.kb-tabs li.active a:focus {
+    text-decoration: none;
+    background-color: #fff;
+    border-color: #ddd #ddd #ddd;
+    border-bottom-color: transparent;
+}
+
+ul.kb-tabs li a:hover,
+ul.kb-tabs li a:active {
+    outline: 0
+}

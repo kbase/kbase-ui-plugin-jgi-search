@@ -30,15 +30,34 @@
     color: inherit;
 }
 
-.component-jgisearch-search .form-group {
+.component_jgi-search_search .form-group {
     margin: 0 4px;
 }
 
-.component-jgisearch-search .form-control {
+.component_jgi-search_search .form-control {
     margin: 0 4px;
 }
 
-.component-jgisearch-search blockquote {
+.component_jgi-search_search blockquote {
     font-size: inherit;
     font-style: italic;
+}
+
+.component_jgi-search_search {
+    flex: 1 1 0px;
+    display: flex;
+    flex-direction: column;
+}
+
+.component_jgi-search_search > .search-row {
+    flex: 0 0 50px;
+    border: 1px red solid;
+}
+.component_jgi-search_search > .filter-row {
+    flex: 0 0 50px;
+    border: 1px blue dashed;
+}
+.component_jgi-search_search > .result-row {
+    flex: 1 1 0px;
+    border: 1px green dotted;
 }

@@ -1,0 +1,45 @@
+.component-policy-viewer {
+    padding-top: 12px;
+}
+
+.component-policy-viewer .-index {
+    display: inline-block;
+    width: 30%;
+    /* color from bootstrap tabs */
+    border: 1px rgb(221, 221, 221) solid;
+    padding: 6px;
+    vertical-align: top;
+}
+
+.component-policy-viewer .-index ul {
+    list-style: none;
+    padding: 0;
+}
+
+.component-policy-viewer .-index li {
+    display: block;
+}
+
+.component-policy-viewer .-index li a.-item {
+    padding: 4px;
+    display: block;
+}
+
+.component-policy-viewer .-index .-item:hover,
+.component-policy-viewer .-index .-item.-active {
+    background-color: #DDD;
+}
+
+.component-policy-viewer .-body {
+    display: inline-block;
+    width: 70%;
+    /* border: 1px silver solid; */
+    padding: 6px 6px 6px 12px;
+    vertical-align: top;
+}
+
+.component-policy-viewer .-body .-title {
+    font-weight: bold;
+}
+
+.component-policy-viewer .-body .-content {}

@@ -6,31 +6,38 @@ package:
   description: Search and Import Tool for JGI Data
 source:
   modules:
-  styles: 
+  styles:
     -
-      styles.css
+      file: styles.css
 install:
   widgets:
-    -
-      module: panel2
-      id: kb_jgi_search2_panel
-      type: factory
+    # -
+    #   module: panel2
+    #   id: kb_jgi_search2_panel
+    #   type: factory
     -
       module: panel
-      id: kb_jgi_search_panel
+      id: jgi-search_panel
       type: factory
       css: true
     -
-      module: listJobs
-      id: kb_jgi_search_list_jobs
+      module: widgets/tabsWidget
+      id: jgi-search_tabs
       type: factory
+      css: true
+    # -
+    #   module: listJobs
+    #   id: kb_jgi_search_list_jobs
+    #   type: factory
   ko-components:
-    # none yet
+    -
+      name: jgi-search/main
+      module: components/main
+      type: factory
     -
       name: 'jgisearch/search'
       module: components/search
-      css: true
-      type: factory  
+      type: factory
     -
       name: 'jgisearch/browser'
       module: components/browser
@@ -38,7 +45,6 @@ install:
     -
       name: 'jgisearch/search-result'
       module: components/search-result
-      css: true
       type: factory
     -
       name: 'jgisearch/json-viewer'
@@ -51,23 +57,27 @@ install:
       css: true
       type: factory
     -
-      name: 'policy-viewer'
-      module: 'components/policyViewer'
-      css: true
+      name: jgi-search/quick-view
+      module: components/quickView
       type: factory
+    -
+      name: jgi-search/terms
+      module: components/terms
+      type: factory
+      css: true
   routes:
     -
       path: ['jgi', 'search']
-      widget: kb_jgi_search_panel
+      widget: jgi-search_panel
       authorization: true
-    - 
+    -
       path: ['jgi', 'search2']
       widget: 'kb_jgi_search2_panel'
       authorization: true
-    - 
+    -
       path: ['jgi', 'listjobs']
       widget: 'kb_jgi_search_list_jobs'
-      authorization: true      
+      authorization: true
   menu:
     -
       name: jgi-search
@@ -82,15 +92,15 @@ install:
         label: JGI Search2
         icon: search-plus
   schema:
-    - 
+    -
       name: jgi-search/query/input
       path: schemas/query/input.json
-    # - 
+    # -
     #   name: jgi-search/query/output
     #   path: schemas/queryOutput.json
-    # - 
+    # -
     #   name: jgi-search/fetch/input
     #   path: schemas/fetchInput.json
-    # - 
+    # -
     #   name: jgi-search/fetch/output
-    #   path: schemas/fetchOutput.json      
+    #   path: schemas/fetchOutput.json

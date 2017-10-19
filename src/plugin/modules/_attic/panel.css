@@ -4,6 +4,7 @@
     background-color: rgb(151, 41, 41);
     color: white;
     font-weight: bold;
+    font-size: 120%;
 }
 
 .modal-dialog .kb-error-dialog {}

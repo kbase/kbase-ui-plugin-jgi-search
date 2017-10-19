@@ -1,0 +1,28 @@
+# Error Types
+---
+-
+  message: missing required parameter "query"
+  type: input
+  code: missing
+  info:
+    key: query
+-
+  message: the "query" parameter must be an object mapping fields to search strings
+  type: input
+  code: wrong-type
+  info:
+    key: query
+    expecting: dict
+    got:
+-
+  message: the "limit" paramter must be an illumina_read_insert_size_avg_insert
+  type: input
+  code: wrong-type
+  info:
+    key: limit
+-
+  message: the "limit" parameter must be an integer between 1 and 10,000
+  type: input
+  code: out-of-range
+  info:
+    key: limit

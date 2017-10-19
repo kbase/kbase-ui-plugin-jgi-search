@@ -3,14 +3,12 @@ define([
     'bluebird',
     'kb_common/html',
     'kb_common/ui',
-    '../utils',
     'yaml!../helpData.yml'
 ], function (
     ko,
     Promise,
     html,
     ui,
-    utils,
     helpData
 ) {
     'use strict';
@@ -183,19 +181,19 @@ define([
             data.typeFilterInput('_select_');
         }
 
-        var newSeqProject = ko.observable();
+        var newProject = ko.observable();
 
-        newSeqProject.subscribe(function (newValue) {
+        newProject.subscribe(function (newValue) {
             newValue = newValue.trim(' ');
             if (newValue.length === 0) {
                 return;
             }
-            params.search.seqProjectFilter.push(parseInt(newValue));
-            newSeqProject('');
+            params.search.projectFilter.push(parseInt(newValue));
+            newProject('');
         });
 
-        function doRemoveSeqProject(data) {
-            params.search.seqProjectFilter.remove(data);
+        function doRemoveProject(data) {
+            params.search.projectFilter.remove(data);
         }
 
         return {
@@ -213,9 +211,9 @@ define([
             typeFilterInput: ko.observable('_select_'),
             typeFilterOptions: typeFilterOptions,
             // Project filter
-            newSeqProject: newSeqProject,
-            seqProjectFilter: params.search.seqProjectFilter,
-            doRemoveSeqProject: doRemoveSeqProject,
+            newProject: newProject,
+            projectFilter: params.search.projectFilter,
+            doRemoveProject: doRemoveProject,
 
             // ACTIONS
             doHelp: doHelp,
@@ -236,9 +234,6 @@ define([
         }, [
             input({
                 class: 'form-control',
-                style: {
-                    margin: '0 4px'
-                },
                 dataBind: {
                     textInput: 'searchInput',
                     hasFocus: true
@@ -286,10 +281,7 @@ define([
 
     function buildTypeFilter() {
         return div({
-            class: 'form-group',
-            style: {
-                margin: '0 4px'
-            }
+            class: 'form-group'
         }, [
             label('Type'),
             select({
@@ -300,10 +292,7 @@ define([
                     },
                     foreach: 'typeFilterOptions'
                 },
-                class: 'form-control',
-                style: {
-                    margin: '0 4px'
-                }
+                class: 'form-control'
             }, [
                 '<!-- ko if: enabled -->',
                 option({
@@ -351,67 +340,16 @@ define([
         ]);
     }
 
-    function buildSeqProjectFilter() {
+    function buildProjectFilter() {
         return div({
-            class: 'form-group',
-            style: {
-                margin: '0 4px'
-            }
-        }, [
-            label({}, 'Projects'),
-            input({
-                dataBind: {
-                    value: 'newSeqProject'
-                },
-                placeholder: 'Filter by seq. project id'
-            }),
-            div({
-                style: {
-                    display: 'inline-block'
-                },
-                dataBind: {
-                    foreach: 'seqProjectFilter'
-                }
-            }, [
-                span({
-                    style: {
-                        border: '1px silver solid',
-                        borderRadius: '3px',
-                        padding: '3px'
-                    }
-                }, [
-                    span(({
-                        dataBind: {
-                            text: '$data'
-                        },
-                        style: {
-                            padding: '3px'
-                        }
-                    })),
-                    span({
-                        dataBind: {
-                            click: '$component.doRemoveSeqProject'
-                        },
-                        class: 'kb-btn-mini'
-                    }, 'x')
-                ])
-            ])
-        ]);
-    }
-
-    function buildAnalysisProjectFilter() {
-        return div({
-            class: 'form-group',
-            style: {
-                margin: '0 4px'
-            }
+            class: 'form-group'
         }, [
             label({}, 'Projects'),
             input({
                 dataBind: {
                     value: 'newProject'
                 },
-                placeholder: 'Filter by anal. project id'
+                placeholder: 'Filter by project id'
             }),
             div({
                 style: {
@@ -448,30 +386,36 @@ define([
     }
 
     function buildFilterArea() {
-        return div({
-            class: 'form-inline',
-            style: {
-
-            }
-        }, [
-            span({
+        return [
+            div({
                 style: {
                     fontWeight: 'bold',
                     color: 'gray',
                     marginTop: '8px',
                     fontSize: '80%'
                 }
-            }),
-            buildTypeFilter(),
-            buildSeqProjectFilter()
-        ]);
+            }, 'FILTERS'),
+            div({
+                class: 'form-inline',
+                style: {
+
+                }
+            }, [
+                buildTypeFilter(),
+                buildProjectFilter()
+            ])
+        ];
     }
 
     function buildResultsArea() {
-        return utils.komponent({
-            name: 'jgisearch/browser',
-            params: {
-                search: 'search'
+        return div({
+            dataBind: {
+                component: {
+                    name: '"jgisearch/browser"',
+                    params: {
+                        search: 'search'
+                    }
+                }
             }
         });
     }
@@ -529,64 +473,75 @@ define([
         ]);
     }
 
-    var styles = utils.makeStyles({
-        component: {
-            flex: '1 1 0px',
-            display: 'flex',
-            flexDirection: 'column'
-        },
-        searchArea: {
-            flex: '0 0 50px',
-            // border: '1px red solid'
-        },
-        filterArea: {
-            flex: '0 0 50px',
-            // border: '1px blue dashed'
-        },
-        resultArea: {
-            flex: '1 1 0px',
-            // border: '1px green dotted',
-            display: 'flex',
-            flexDirection: 'column'
-        }
-    });
-
-
     function template() {
         return div({
-            class: styles.classes.component
+            class: 'component_jgi-search_search'
         }, [
-            styles.sheet,
             // The search input area
             div({
-                class: styles.classes.searchArea
+                class: 'search-row'
             }, buildInputArea()),
             // The search filter area
             div({
-                class: styles.classes.filterArea
+                class: 'filter-row'
             }, buildFilterArea()),
             // The search results / error / message area
             div({
-                class: styles.classes.resultArea
+                class: 'result-row'
             }, [
-                // '<!-- ko ifnot: search.searchState() === "none" -->',
-                // '<!-- ko if: ["pending", "inprogress", "success", "notfound"].some(function (s) {search.searchState() === s}) -->',
+                '<!-- ko if: search.userSearch() -->',
                 buildResultsArea(),
-                // '<!-- /ko -->',
-                // '<!-- ko if: search.searchState() === "none" -->',
-                // div({
-                //     style: {
-                //         margin: '10px',
-                //         border: '1px silver solid',
-                //         padding: '8px',
-                //         backgroundColor: 'silver',
-                //         textAlign: 'center'
-                //     }
-                // }, buildNoActiveSearch()),
-                // '<!-- /ko -->'
+                '<!-- /ko -->',
+                '<!-- ko ifnot: search.userSearch() -->',
+                div({
+                    style: {
+                        margin: '10px',
+                        border: '1px silver solid',
+                        padding: '8px',
+                        backgroundColor: 'silver',
+                        textAlign: 'center'
+                    }
+                }, buildNoActiveSearch()),
+                '<!-- /ko -->'
             ])
         ]);
     }
+
+    // function templatex() {
+    //     return div({
+    //         class: 'component-jgisearch-search'
+    //     }, [
+    //         buildInputArea(),
+    //
+    //         buildFilterArea(),
+    //         '<!-- ko if: search.userSearch() -->',
+    //         // '<!-- ko if: search.searchStatus() === "results" || search.searchStatus() === "searching" -->',
+    //         buildResultsArea(),
+    //         '<!-- /ko -->',
+    //         '<!-- ko ifnot: search.userSearch() -->',
+    //         // '<!-- ko if: search.searchStatus() === "nosearch" -->',
+    //         div({
+    //             style: {
+    //                 margin: '10px',
+    //                 border: '1px silver solid',
+    //                 padding: '8px',
+    //                 backgroundColor: 'silver',
+    //                 textAlign: 'center'
+    //             }
+    //         }, buildNoActiveSearch()),
+    //         '<!-- /ko -->',
+    //         // '<!-- ko if: search.searchStatus() === "noresults" -->',
+    //         // 'Sorry, no results',
+    //         // '<!-- /ko -->',
+    //         // '<!-- ko if: search.searchStatus() === "searching" -->',
+    //         // 'searching',
+    //         // '<!-- /ko -->',
+    //         // '<!-- ko if: search.searchStatus() === "error" -->',
+    //         // 'ERROR',
+    //         // '<!-- /ko -->'
+    //
+    //     ]);
+    // }
 
     function component() {
         return {

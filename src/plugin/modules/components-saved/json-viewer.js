@@ -2,7 +2,7 @@ define([
     'knockout',
     'kb_common/html',
     'numeral'
-], function (
+], function(
     ko,
     html,
     numeral
@@ -27,72 +27,72 @@ define([
 
     function makeBrowsable(key, obj, forceOpen) {
         switch (typeof obj) {
-        case 'string':
-            return {
-                type: typeof obj,
-                key: key,
-                value: obj,
-                display: String(obj)
-            };
-        case 'number':
-            return {
-                type: typeof obj,
-                key: key,
-                value: niceNumber(key, obj),
-                display: String(obj)
-            };
-        case 'boolean':
-            return {
-                type: typeof obj,
-                key: key,
-                value: obj,
-                display: String(obj)
-            };
-        case 'object':
-            if (obj === null) {
+            case 'string':
                 return {
-                    type: 'null',
+                    type: typeof obj,
                     key: key,
                     value: obj,
-                    display: 'null'
+                    display: String(obj)
                 };
-            } else if (obj instanceof Array) {
+            case 'number':
                 return {
-                    type: 'array',
+                    type: typeof obj,
                     key: key,
-                    show: ko.observable(forceOpen || false),
-                    value: obj.map(function (element) {
-                        // return makeBrowsable(element);
-                        return element;
-                    })
+                    value: niceNumber(key, obj),
+                    display: String(obj)
                 };
-            } else {
+            case 'boolean':
                 return {
-                    type: 'object',
-                    show: ko.observable(forceOpen || false),
+                    type: typeof obj,
                     key: key,
-                    value: Object.keys(obj).map(function (key) {
-                        return {
-                            key: key,
-                            value: obj[key]
-                        };
-                    }).sort(function (a, b) {
-                        if (a.key < b.key) {
-                            return -1;
-                        } else if (a.key > b.key) {
-                            return 1;
-                        }
-                        return 0;
-                    })
+                    value: obj,
+                    display: String(obj)
                 };
-            }
-        default:
-            return {
-                type: 'unknown',
-                key: key,
-                value: 'type not handled: ' + (typeof obj),
-                display: 'type not handled: ' + (typeof obj)
-            };
+            case 'object':
+                if (obj === null) {
+                    return {
+                        type: 'null',
+                        key: key,
+                        value: obj,
+                        display: 'null'
+                    };
+                } else if (obj instanceof Array) {
+                    return {
+                        type: 'array',
+                        key: key,
+                        show: ko.observable(forceOpen || false),
+                        value: obj.map(function(element) {
+                            // return makeBrowsable(element);
+                            return element;
+                        })
+                    };
+                } else {
+                    return {
+                        type: 'object',
+                        show: ko.observable(forceOpen || false),
+                        key: key,
+                        value: Object.keys(obj).map(function(key) {
+                            return {
+                                key: key,
+                                value: obj[key]
+                            };
+                        }).sort(function(a, b) {
+                            if (a.key < b.key) {
+                                return -1;
+                            } else if (a.key > b.key) {
+                                return 1;
+                            }
+                            return 0;
+                        })
+                    };
+                }
+            default:
+                return {
+                    type: 'unknown',
+                    key: key,
+                    value: 'type not handled: ' + (typeof obj),
+                    display: 'type not handled: ' + (typeof obj)
+                };
         }
     }
 

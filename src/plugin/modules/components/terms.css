@@ -1,0 +1,52 @@
+.component-terms {
+    padding-top: 12px;
+    max-width: 50em;
+    margin: 0 auto;
+}
+
+.component-terms .-index {
+    display: inline-block;
+    width: 30%;
+    /* color from bootstrap tabs */
+    border: 1px rgb(221, 221, 221) solid;
+    padding: 6px;
+    vertical-align: top;
+}
+
+.component-terms .-index ul {
+    list-style: none;
+    padding: 0;
+}
+
+.component-terms .-index li {
+    display: block;
+}
+
+.component-terms .-index li a.-item {
+    padding: 4px;
+    display: block;
+}
+
+.component-terms .-index .-item:hover,
+.component-terms .-index .-item.-active {
+    background-color: #DDD;
+}
+
+.component-terms .-body {
+    display: inline-block;
+    width: 70%;
+    /* border: 1px silver solid; */
+    padding: 6px 6px 6px 12px;
+    vertical-align: top;
+}
+
+.component-terms .-body .-title {
+    font-weight: bold;
+}
+
+.component-terms .-body .-content {}
+
+.component-terms .terms-content {
+    border: 1px silver solid;
+    padding: 6px;
+}

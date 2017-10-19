@@ -5,7 +5,6 @@ define([
     'kb_common/html',
     'kb_common/jsonRpc/genericClient',
     'kb_service/utils',
-    '../utils',
     'css!./browser.css'
 ], function (
     Promise,
@@ -13,8 +12,7 @@ define([
     marked,
     html,
     GenericClient,
-    serviceUtils,
-    utils
+    serviceUtils
 ) {
     'use strict';
 
@@ -22,6 +20,7 @@ define([
         span = t('span'),
         div = t('div'),
         button = t('button'),
+        label = t('label'),
         input = t('input'),
         select = t('select');
 
@@ -51,7 +50,7 @@ define([
 
     // NB: hmm, it looks like the params are those active in the tab which spawned
     // this component...
-    function viewModel(params, componentInfo) {
+    function viewModel(params) {
         // From parent search component.
         var search = params.search;
         var totalCount = search.searchTotal;
@@ -60,29 +59,10 @@ define([
         var pageSize = search.pageSize;
         var page = search.page;
 
-        var pageFrom = ko.pureComputed(function () {
-            if (!page()) {
-                return '';
-            }
-
-            return (page() - 1) * pageSize() + 1;
+        var pageSizeInput = ko.observable(String(pageSize()));
+        pageSizeInput.subscribe(function (newValue) {
+            pageSize(parseInt(newValue));
         });
-
-        var pageTo = ko.pureComputed(function () {
-            if (!page()) {
-                return '';
-            }
-            return Math.min(page() * pageSize(), totalCount());
-        });
-
-
-
-        var pageSizeInput = ko.pureComputed(function() {
-            return String(pageSize());
-        });
-        // pageSizeInput.subscribe(function (newValue) {
-        //     pageSize(parseInt(newValue));
-        // });
 
         // Our own, for now. Since these are overall properties of the
         // search capabilities, they should be foisted up to the search as well.
@@ -217,11 +197,11 @@ define([
         });
 
         // todo: yeah, this should be in the top level...
-        // pageSizeInput.subscribe(function () {
-        //     if (params.search.searchTotal() > 0) {
-        //         params.search.doSearch();
-        //     }
-        // });
+        pageSizeInput.subscribe(function () {
+            if (params.search.searchTotal() > 0) {
+                params.search.doSearch();
+            }
+        });
 
         // pageStart.subscribe(function() {
         //     if (params.search.searchResults().length > 0) {
@@ -233,13 +213,6 @@ define([
             // subscriptions.forEach(function(subscription) {
             //     subscription.dispose();
             // });
-        }
-
-        function isSearchState(states) {
-            var s = search.searchState();
-            return states.some(function (state) {
-                return (state === s);
-            });
         }
 
         return {
@@ -257,10 +230,8 @@ define([
             pageSize: pageSize,
             pageSizeInput: pageSizeInput,
             pageSizes: pageSizes,
-
-            pageFrom: pageFrom,
-            pageTo: pageTo,
-
+            // pageStart: pageStart,
+            // pageEnd: pageEnd,
             doFirst: doFirst,
             doLast: doLast,
             doPrevPage: doPrevPage,
@@ -271,9 +242,6 @@ define([
             sortFields: sortFields,
             sortDirection: sortDirection,
             sortDirections: sortDirections,
-
-            // Queries
-            isSearchState: isSearchState,
 
             // Actions
             doSearch: params.search.doSearch,
@@ -291,14 +259,13 @@ define([
 
     function buildPagingControls() {
         return div({
-            class: 'btn-toolbar ' + styles.classes.toolbar
+            class: 'btn-toolbar -toolbar'
         }, [
             div({
                 style: {
                     display: 'inline-block',
-                    width: '30%',
-                    verticalAlign: 'middle',
-                    whiteSpace: 'nowrap'
+                    width: '50%',
+                    verticalAlign: 'top'
                 }
             }, [
                 div({
@@ -311,28 +278,28 @@ define([
                         button({
                             dataBind: {
                                 click: 'doFirst',
-                                disable: '!page() || page() === 1 || searching()'
+                                disable: 'page() === 1 || searching()'
                             },
                             class: 'btn btn-default'
                         }, buildIcon('step-backward')),
                         button({
                             dataBind: {
                                 click: 'doPrevPage',
-                                disable: '!page() || page() === 1 || searching()'
+                                disable: 'page() === 1 || searching()'
                             },
                             class: 'btn btn-default'
                         }, buildIcon('backward')),
                         button({
                             dataBind: {
                                 click: 'doNextPage',
-                                disable: '!page() || page() === totalPages() || searching()'
+                                disable: 'page() === totalPages() || searching()'
                             },
                             class: 'btn btn-default'
                         }, buildIcon('forward')),
                         button({
                             dataBind: {
                                 click: 'doLast',
-                                disable: '!page() || page() === totalPages() || searching()'
+                                disable: 'page() === totalPages() || searching()'
                             },
                             class: 'btn btn-default'
                         }, buildIcon('step-forward')),
@@ -349,19 +316,18 @@ define([
                             dataBind: {
                                 style: {
                                     color: 'searching() ? "gray" : "black"'
-                                },
-                                ifnot: 'isSearchState(["none", "notfound"])'
+                                }
                             }
                         }, [
                             span({
                                 dataBind: {
-                                    text: 'pageFrom()'
+                                    text: '(page() - 1) * pageSize() + 1'
                                 }
                             }),
                             ' to ',
                             span({
                                 dataBind: {
-                                    text: 'pageTo()'
+                                    text: 'Math.min(page() * pageSize(), totalCount())'
                                 }
                             }),
                             ' of ',
@@ -388,23 +354,20 @@ define([
                                 ')'
                             ]),
                             '<!-- /ko -->',
-                            // '<!-- /ko -->'
+                            '<!-- /ko -->'
                         ])
                     ])
                 ]),
 
             ]),
-
             div({
                 style: {
                     display: 'inline-block',
-                    width: '20%',
-                    verticalAlign: 'middle',
-                    textAlign: 'center',
-                    whiteSpace: 'nowrap'
+                    width: '25%',
+                    verticalAlign: 'top',
+                    textAlign: 'center'
                 }
             }, [
-                '<!-- ko if: totalPages() && totalPages() > 1 -->',
                 span({
                     style: {
                         marginLeft: '6px'
@@ -446,236 +409,92 @@ define([
                     dataBind: {
                         text: 'totalPages()'
                     }
-                }),
-                '<!-- /ko -->',
+                })
             ]),
-
             div({
+                class: 'btn-group form-inline',
                 style: {
-                    display: 'inline-block',
-                    width: '50%',
-                    verticalAlign: 'middle',
+                    width: '25%',
+                    margin: '0',
                     textAlign: 'right',
-                    paddingRight: '10px',
-                    whiteSpace: 'nowrap'
+                    float: 'none',
+                    verticalAlign: 'top'
                 }
             }, [
-                '<!-- ko if: search.stagingJobs().length === 0 -->',
-                div({
+                label({
                     style: {
-                        display: 'inline-block',
-                        height: '25px'
+                        // for bootstrap
+                        marginBottom: '0',
+                        fontWeight: 'normal'
                     }
                 }, [
-                    'No current transfers'
-                ]),
-                '<!-- /ko -->',
-
-                '<!-- ko if: search.stagingJobs().length > 0 -->',
-
-                '<!-- ko ifnot: search.monitoringJobs() -->',
-                div({
-                    style: {
-                        display: 'inline-block',
-                        height: '25px'
-                    }
-                }, [
-                    'Transferred ',
-                    span({
+                    select({
                         dataBind: {
-                            text: 'search.stagingJobStates.completed'
+                            value: 'pageSizeInput',
+                            options: 'pageSizes',
+                            optionsText: '"label"',
+                            optionsValue: '"value"'
                         },
-                        style: {
-                            fontWeight: 'bold'
-                        }
+                        class: 'form-control'
                     }),
-                    ' file',
-                    '<!-- ko if: saerch.stagingJobs().length > 1 -->',
-                    's',
-                    '<!-- /ko -->',
-                    ' to your staging area'
-                ]),
-                '<!-- /ko -->',
-
-                '<!-- ko if: search.monitoringJobs() -->',
-                div({
-                    style: {
-                        display: 'inline-block',
-                        height: '25px'
-                    }
-                }, [
-                    'Transferring ',
-                    span({
-                        style: {
-                            fontSize: '80%'
-                        }
-                    }, html.loading())
-                ]),
-                div({
-                    style: {
-                        display: 'inline-block'
-                    }
-                }, 'Sent'),
-                div({
-                    dataBind: {
-                        text: 'search.stagingJobStates.sent',
-                        style: {
-                            'font-weight': 'search.stagingJobStates.sent() > 0 ? "bold" : "normal"',
-                            color: 'search.stagingJobStates.sent() > 0 ? "green" : "black"',
-                            border: 'search.stagingJobStates.sent() > 0 ? "1px green solid" : "1px silver dashed"'
-                        }
-                    },
-                    style: {
-                        display: 'inline-block',
-                        width: '25px',
-                        height: '25px',
-                        border: '1px silver solid',
-                        fontFamily: 'monospace',
-                        textAlign: 'center'
-                    }
-                }),
-                div({
-                    style: {
-                        display: 'inline-block',
-                        marginLeft: '4px'
-                    }
-                }, 'queued'),
-                div({
-                    dataBind: {
-                        text: 'search.stagingJobStates.queued',
-                        style: {
-                            'font-weight': 'search.stagingJobStates.queued() > 0 ? "bold" : "normal"',
-                            color: 'search.stagingJobStates.queued() > 0 ? "green" : "black"',
-                            border: 'search.stagingJobStates.queued() > 0 ? "1px green solid" : "1px silver dashed"'
-                        }
-                    },
-                    style: {
-                        display: 'inline-block',
-                        width: '25px',
-                        height: '25px',
-                        border: '1px silver solid',
-                        fontFamily: 'monospace',
-                        textAlign: 'center'
-                    }
-                }),
-                div({
-                    style: {
-                        display: 'inline-block',
-                        marginLeft: '4px'
-                    }
-                }, 'restoring'),
-                div({
-                    dataBind: {
-                        text: 'search.stagingJobStates.restoring',
-                        style: {
-                            'font-weight': 'search.stagingJobStates.restoring() > 0 ? "bold" : "normal"',
-                            color: 'search.stagingJobStates.restoring() > 0 ? "green" : "black"',
-                            border: 'search.stagingJobStates.restoring() > 0 ? "1px green solid" : "1px silver dashed"'
-                        }
-                    },
-                    style: {
-                        display: 'inline-block',
-                        width: '25px',
-                        height: '25px',
-                        border: '1px silver solid',
-                        fontFamily: 'monospace',
-                        textAlign: 'center'
-                    }
-                }),
-                div({
-                    style: {
-                        display: 'inline-block',
-                        marginLeft: '4px'
-                    }
-                }, 'copying'),
-                div({
-                    dataBind: {
-                        text: 'search.stagingJobStates.copying',
-                        style: {
-                            'font-weight': 'search.stagingJobStates.copying() > 0 ? "bold" : "normal"',
-                            color: 'search.stagingJobStates.copying() > 0 ? "green" : "black"',
-                            border: 'search.stagingJobStates.copying() > 0 ? "1px green solid" : "1px silver dashed"'
-                        }
-                    },
-                    style: {
-                        display: 'inline-block',
-                        width: '25px',
-                        height: '25px',
-                        border: '1px silver solid',
-                        fontFamily: 'monospace',
-                        textAlign: 'center'
-                    }
-                }),
-                div({
-                    style: {
-                        display: 'inline-block'
-                    }
-                }, 'completed'),
-                div({
-                    dataBind: {
-                        text: 'search.stagingJobStates.completed',
-                        style: {
-                            'font-weight': 'search.stagingJobStates.copying() > 0 ? "bold" : "normal"',
-                            color: 'search.stagingJobStates.copying() > 0 ? "green" : "black"',
-                            border: 'search.stagingJobStates.copying() > 0 ? "1px green solid" : "1px silver dashed"'
-                        }
-                    },
-                    style: {
-                        display: 'inline-block',
-                        width: '25px',
-                        height: '25px',
-                        border: '1px silver solid',
-                        fontFamily: 'monospace',
-                        textAlign: 'center'
-                    }
-                }),
-                '<!-- /ko -->',
-
-                '<!-- /ko -->'
-            ])
+                    ' items per page'
+                ])
+            ]),
+            // div({
+            //     class: 'btn-group form-inline',
+            //     style: {
+            //         width: '55%',
+            //         margin: '0',
+            //         textAlign: 'right',
+            //         float: 'none',
+            //         verticalAlign: 'top'
+            //     }
+            // }, [
+            //     label({
+            //         style: {
+            //             // for bootstrap
+            //             marginBottom: '0',
+            //             fontWeight: 'normal'
+            //         }
+            //     }, [
+            //         'Sort by ',
+            //         select({
+            //             dataBind: {
+            //                 value: 'sortBy',
+            //                 options: 'sortFields',
+            //                 optionsText: '"label"',
+            //                 optionsValue: '"key"',
+            //                 optionsCaption: '"Natural"'
+            //             },
+            //             class: 'form-control'
+            //         }),
+            //         select({
+            //             dataBind: {
+            //                 value: 'sortDirection',
+            //                 options: 'sortDirections',
+            //                 optionsText: '"label"',
+            //                 optionsValue: '"value"',
+            //                 disable: '!sortBy()'
+            //             },
+            //             class: 'form-control'
+            //         }),
+            //     ])
+            // ])
         ]);
     }
 
-
-    var styles = utils.makeStyles({
-        component: {
-            css: {
-                flex: '1 1 0px',
-                display: 'flex',
-                'flex-direction': 'column'
-            }
-        },
-        controls: {
-            css: {
-                flex: '0 0 50px'
-            }
-        },
-        toolbar: {
-            css: {
-                // borderBottom: '1px silver solid',
-                margin: '0',
-                // paddingBottom: '4px'
-            }
-        },
-        items: {
-            css: {
-                flex: '1 1 0px',
-                display: 'flex',
-                'flex-direction': 'column'
-            }
-        }
-    });
-
     function template() {
         return div({
-            class: styles.classes.component
+            class: 'component-jgisearch-browser'
         }, [
-            styles.sheet,
             div({
-                class: styles.classes.controls
+                style: {
+                    padding: '4px',
+                    marginTop: '10px',
+                    marginBottom: '6px'
+                }
             }, buildPagingControls()),
             div({
-                class: styles.classes.items,
                 dataBind: {
                     component: {
                         name: '"jgisearch/search-result"',
