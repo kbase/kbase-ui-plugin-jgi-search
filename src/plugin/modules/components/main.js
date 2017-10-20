@@ -296,7 +296,7 @@ define([
         // Fetch send a query and fetch the results.
         function fetchQuery(query, filter, page, pageSize) {
             var fields = [
-                'metadata.proposal_id','metadata.sequencing_project_id', 'metadata.analysis_project_id',
+                'metadata.proposal_id','metadata.sequencing_project_id', 'metadata.analysis_project_id', 'metadata.pmo_project_id',
                 'file_size', 'file_type', 'file_name', // file type, data type
                 'metadata.pmo_project.name', 'metadata.sequencing_project.sequencing_project_name', // title
                 'metadata.proposal.pi.last_name', 'metadata.proposal.pi.first_name', 'metadata.pmo_project.pi_name', // pi
@@ -418,8 +418,8 @@ define([
                     var hit = result.hits[0];
                     // var rowNumber = (page() - 1) * pageSize() + 1 + index;
                     var projectId;
-                    if (hit.source.metadata.sequencing_project_id) {
-                        projectId = hit.source.metadata.sequencing_project_id;
+                    if (hit.source.metadata.sequencing_project_id || hit.source.metadata.pmo_project_id) {
+                        projectId = hit.source.metadata.sequencing_project_id || hit.source.metadata.pmo_project_id;
                     } else {
                         projectId = 'n/a';
                     }
@@ -779,12 +779,18 @@ define([
 
                         var sequencingProjectId = (function (id) {
                             return {
-                                value: id || '-',
+                                value: id,
                                 addToSearch:  function () {
                                     seqProjectFilter.push(id);
                                 }
                             };
                         }(utils.getProp(hit.source.metadata, ['sequencing_project_id'])));
+
+                        var pmoProjectId = (function (id) {
+                            return {
+                                value: id
+                            };
+                        }(utils.getProp(hit.source.metadata, ['pmo_project_id'])));
 
                         var analysisProjectId = utils.getProp(hit.source.metadata, ['analysis_project_id'], '-');
 
@@ -899,6 +905,7 @@ define([
                             pi: pi,
                             proposalId: proposalId,
                             analysisProjectId: analysisProjectId,
+                            pmoProjectId: pmoProjectId,
                             sequencingProjectId: sequencingProjectId,
                             date: utils.usDate(hit.source.file_date),
                             modified: utils.usDate(hit.source.modified),

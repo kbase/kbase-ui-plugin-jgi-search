@@ -147,6 +147,15 @@ define([
                 }
             }
         },
+        pmoProjectId: {
+            css: {
+                flexBasis: '7%',
+                textAlign: 'right',
+                paddingRight: '3px',
+                fontStyle: 'italic',
+                color: 'gray'
+            }
+        },
         // analysisProjectId: {
         //     flexBasis: '7%',
         //     textAlign: 'right',
@@ -946,6 +955,7 @@ define([
             //     },
             //     class: [styles.classes.cell, styles.classes.proposalId]
             // }),
+            '<!-- ko if: sequencingProjectId.value -->',
             div({
                 dataBind: {
                     text: 'sequencingProjectId.value',
@@ -953,8 +963,24 @@ define([
                     clickBubble: false
                     // click: '$component.search.doAddToSearch.bind($data, $data, "sequencingProjectId")'
                 },
-                class: [styles.classes.cell, styles.classes.sequencingProjectId]
+                class: [styles.classes.cell, styles.classes.sequencingProjectId],
+                title: 'Sequencing Project ID'
             }),
+            '<!-- /ko -->',
+            '<!-- ko if: pmoProjectId.value -->',
+            div({
+                dataBind: {
+                    text: 'pmoProjectId.value',
+                },
+                class: [styles.classes.cell, styles.classes.pmoProjectId],
+                title: 'PMO Project ID'
+            }),
+            '<!-- /ko -->',
+            '<!-- ko ifnot: pmoProjectId.value || sequencingProjectId.value-->',
+            div({
+                class: [styles.classes.cell, styles.classes.pmoProjectId]
+            }),
+            '<!-- /ko -->',
             // div({
             //     dataBind: {
             //         text: 'analysisProjectId'
