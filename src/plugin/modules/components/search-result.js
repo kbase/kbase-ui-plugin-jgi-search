@@ -99,6 +99,7 @@ define([
             height: '35px',
             padding: '2px',
             display: 'flex',
+            flexDirection: 'row',
             alignItems: 'center'
         },
         headerCell: {
@@ -115,13 +116,14 @@ define([
         },
         innerCell: {
             flex: '1 1 0px',
-            display: 'block',
+            display: 'flex',
+            flexDirection: 'column',
             overflow: 'hidden',
             whiteSpace: 'nowrap',
             textOverflow: 'ellipsis'
         },
         titleCell: {
-            flexBasis: '29%'
+            flexBasis: '25%'
         },
         piCell: {
             flexBasis: '10%'
@@ -145,11 +147,11 @@ define([
                 }
             }
         },
-        analysisProjectId: {
-            flexBasis: '7%',
-            textAlign: 'right',
-            paddingRight: '3px'
-        },
+        // analysisProjectId: {
+        //     flexBasis: '7%',
+        //     textAlign: 'right',
+        //     paddingRight: '3px'
+        // },
 
         dateCell: {
             flexBasis: '10%'
@@ -161,13 +163,20 @@ define([
             flexBasis: '5%'
         },
         s1Cell: {
-            flexBasis: '5%'
+            flexBasis: '7%'
         },
         s2Cell: {
-            flexBasis: '5%'
+            flexBasis: '7%'
         },
-        s3Cell: {
-            flexBasis: '5%'
+        // s3Cell: {
+        //     flexBasis: '5%'
+        // },
+        fileSizeCell: {
+            flexBasis: '7%'
+        },
+        transferCell: {
+            flexBasis: '5%',
+            textAlign: 'center'
         },
         sectionHeader: {
             padding: '4px',
@@ -180,6 +189,23 @@ define([
         },
         private: {
             backgroundColor: 'green'
+        },
+        miniButton: {
+            css: {
+                padding: '2px',
+                border: '2px transparent solid',
+                cursor: 'pointer'
+            },
+            pseudo: {
+                hover: {
+                    border: '2px white solid'
+                },
+                active: {
+                    border: '2px white solid',
+                    backgroundColor: '#555',
+                    color: '#FFF'
+                }
+            }
         }
     });
 
@@ -292,6 +318,45 @@ define([
         function doAddProject(data) {
             params.search.projectFilter.push(data.projectId);
         }
+
+
+        function doStage(item) {
+            // spawn the staging request
+            // the search vm takes care of the rest...
+
+            // stagingStatus('requesting');
+
+            // TODO: need to work on the detail item structure!
+            //console.log('going to stage ...', data);
+
+            params.search.doStage(item.id)
+                .then(function (result) {
+                    if ('jobId' in result) {
+                        // we need to do this manually since main.js just
+                        // sets it in the results not the detail.
+                        // TODO: cache detail items in the main vm so that the
+                        // transfer job status will still be there if the user
+                        // closes and re-opens the detail.
+                        // TODO: restore job status whenever user scrolls through
+                        // data or pull s up detail...
+                        item.transferJob(result);
+                        // stagingStatus('sent');
+                    } else {
+                        console.error('ERROR', result);
+                        // stagingStatus('error');
+                        // error(result);
+                    }
+                })
+                .catch(function (err) {
+                    console.error('ERROR', err);
+                    // stagingStatus('error');
+                    // error({
+                    //     message: err.message,
+                    //     error: err
+                    // });
+                });
+        }
+
         return {
             search: params.search,
             searchResults: searchResults,
@@ -299,7 +364,8 @@ define([
             infoTopics: infoTopics,
             doShowTip: doShowTip,
             doShowInfo: doShowInfo,
-            doAddProject: doAddProject
+            doAddProject: doAddProject,
+            doStage: doStage
         };
     }
 
@@ -794,6 +860,51 @@ define([
     //     };
     // }
 
+    function buildCartButton() {
+        return span({
+            class: styles.classes.miniButton,
+            // dataToggle: 'tooltip',
+            // dataPlacement: 'left',
+            title: 'Click here to save this search result in your search shopping cart',
+            dataBind: {
+                click: '$component.doStage',
+                clickBubble: false
+            }
+        }, [
+            '<!-- ko if: transferJob() -->',
+
+            '<!-- ko if: transferJob().status() !== "completed" -->',
+            span({
+                class: 'fa fa-spinner fa-pulse fa-fw',
+                style: {
+                    // margin: '0 4px',
+                    color: 'orange'
+                }
+            }),
+            '<!-- /ko -->',
+
+            '<!-- ko if: transferJob().status() == "completed" -->',
+            span({
+                class: 'fa fa-check',
+                style: {
+                    color: 'green'
+                }
+            }),
+            '<!-- /ko -->',
+
+            '<!-- /ko -->',
+
+            '<!-- ko ifnot: transferJob() -->',
+            span({
+                class: 'fa fa-download fa-rotate-270',
+                // style: {
+                //     margin: '0 4px'
+                // }
+            }),
+            '<!-- /ko -->'
+        ]);
+    }
+
     function buildResult() {
         var rowClass = {};
         rowClass[styles.classes.selected] = 'selected()';
@@ -844,12 +955,12 @@ define([
                 },
                 class: [styles.classes.cell, styles.classes.sequencingProjectId]
             }),
-            div({
-                dataBind: {
-                    text: 'analysisProjectId'
-                },
-                class: [styles.classes.cell, styles.classes.analysisProjectId]
-            }),
+            // div({
+            //     dataBind: {
+            //         text: 'analysisProjectId'
+            //     },
+            //     class: [styles.classes.cell, styles.classes.analysisProjectId]
+            // }),
             div({
                 dataBind: {
                     text: 'modified'
@@ -891,16 +1002,25 @@ define([
                 class: [styles.classes.innerCell]
             })),
             div({
-                class: [styles.classes.cell, styles.classes.s3Cell]
+                class: [styles.classes.cell, styles.classes.fileSizeCell]
             }, div({
                 dataBind: {
-                    text: 's3',
+                    typedText: {
+                        value: 'fileSize',
+                        type: '"number"',
+                        format: '"0.0 b"'
+                    },
                     attr: {
-                        title: 's3'
+                        title: '"File size is " + fileSize'
                     }
                 },
                 class: [styles.classes.innerCell]
             })),
+            div({
+                class: [styles.classes.cell, styles.classes.transferCell]
+            }, div({
+                class: [styles.classes.innerCell]
+            }, buildCartButton())),
         ]);
     }
 
@@ -942,7 +1062,11 @@ define([
             p([
                 'To get back to this page any time, just remove all search conditions above!'
             ]),
-            blockquote([
+            blockquote({
+                style: {
+                    fontSize: 'inherit'
+                }
+            }, [
                 'Try a very simple search: ', buildExample('coli'), '.'
             ]),
             p([
@@ -953,13 +1077,21 @@ define([
                 ' record. To search by just part of a word, use an asterisk wildcard (*) at the',
                 ' beginning or end (or both!).'
             ]),
-            blockquote([
+            blockquote({
+                style: {
+                    fontSize: 'inherit'
+                }
+            },[
                 'Try ', buildExample('Escher'), '. No results? Just add an asterisk to the end ', buildExample('Escher*'), '.'
             ]),
             p([
                 'All search terms are applied to narrow your search.'
             ]),
-            blockquote([
+            blockquote({
+                style: {
+                    fontSize: 'inherit'
+                }
+            },[
                 'Try ', buildExample('coli MG1655'),
             ]),
             p([
@@ -980,17 +1112,20 @@ define([
                     class: [styles.classes.headerCell, styles.classes.titleCell]
                 }, [buildSortControl('title'), 'Title']),
                 div({
-                    class: [styles.classes.headerCell, styles.classes.piCell]
+                    class: [styles.classes.headerCell, styles.classes.piCell],
+                    title: 'Principal Investigator'
                 }, [buildSortControl('pi'), 'PI']),
                 // div({
                 //     class: [styles.classes.headerCell, styles.classes.proposalId]
                 // }, [buildSortControl('proposalId'), 'Prop.']),
                 div({
-                    class: [styles.classes.headerCell, styles.classes.sequencingProjectId]
-                }, [buildSortControl('sequencingProjectId'), 'Seq.']),
-                div({
-                    class: [styles.classes.headerCell, styles.classes.analysisProjectId]
-                }, [buildSortControl('analysisProjectId'), 'Ana.']),
+                    class: [styles.classes.headerCell, styles.classes.sequencingProjectId],
+                    title: 'Sequencing project id'
+                }, [buildSortControl('sequencingProjectId'), 'Project']),
+                // div({
+                //     class: [styles.classes.headerCell, styles.classes.analysisProjectId],
+                //     title: 'Analysis project id'
+                // }, [buildSortControl('analysisProjectId'), 'Anal. proj.']),
                 div({
                     class: [styles.classes.headerCell, styles.classes.dateCell]
                 }, [buildSortControl('date'), 'Date']),
@@ -998,17 +1133,25 @@ define([
                     class: [styles.classes.headerCell, styles.classes.scientificNameCell]
                 }, [buildSortControl('scientific-name'), 'Scientific name']),
                 div({
-                    class: [styles.classes.headerCell, styles.classes.dataTypeCell]
+                    class: [styles.classes.headerCell, styles.classes.dataTypeCell],
+                    title: 'File data type'
                 }, [buildSortControl('type'), 'Type']),
                 div({
-                    class: [styles.classes.headerCell, styles.classes.s1Cell]
+                    class: [styles.classes.headerCell, styles.classes.s1Cell],
+                    title: 'Special column - depends on file type'
                 }, 'S1'),
                 div({
-                    class: [styles.classes.headerCell, styles.classes.s2Cell]
+                    class: [styles.classes.headerCell, styles.classes.s2Cell],
+                    title: 'Special column - depends on file type'
                 }, 'S2'),
                 div({
-                    class: [styles.classes.headerCell, styles.classes.s3Cell]
-                }, 'S3')
+                    class: [styles.classes.headerCell, styles.classes.fileSizeCell],
+                    title: 'File size'
+                }, 'Size'),
+                div({
+                    class: [styles.classes.headerCell, styles.classes.transferCell],
+                    title: 'Transfer to your KBase staging area'
+                }, '')
             ]),
             div({
                 class: styles.classes.body

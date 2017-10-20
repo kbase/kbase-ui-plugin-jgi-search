@@ -31,7 +31,7 @@ define([
             // spawn the staging request
             // the search vm takes care of the rest...
 
-            stagingStatus('requesting');
+            // stagingStatus('requesting');
 
             // TODO: need to work on the detail item structure!
             console.log('going to stage ...', params.item.data.id);
@@ -40,20 +40,23 @@ define([
                 .then(function (result) {
                     console.log('result', result);
                     if ('jobId' in result) {
-                        stagingStatus('sent');
+                        params.item.transferJob(result);
+                        // stagingStatus('sent');
                     } else {
-                        stagingStatus('error');
+                        // stagingStatus('error');
                         error(result);
                     }
                 })
                 .catch(function (err) {
-                    stagingStatus('error');
+                    // stagingStatus('error');
                     error({
                         message: err.message,
                         error: err
                     });
                 });
         }
+
+        var transferJob = ko.observable();
 
         return {
             item: params.item,
@@ -285,19 +288,66 @@ define([
                 }, [
                     button({
                         dataBind: {
-                            click: '$component.doStage'
+                            click: '$component.doStage',
+                            disable: 'transferJob()'
                         },
                         class: 'btn btn-primary'
-                    }, 'Copy JGI File -> Your KBase Staging Area')
+                    }, [
+                        span({
+                            class: 'fa fa-download fa-rotate-270',
+                            style: {
+                                margin: '0 4px 0 0'
+                            }
+                        }),
+                        'Copy JGI File to your Data Staging Area'
+                    ])
                 ]),
                 div({
-
+                    style: {
+                        textAlign: 'center',
+                        marginTop: '4px'
+                    }
                 }, [
-                    div({
-                        dataBind: {
-                            text: '$component.stagingStatus'
-                        }
-                    }),
+                    '<!-- ko if: transferJob() -->',
+
+                    '<!-- ko if: transferJob().status() !== "completed" -->',
+                    div([
+                        span({
+                            class: 'fa fa-spinner fa-pulse fa-fw',
+                            style: {
+                                // margin: '0 4px',
+                                color: 'orange'
+                            }
+                        }),
+                        span({
+                            dataBind: {
+                                text: 'transferJob().status()'
+                            },
+                            style: {
+                                marginLeft: '4px'
+                            }
+                        }),
+                    ]),
+                    '<!-- /ko -->',
+
+                    '<!-- ko if: transferJob().status() == "completed" -->',
+                    div([
+                        span({
+                            class: 'fa fa-check',
+                            style: {
+                                color: 'green'
+                            }
+                        }),
+                        span({
+                            style: {
+                                marginLeft: '4px'
+                            }
+                        }, 'Transfer complete!'),
+                    ]),
+                    '<!-- /ko -->',
+
+                    '<!-- /ko -->',
+
                     '<!-- ko if: $component.error -->',
                     div({
                         dataBind: {
@@ -315,29 +365,60 @@ define([
                     ]),
                     '<!-- /ko -->'
                 ])
-                // table({
-                //     class: 'table table-striped form'
-                // }, [
-                //     tr([
-                //         th('Status'),
-                //         td({
-                //             dataBind: {
-                //                 text: 'stagingStatus'
-                //             }
-                //         })
-                //     ]),
-                //     tr([
-                //         th('Progress'),
-                //         td({
-                //             dataBind: {
-                //                 text: 'stagingProgress',
-                //                 style: {
-                //                     color: 'stagingProgressColor'
-                //                 }
-                //             }
-                //         })
-                //     ])
-                // ])
+            ]),
+            div({
+                style: {
+                    width: '50em',
+                    margin: '10px auto 20px auto'
+                }
+            }, [
+                '<!-- ko if: transferJob() -->',
+
+                '<!-- ko if: transferJob().status() !== "completed" -->',
+                div({
+                    style: {
+                        border: '1px orange solid',
+                        padding: '10px'
+                    }
+                }, [
+                    p([
+                        'Transfer is in progress. You may close this window and monitor it from the main results window.'
+                    ])
+                ]),
+                '<!-- /ko -->',
+
+                '<!-- ko if: transferJob().status() == "completed" -->',
+                div({
+                    style: {
+                        border: '1px green solid',
+                        padding: '10px'
+                    }
+                }, [
+                    p([
+                        'Transfer is complete. You will find your transferred file in the Data Panel\'s Staging tab of any Narrative, ',
+                        'from where you may import it.'
+                    ])
+                ]),
+                '<!-- /ko -->',
+
+                '<!-- /ko -->',
+
+                '<!-- ko if: $component.error -->',
+                div({
+                    dataBind: {
+                        with: '$component.error'
+                    },
+                    style: {
+                        border: '2px red solid'
+                    }
+                }, [
+                    div({
+                        dataBind: {
+                            text: 'message'
+                        }
+                    })
+                ]),
+                '<!-- /ko -->'
             ])
         ]);
     }
@@ -451,7 +532,7 @@ define([
     function buildSourceFileInfo() {
         return div([
             div({
-                class: 'section-header'
+                class: styles.classes.sectionHeader
             }, 'File info'),
             table({
                 class: 'table table-striped',
@@ -534,7 +615,7 @@ define([
 
             '<!-- ko if: kbaseType -->',
             div({
-                class: 'section-header'
+                class: styles.classes.sectionHeader
             }, 'File import metadata'),
             p([
                 'This information may be required when importing the data into KBase.'

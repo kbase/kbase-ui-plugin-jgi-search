@@ -488,47 +488,6 @@ define([
         }, text);
     }
 
-    function buildNoActiveSearch() {
-        return div({
-            style: {
-                textAlign: 'left',
-                maxWidth: '50em',
-                margin: '0 auto'
-            }
-        }, [
-            p('Hi, you don\'t have an active search, so there isn\'t anything to show you.'),
-            p([
-                'To start a search, simply type into the search box above. '
-            ]),
-            p([
-                'To get back to this page any time, just remove all search conditions above!'
-            ]),
-            blockquote([
-                'Try a very simple search: ', buildExample('coli'), '.'
-            ]),
-            p([
-                'The search matches whole words against the entire ',
-                a({
-                    href: ''
-                }, 'JAMO'),
-                ' record. To search by just part of a word, use an asterisk wildcard (*) at the',
-                ' beginning or end (or both!).'
-            ]),
-            blockquote([
-                'Try ', buildExample('Escher'), '. No results? Just add an asterisk to the end ', buildExample('Escher*'), '.'
-            ]),
-            p([
-                'All search terms are applied to narrow your search.'
-            ]),
-            blockquote([
-                'Try ', buildExample('coli MG1655'),
-            ]),
-            p([
-                'You may use one or more filters to additionally narrow down the search'
-            ])
-        ]);
-    }
-
     var styles = utils.makeStyles({
         component: {
             flex: '1 1 0px',
@@ -569,21 +528,7 @@ define([
             div({
                 class: styles.classes.resultArea
             }, [
-                // '<!-- ko ifnot: search.searchState() === "none" -->',
-                // '<!-- ko if: ["pending", "inprogress", "success", "notfound"].some(function (s) {search.searchState() === s}) -->',
                 buildResultsArea(),
-                // '<!-- /ko -->',
-                // '<!-- ko if: search.searchState() === "none" -->',
-                // div({
-                //     style: {
-                //         margin: '10px',
-                //         border: '1px silver solid',
-                //         padding: '8px',
-                //         backgroundColor: 'silver',
-                //         textAlign: 'center'
-                //     }
-                // }, buildNoActiveSearch()),
-                // '<!-- /ko -->'
             ])
         ]);
     }

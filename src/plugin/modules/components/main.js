@@ -142,7 +142,7 @@ define([
                 completed: 0
             };
             stagingJobs().forEach(function (job) {
-                var newState = job.status;
+                var newState = job.status();
                 if (newState in states) {
                     states[newState] += 1;
                 } else {
@@ -183,24 +183,21 @@ define([
             }
             function checkProgress() {
                 var jobChecks = stagingJobs().map(function (job) {
-                    if (job.status === 'completed') {
+                    if (job.status() === 'completed') {
                         return;
                     }
-                    return Promise.all([
-                        job.id,
-                        rpc.call('jgi_gateway_eap', 'stage_status', {
-                            job_id: job.id
+                    return rpc.call('jgi_gateway_eap', 'stage_status', {
+                        job_id: job.jobId
+                    })
+                        .spread(function (result, error) {
+                            if (error) {
+                                throw new Error('Error checking job state: ' + error.message);
+                            }
+                            return result;
                         })
-                            .spread(function (result, error) {
-                                if (error) {
-                                    throw new Error('Error checking job state: ' + error.message);
-                                }
-                                return result;
-                            })
-                    ])
-                        .spread(function (id, result) {
+                        .then(function (result) {
                             var status = utils.grokStageStats(result.message);
-                            job.status = status.status;
+                            job.status(status.status);
                             return status.status;
                         });
                 }).filter(function (jobCheck) {
@@ -252,15 +249,30 @@ define([
                 .spread(function (result, error) {
                     if (result) {
                         // stagingSpec.stagingStatus('Staging submitted with job id ' + result.job_id);
-                        console.log('got result', result);
-                        stagingJobs.push({
-                            id: result.job_id,
+                        // console.log('got result', result);
+                        var job = {
+                            dbId: id,
+                            jobId: result.job_id,
                             started: new Date(),
-                            status: 'sent'
-                        });
-                        return {
-                            jobId: result.job_id
+                            status: ko.observable('sent')
                         };
+                        stagingJobs.push(job);
+
+                        // Set it it the results item as well.
+                        var res = searchResults();
+                        for (var i = 0; i < res.length; i += 1) {
+                            // console.log('item', item, item.id, job.dbId);
+                            var item = res[i];
+                            if (item.id === job.dbId) {
+                                item.transferJob(job);
+                                break;
+                            }
+                        }
+
+                        return job;
+                        // return {
+                        //     jobId: result.job_id
+                        // };
 
                         // monitorProgress(result.job_id, stagingSpec.stagingProgress, stagingSpec.stagingProgressColor);
                     } else {
@@ -285,7 +297,7 @@ define([
         function fetchQuery(query, filter, page, pageSize) {
             var fields = [
                 'metadata.proposal_id','metadata.sequencing_project_id', 'metadata.analysis_project_id',
-                'file_type', 'file_name', // file type, data type
+                'file_size', 'file_type', 'file_name', // file type, data type
                 'metadata.pmo_project.name', 'metadata.sequencing_project.sequencing_project_name', // title
                 'metadata.proposal.pi.last_name', 'metadata.proposal.pi.first_name', 'metadata.pmo_project.pi_name', // pi
                 // scientific name
@@ -438,8 +450,16 @@ define([
 
                     var pi = utils.grokPI(hit, fileType);
 
+                    // have a current transfer job?
+
+                    var jobs = stagingJobs().filter(function (job) {
+                        return job.dbId === hit.id;
+                    });
+                    var transferJob = jobs[0];
+
                     return {
                         // rowNumber: rowNumber,
+                        id: hit.id,
                         score: numeral(hit.score).format('00.00'),
                         type: hit.type,
                         title: title,
@@ -477,7 +497,9 @@ define([
                         showInfo: ko.observable(false),
                         detailFormatted: JSON.stringify(hit.source, null, 4),
                         source: hit.source,
-                        data: hit
+                        data: hit,
+                        // UI
+                        transferJob: ko.observable(transferJob)
                     };
                 });
         }
@@ -745,6 +767,11 @@ define([
                     searchResults.removeAll();
                     searchElapsed(stats.request_elapsed_time);
 
+                    var jobMap = {};
+                    stagingJobs().forEach(function (job) {
+                        jobMap[job.dbId] = job;
+                    });
+
                     result.hits.forEach(function (hit, index) {
                         // var project = hit.source.metadata;
                         var rowNumber = (page() - 1) * pageSize() + 1 + index;
@@ -879,9 +906,12 @@ define([
                             s1: s1,
                             s2: s2,
                             s3: '-',
+                            // fileSize: numeral(hit.source.file_size).format('0.0 b'),
+                            fileSize: hit.source.file_size,
                             // view stuff
                             selected: ko.observable(false),
-                            isPublic: utils.getProp(hit, 'source._es_public_data', false)
+                            isPublic: utils.getProp(hit, 'source._es_public_data', false),
+                            transferJob: ko.observable(jobMap[hit.id])
                         };
                         searchResults.push(resultItem);
                     });
