@@ -50,3 +50,8 @@
     border: 1px silver solid;
     padding: 6px;
 }
+
+.component-terms .terms-content blockquote {
+    font-size: inherit;
+    font-style: italic;
+}
