@@ -592,6 +592,7 @@ define([
                 return null;
             }
 
+
             var rows = Math.floor(totalHeight / rowHeight);
             return rows;
         });
@@ -935,6 +936,11 @@ define([
         page.subscribe(function () {
             doSearch();
         });
+
+        pageSize.subscribe(function() {
+            doSearch();
+        });
+
 
 
         searchQuery.subscribe(function () {
