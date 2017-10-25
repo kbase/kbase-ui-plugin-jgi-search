@@ -46,7 +46,7 @@ define([
                 .join('; ');
         }
         return '';
-    }    
+    }
 
     function grokFastq(dataTypeDef, hit) {
 
@@ -725,7 +725,6 @@ define([
 
     return {
         komponent: komponent,
-        makeStyles: makeStyles,
         grokTitle: grokTitle,
         grokScientificName: grokScientificName,
         grokPI: grokPI,
