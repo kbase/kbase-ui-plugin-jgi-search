@@ -11,10 +11,6 @@ source:
       file: styles.css
 install:
   widgets:
-    # -
-    #   module: panel2
-    #   id: kb_jgi_search2_panel
-    #   type: factory
     -
       module: panel
       id: jgi-search_panel
