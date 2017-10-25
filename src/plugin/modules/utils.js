@@ -46,55 +46,7 @@ define([
                 .join('; ');
         }
         return '';
-    }
-
-    function makeStyles(styleDefs) {
-        var classes = {};
-
-        // generate unique class names
-        Object.keys(styleDefs).forEach(function (key) {
-            var id = key + '_' + html.genId();
-
-            classes[key] = id;
-
-            if (!styleDefs[key].css) {
-                styleDefs[key] = {
-                    css: styleDefs[key]
-                }
-            }
-
-            styleDefs[key].id  = id;
-        });
-
-        var sheet = [];
-        Object.keys(styleDefs).forEach(function (key) {
-            var style = styleDefs[key];
-            var pseudo = '';
-            sheet.push([
-                '.',
-                style.id + pseudo,
-                '{',
-                makeStyleAttribs(style.css),
-                '}'
-            ].join(''));
-            if (style.pseudo) {
-                Object.keys(style.pseudo).forEach(function (key) {
-                    sheet.push([
-                        '.',
-                        style.id + ':' + key,
-                        '{',
-                        makeStyleAttribs(style.pseudo[key]),
-                        '}'
-                    ].join(''));
-                })
-            }
-        });
-        return {
-            classes: classes,
-            def: styleDefs,
-            sheet: style(sheet.join('\n'))
-        };
-    }
+    }    
 
     function grokFastq(dataTypeDef, hit) {
 

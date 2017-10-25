@@ -25,7 +25,7 @@ define([
         td = t('td'),
         h3 = t('h3');
 
-    var styles = utils.makeStyles({
+    var styles = html.makeStyles({
         component: {
             flex: '1 1 0px',
             display: 'flex',
@@ -967,6 +967,7 @@ define([
                 title: 'Sequencing Project ID'
             }),
             '<!-- /ko -->',
+            '<!-- ko ifnot: sequencingProjectId.value -->',
             '<!-- ko if: pmoProjectId.value -->',
             div({
                 dataBind: {
@@ -976,11 +977,13 @@ define([
                 title: 'PMO Project ID'
             }),
             '<!-- /ko -->',
-            '<!-- ko ifnot: pmoProjectId.value || sequencingProjectId.value-->',
+            '<!-- ko ifnot: pmoProjectId.value -->',
             div({
                 class: [styles.classes.cell, styles.classes.pmoProjectId]
             }),
             '<!-- /ko -->',
+            '<!-- /ko -->',
+
             // div({
             //     dataBind: {
             //         text: 'analysisProjectId'

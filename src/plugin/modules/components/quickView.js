@@ -67,7 +67,7 @@ define([
         };
     }
 
-    var styles = utils.makeStyles({
+    var styles = html.makeStyles({
         component: {
             css: {
                 flex: '1 1 0px',
