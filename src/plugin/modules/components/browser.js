@@ -301,7 +301,9 @@ define([
                     display: 'inline-block',
                     width: '30%',
                     verticalAlign: 'middle',
-                    whiteSpace: 'nowrap'
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis'
                 }
             }, [
                 div({
@@ -404,7 +406,9 @@ define([
                     width: '20%',
                     verticalAlign: 'middle',
                     textAlign: 'center',
-                    whiteSpace: 'nowrap'
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis'
                 }
             }, [
                 '<!-- ko if: totalPages() && totalPages() > 1 -->',
@@ -460,7 +464,9 @@ define([
                     verticalAlign: 'middle',
                     textAlign: 'right',
                     paddingRight: '10px',
-                    whiteSpace: 'nowrap'
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis'
                 }
             }, [
                 '<!-- ko if: search.stagingJobs().length === 0 -->',
