@@ -431,9 +431,9 @@ define([
 
     function grokStageStats(message) {
         // NOTE: yes the strings are quoted!
-        var queuedRe = /^"In_Queue"$/;
-        var progressRe = /^"In Progress\. Total files = ([\d]+)\. Copy complete = ([\d]+)\. Restore in progress = ([\d]+)\. Copy in progress = ([\d]+)"$/;
-        var completedRe = /^"Transfer Complete\. Transfered ([\d]+) files\."$/;
+        var queuedRe = /^In_Queue$/;
+        var progressRe = /^In Progress\. Total files = ([\d]+)\. Copy complete = ([\d]+)\. Restore in progress = ([\d]+)\. Copy in progress = ([\d]+)$/;
+        var completedRe = /^Transfer Complete\. Transfered ([\d]+) files\.$/;
 
         if (queuedRe.test(message)) {
             return {

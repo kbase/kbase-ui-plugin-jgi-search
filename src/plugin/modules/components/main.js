@@ -196,7 +196,7 @@ define([
                             return result;
                         })
                         .then(function (result) {
-                            var status = utils.grokStageStats(result.message);
+                            var status = utils.grokStageStats(result);
                             job.status(status.status);
                             return status.status;
                         });
