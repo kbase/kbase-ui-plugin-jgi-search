@@ -1021,15 +1021,29 @@ define([
             })),
             div({
                 class: [styles.classes.cell, styles.classes.s2Cell]
-            }, div({
+            }, div([
+              '<!-- ko if: s2.url -->',
+              a({
                 dataBind: {
-                    text: 's2',
-                    attr: {
-                        title: 's2'
-                    }
-                },
-                class: [styles.classes.innerCell]
-            })),
+                  attr: {
+                    href: 's2.url',
+                    target: '"_blank"'
+                  },
+                  // Just to disable bubbling.
+                  click: 'function () {return true;}',
+                  clickBubble: false,
+                  text: 's2.text'
+                }
+              }),
+              '<!-- /ko -->',
+              '<!-- ko if: !s2.url -->',
+              span({
+                dataBind: {
+                  text: 's2'
+                }
+              }),
+              '<!-- /ko -->'
+            ])),
             div({
                 class: [styles.classes.cell, styles.classes.fileSizeCell]
             }, div({
@@ -1054,14 +1068,12 @@ define([
     }
 
     function buildSortControl() {
-        return '';
-        // disable for now since don't have sort on back end
-        // return span({
-        //     class: 'fa fa-sort',
-        //     style: {
-        //         marginRight: '2px'
-        //     }
-        // });
+        return span({
+            class: 'fa fa-sort',
+            style: {
+                marginRight: '2px'
+            }
+        });
     }
 
     function buildExample(text) {

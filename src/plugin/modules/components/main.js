@@ -308,7 +308,8 @@ define([
                 'modified', // modified
                 '_es_public_data', // is the data public?
                 // fastq
-                'metadata.portal.display_location', 'metadata.sow_segment.index_sequence'
+                'metadata.portal.display_location', 'metadata.sow_segment.index_sequence',
+                'metadata.gold_data.gold_url', 'metadata.gold_data.gold_stamp_id'
             ];
             var param = {
                 query: query,
@@ -892,7 +893,25 @@ define([
                         var s2;
                         switch (fileType.dataType) {
                         case 'fastq':
-                            s2 = utils.getProp(hit, 'source.metadata.sow_segment.index_sequence', '-');
+                            // s2 = utils.getProp(hit, 'source.metadata.sow_segment.index_sequence', '-');
+                            if (utils.hasProp(hit, 'source.metadata.gold_data')) {
+                              var goldUrl;
+                              if (utils.hasProp(hit, 'source.metadata.gold_data.gold_url')) {
+                                goldUrl = utils.getProp(hit, 'source.metadata.gold_data.gold_url');
+                              } else if (utils.hasProp(hit, 'source.metadata.gold_data.gold_stamp_id')) {
+                                goldUrl = 'https://gold.jgi.doe.gov/projects?id=' +
+                                           utils.getProp(hit, 'source.metadata.gold_data.gold_stamp_id');
+                              }
+                              if (goldUrl) {
+                                s2 = {
+                                  text: 'gold',
+                                  url: goldUrl
+                                };
+                              }
+                            }
+                            if (!s2) {
+                              s2 = '-';
+                            }
                             break;
                         default:
                             s2 = '-';
