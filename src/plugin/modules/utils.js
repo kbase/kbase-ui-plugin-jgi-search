@@ -545,6 +545,46 @@ define([
         return defaultValue;
     }
 
+    function hasProp(obj, props) {
+        if (typeof props === 'string') {
+            props = [props];
+        }
+        function getit(o, p) {
+            if (p.length === 0) {
+                return;
+            }
+            var value;
+            if (o instanceof Array) {
+                var index = parseInt(o.pop());
+                if (isNaN(index)) {
+                    return;
+                }
+                value = o[index];
+            } else {
+                value = o[p.pop()];
+            }
+            if (p.length === 0) {
+                return value;
+            }
+            if (typeof value !== 'object') {
+                return;
+            }
+            if (value === null) {
+                return;
+            }
+            return getit(value, p);
+        }
+        for (var i = 0; i < props.length; i += 1) {
+            var prop = props[i].split('.');
+            var value = getit(obj, prop.reverse());
+            if (value === undefined) {
+                continue;
+            }
+            return true;
+        }
+        return false;
+    }
+
     /*
     A user input search expression is converted to an elasticsearch
     simple query string.
@@ -736,6 +776,7 @@ define([
         normalizeFileType: normalizeFileType,
         usDate: usDate,
         getProp: getProp,
+        hasProp: hasProp,
         parseSearchExpression: parseSearchExpression,
         isEqual: isEqual
     };
