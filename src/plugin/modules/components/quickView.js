@@ -124,11 +124,11 @@ define([
         ]);
     }
 
-    function buildProjectInfo() {
+    function buildSequencingdProjectInfo() {
         return table({
             class: 'table table-striped',
             dataBind: {
-                with: 'project'
+                with: 'sequencingProject'
             }
         }, [
             tr([
@@ -182,6 +182,64 @@ define([
         ]);
     }
 
+    function buildAnalysisProjectInfo() {
+        return table({
+            class: 'table table-striped',
+            dataBind: {
+                with: 'analysisProject'
+            }
+        }, [
+            tr([
+                th('Name'),
+                td({
+                    dataBind: {
+                        text: 'name'
+                    }
+                })
+            ]),
+            tr([
+                th('ID'),
+                td({
+                    dataBind: {
+                        text: 'id'
+                    }
+                })
+            ]),
+            tr([
+                th('Method'),
+                td({
+                    dataBind: {
+                        text: 'assemblyMethod'
+                    }
+                })
+            ]),
+            tr([
+                th('Genome type'),
+                td({
+                    dataBind: {
+                        text: 'genomeType'
+                    }
+                })
+            ]),
+            tr([
+                th('Modified'),
+                td({
+                    dataBind: {
+                        text: 'modificationDate'
+                    }
+                })
+            ]),
+            tr([
+                th('Comments'),
+                td({
+                    dataBind: {
+                        text: 'comments'
+                    }
+                })
+            ])
+        ]);
+    }
+
     function buildProjectView() {
         return div({
             class: 'container-fluid',
@@ -196,12 +254,56 @@ define([
                     class: 'col-md-6'
                 }, [
                     h3('Proposal'),
-                    buildProposalInfo()
+                    '<!-- ko if: proposal -->',
+                    buildProposalInfo(),
+                    '<!-- /ko -->',
+                    '<!-- ko ifnot: proposal -->',
+                    div({
+                        style: {
+                            fontStyle: 'italic',
+                            textAlign: 'center'
+                        }
+                    }, 'No proposal details available'),
+                    '<!-- /ko -->'
                 ]), div({
                     class: 'col-md-6'
                 }, [
                     h3('Sequencing Project'),
-                    buildProjectInfo()
+                    '<!-- ko if: sequencingProject -->',
+                    buildSequencingdProjectInfo(),
+                    '<!-- /ko -->',
+                    '<!-- ko ifnot: sequencingProject -->',
+                    div({
+                        style: {
+                            fontStyle: 'italic',
+                            textAlign: 'center'
+                        }
+                    }, 'No sequencing project details available'),
+                    '<!-- /ko -->'
+                ])
+            ]),
+            div({
+                class: 'row'
+            }, [
+                div({
+                    class: 'col-md-6'
+                }, [
+                    
+                ]), div({
+                    class: 'col-md-6'
+                }, [
+                    h3('Analysis Project'),
+                    '<!-- ko if: analysisProject -->',
+                    buildAnalysisProjectInfo(),
+                    '<!-- /ko -->',
+                    '<!-- ko ifnot: analysisProject -->',
+                    div({
+                        style: {
+                            fontStyle: 'italic',
+                            textAlign: 'center'
+                        }
+                    }, 'No analysis project details available'),
+                    '<!-- /ko -->'
                 ])
             ])
         ]);

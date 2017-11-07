@@ -16,9 +16,6 @@ define([
     'use strict';
 
     var t = html.tag,
-        p = t('p'),
-        a = t('a'),
-        blockquote = t('blockquote'),
         select = t('select'),
         option = t('option'),
         div = t('div'),
@@ -183,20 +180,25 @@ define([
             data.typeFilterInput('_select_');
         }
 
-        var newSeqProject = ko.observable();
+        // var seqProjectFilter = ko.observable();
 
-        newSeqProject.subscribe(function (newValue) {
-            newValue = newValue.trim(' ');
-            if (newValue.length === 0) {
-                return;
-            }
-            params.search.seqProjectFilter.push(parseInt(newValue));
-            newSeqProject('');
-        });
+        // Disable - simplify to single project filter
+        // var newSeqProject = ko.observable();
 
-        function doRemoveSeqProject(data) {
-            params.search.seqProjectFilter.remove(data);
-        }
+        // newSeqProject.subscribe(function (newValue) {
+        //     newValue = newValue.trim(' ');
+        //     if (newValue.length === 0) {
+        //         return;
+        //     }
+        //     params.search.seqProjectFilter.push(parseInt(newValue));
+        //     newSeqProject('');
+        // });
+
+        // function doRemoveSeqProject(data) {
+        //     params.search.seqProjectFilter.remove(data);
+        // }
+
+        console.log('in search, page size is', pageSize());
 
         return {
             // The top level search is included so that it can be
@@ -213,9 +215,12 @@ define([
             typeFilterInput: ko.observable('_select_'),
             typeFilterOptions: typeFilterOptions,
             // Project filter
-            newSeqProject: newSeqProject,
+            // newSeqProject: newSeqProject,
             seqProjectFilter: params.search.seqProjectFilter,
-            doRemoveSeqProject: doRemoveSeqProject,
+            proposalFilter: params.search.proposalFilter,
+            piFilter: params.search.piFilter,
+
+            // doRemoveSeqProject: doRemoveSeqProject,
 
             // ACTIONS
             doHelp: doHelp,
@@ -351,51 +356,235 @@ define([
         ]);
     }
 
-    function buildSeqProjectFilter() {
+    // function buildSeqProjectFilter() {
+    //     return div({
+    //         class: 'form-group',
+    //         style: {
+    //             margin: '0 4px'
+    //         }
+    //     }, [
+    //         label({}, 'Projects'),
+    //         input({
+    //             dataBind: {
+    //                 value: 'newSeqProject'
+    //             },
+    //             placeholder: 'Filter by seq. project id'
+    //         }),
+    //         div({
+    //             style: {
+    //                 display: 'inline-block'
+    //             },
+    //             dataBind: {
+    //                 foreach: 'seqProjectFilter'
+    //             }
+    //         }, [
+    //             span({
+    //                 style: {
+    //                     border: '1px silver solid',
+    //                     borderRadius: '3px',
+    //                     padding: '3px'
+    //                 }
+    //             }, [
+    //                 span(({
+    //                     dataBind: {
+    //                         text: '$data'
+    //                     },
+    //                     style: {
+    //                         padding: '3px'
+    //                     }
+    //                 })),
+    //                 span({
+    //                     dataBind: {
+    //                         click: '$component.doRemoveSeqProject'
+    //                     },
+    //                     class: 'kb-btn-mini'
+    //                 }, 'x')
+    //             ])
+    //         ])
+    //     ]);
+    // }
+
+    function buildFilterControl(arg) {
         return div({
             class: 'form-group',
             style: {
                 margin: '0 4px'
             }
         }, [
-            label({}, 'Projects'),
+            label({
+                style: {
+                    marginRight: '2px'
+                }
+            }, arg.label),
             input({
                 dataBind: {
-                    value: 'newSeqProject'
-                },
-                placeholder: 'Filter by seq. project id'
-            }),
-            div({
-                style: {
-                    display: 'inline-block'
-                },
-                dataBind: {
-                    foreach: 'seqProjectFilter'
-                }
-            }, [
-                span({
+                    value: 'filter',
                     style: {
-                        border: '1px silver solid',
-                        borderRadius: '3px',
-                        padding: '3px'
+                        'font-family': 'filter() ? "monospace": "inherit"'
                     }
-                }, [
-                    span(({
-                        dataBind: {
-                            text: '$data'
-                        },
-                        style: {
-                            padding: '3px'
-                        }
-                    })),
-                    span({
-                        dataBind: {
-                            click: '$component.doRemoveSeqProject'
-                        },
-                        class: 'kb-btn-mini'
-                    }, 'x')
-                ])
-            ])
+                },
+                placeholder: arg.placeholder,
+                style: {
+                    width: '8em'
+                }
+            }),
+            // enable the clear button
+            '<!-- ko if: filter -->',
+            span({
+                dataBind: {
+                    click: 'function() {filter("");}'
+                },
+                class: 'kb-btn-mini'
+            }, 'x'),
+            '<!-- /ko -->',
+            // disable the clear button
+            '<!-- ko ifnot: filter -->',
+            span({                
+                class: 'kb-btn-mini -hidden'
+            }, 'x'),
+            '<!-- /ko -->'
+        ]);
+    }
+
+    function buildSeqProjectFilter() {
+        // return span({
+        //     dataBind: {
+        //         let: '{filter: seqProjectFilter}'
+        //     }
+        // }, buildFilterControl({
+        //     label: 'Project',
+        //     placeholder: 'Filter by seq. project id'
+        // }));
+        // return [
+        //     '<!-- ko let: {filter: seqProjectFilter} -->',
+        //     buildFilterControl({
+        //         label: 'Project',
+        //         placeholder: 'Filter by seq. project id'
+        //     }),
+        //     '<!-- /ko -->'
+        // ];
+        return div({
+            class: 'form-group',
+            style: {
+                margin: '0 4px'
+            }
+        }, [
+            label({
+                style: {
+                    marginRight: '2px'
+                }
+            }, 'Project'),
+            input({
+                dataBind: {
+                    value: 'seqProjectFilter',
+                    style: {
+                        'font-family': 'seqProjectFilter() ? "monospace": "inherit"'
+                    }
+                },
+                placeholder: 'Filter by seq. project id',
+                style: {
+                    width: '8em'
+                }
+            }),
+            // enable the clear button
+            '<!-- ko if: seqProjectFilter -->',
+            span({
+                dataBind: {
+                    click: 'function() {seqProjectFilter("");}'
+                },
+                class: 'kb-btn-mini'
+            }, 'x'),
+            '<!-- /ko -->',
+            // disable the clear button
+            '<!-- ko ifnot: seqProjectFilter -->',
+            span({                
+                class: 'kb-btn-mini -hidden'
+            }, 'x'),
+            '<!-- /ko -->'
+        ]);
+    }
+
+    function buildProposalFilter() {
+        return div({
+            class: 'form-group',
+            style: {
+                margin: '0 4px'
+            }
+        }, [
+            label({
+                style: {
+                    marginRight: '2px'
+                }
+            }, 'Proposal'),
+            input({
+                dataBind: {
+                    value: 'proposalFilter',
+                    style: {
+                        'font-family': 'proposalFilter() ? "monospace": "inherit"'
+                    }
+                },
+                placeholder: 'Filter by proposal id',
+                style: {
+                    width: '8em'
+                }
+            }),
+            // enable the clear button
+            '<!-- ko if: proposalFilter -->',
+            span({
+                dataBind: {
+                    click: 'function() {proposalFilter("");}'
+                },
+                class: 'kb-btn-mini'
+            }, 'x'),
+            '<!-- /ko -->',
+            // disable the clear button
+            '<!-- ko ifnot: proposalFilter -->',
+            span({                
+                class: 'kb-btn-mini -hidden'
+            }, 'x'),
+            '<!-- /ko -->'
+        ]);
+    }
+
+    function buildPIFilter() {
+        return div({
+            class: 'form-group',
+            style: {
+                margin: '0 4px'
+            }
+        }, [
+            label({
+                style: {
+                    marginRight: '2px'
+                }
+            }, 'PI'),
+            input({
+                dataBind: {
+                    value: 'piFilter',
+                    style: {
+                        'font-family': 'piFilter() ? "monospace": "inherit"'
+                    }
+                },
+                placeholder: 'Filter by PI last name',
+                style: {
+                    width: '8em'
+                }
+            }),
+            // enable the clear button
+            '<!-- ko if: piFilter -->',
+            span({
+                dataBind: {
+                    click: 'function() {piFilter("");}'
+                },
+                class: 'kb-btn-mini'
+            }, 'x'),
+            '<!-- /ko -->',
+            // disable the clear button
+            '<!-- ko ifnot: piFilter -->',
+            span({                
+                class: 'kb-btn-mini -hidden'
+            }, 'x'),
+            '<!-- /ko -->'
         ]);
     }
 
@@ -450,8 +639,7 @@ define([
     function buildFilterArea() {
         return div({
             class: 'form-inline',
-            style: {
-
+            style: {                
             }
         }, [
             span({
@@ -461,8 +649,10 @@ define([
                     marginTop: '8px',
                     fontSize: '80%'
                 }
-            }),
+            }, 'Filters: '),
             buildTypeFilter(),
+            buildPIFilter(),
+            buildProposalFilter(),
             buildSeqProjectFilter()
         ]);
     }

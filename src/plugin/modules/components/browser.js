@@ -51,7 +51,7 @@ define([
 
     // NB: hmm, it looks like the params are those active in the tab which spawned
     // this component...
-    function viewModel(params, componentInfo) {
+    function viewModel(params) {
         // From parent search component.
         var search = params.search;
         var totalCount = search.searchTotal;
@@ -164,11 +164,14 @@ define([
             }
             var value = parseInt(newValue);
             if (value > totalPages()) {
-                value = totalPages();
+                pageInput(totalPages());
+                return;
             }
             if (value < 1) {
-                value = 1;
+                pageInput(1);
+                return;
             }
+            
             if (value !== page()) {
                 page(value);
             }
@@ -687,7 +690,7 @@ define([
                 class: styles.classes.items,
                 dataBind: {
                     component: {
-                        name: '"jgisearch/search-result"',
+                        name: '"jgisearch/search-result2"',
                         params: {
                             search: 'search'
                         }

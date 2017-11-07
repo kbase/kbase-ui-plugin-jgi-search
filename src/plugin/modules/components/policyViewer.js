@@ -7,8 +7,7 @@ define([
 ) {
     'use strict';
     var t = html.tag,
-        div = t('div'),
-        button = t('button');
+        div = t('div');
 
     function viewModel(params) {
         var policy = params.policy;

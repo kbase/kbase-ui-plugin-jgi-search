@@ -148,7 +148,7 @@ define([
         }
 
         function start(params) {
-            runtime.send('ui', 'setTitle', 'JGI Search');
+            runtime.send('ui', 'setTitle', 'JGI Search (beta)');
 
             container.innerHTML = utils.komponent({
                 name: 'jgi-search/main',

@@ -36,8 +36,14 @@
     color: #FFF;
 }
 
+.kb-btn-mini.-hidden {
+    cursor: normal;
+    color: transparent;
+}
+
 .kb-btn-mini.-disabled {
     cursor: normal;
+    color: gray;
 }
 
 .kb-btn-mini.-disabled:hover {

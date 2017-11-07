@@ -43,6 +43,15 @@ install:
       module: components/search-result
       type: factory
     -
+      name: 'jgisearch/search-result2'
+      module: components/search-result2
+      type: factory
+    -
+      name: 'jgi-search/table'
+      module: components/table
+      type: factory
+      
+    -
       name: 'jgisearch/json-viewer'
       module: 'components/json-viewer'
       css: true

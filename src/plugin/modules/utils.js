@@ -162,82 +162,112 @@ define([
 
 
     function grokTitle(hit, fileType) {
+        var sp = getProp(hit.source.metadata, ['sequencing_project.sequencing_project_name']);
+        var pp = getProp(hit.source.metadata, ['pmo_project.name']);
+        var fn = hit.source.file_name;
         switch (fileType.dataType) {
         case 'genbank':
             return getProp(hit.source.metadata, ['sequencing_project.sequencing_project_name', 'pmo_project.name'], hit.source.file_name);
         case 'fasta':
         case 'fastq':
         default:
-            return getProp(hit.source.metadata, ['sequencing_project.sequencing_project_name'], hit.source.file_name);
+            if (sp) {
+                return {
+                    value: sp,
+                    info: 'The sequencing project name'
+                };
+            }
+            if (pp) {
+                return {
+                    value: pp,
+                    info: 'The PMO project name'
+                };
+            }
+            return {
+                value: fn,
+                info: 'No project name - showing the file name'
+            };
+            // return getProp(hit.source.metadata, ['sequencing_project.sequencing_project_name'], hit.source.file_name);
         }
     }
 
     function grokScientificName(hit) {
-        // var na = span({ style: { color: 'gray' } }, 'n/a');
-        var genus = getProp(hit.source.metadata, [
-            'genus',
-            'sow_segment.genus',
-            'pmo_project.genus',
-            'gold_data.genus'
-        ], '', function(v) {
-            return (v === null || (typeof(v) === 'string' && v.length === ''));
-        });
-        var species = getProp(hit.source.metadata, [
-            'species',
-            'sow_segment.species',
-            'pmo_project.species',
-            'gold_data.species'
-        ], '', function(v) {
-            return (v === null || (typeof(v) === 'string' && v.length === ''));
-        });
-        var strain = getProp(hit.source.metadata, [
-            'strain',
-            'sow_segment.strain',
-            'pmo_project.strain',
-            'gold_data.strain'
-        ], '', function(v) {
-            return (v === null || (typeof(v) === 'string' && v.length === ''));
-        });
+
+        var org = {};
+        if (hasProp(hit.source.metadata, 'genus')) {
+            org.info = 'Scientific name',
+            ['genus', 'species', 'strain'].forEach(function (key) {
+                org[key] = getProp(hit.source.metadata, key, '');
+            });
+        } else if (hasProp(hit.source.metadata, 'sow_segment.genus')) {
+            org.info = 'Scientific name derived from SOW Segment',
+            ['genus', 'species', 'strain'].forEach(function (key) {
+                org[key] = getProp(hit.source.metadata, 'sow_segement.' + key, '');
+            });
+        } else if (hasProp(hit.source.metadata, 'pmo_project.genus')) {
+            org.info = 'Scientific name derived from PMO Project',
+            ['genus', 'species', 'strain'].forEach(function (key) {
+                org[key] = getProp(hit.source.metadata, 'pmo_project.' + key, '');
+            });
+        } else if (hasProp(hit.source.metadata, 'gold_data.genus')) {
+            org.info = 'Scientific name derived from GOLD',
+            ['genus', 'species', 'strain'].forEach(function (key) {
+                org[key] = getProp(hit.source.metadata, 'gold_data.' + key, '');
+            });
+        }
+
+        if (!(org.genus || org.species || org.strain)) {
+            org.info = 'No scientific name available';
+            org.value = '-';
+            return org;
+        }
 
         // for gold_data (and perhaps others) the species is actually Genus species.
         // handle the general case of the genus being a prefix of the species and fix
         // species.
-        if (species.indexOf(genus) === 0) {
-            species = species.substr(genus.length + 1);
+        if (org.species.indexOf(org.genus) === 0) {
+            org.species = org.species.substr(org.genus.length + 1);
         }
 
         // same for strain.
-        if (strain) {
-            var strainPos = species.lastIndexOf(strain);
-            if (strainPos >= 0 && strainPos === (species.length - strain.length)) {
-                species = species.substr(0, strainPos);
+        if (org.strain) {
+            var strainPos = org.species.lastIndexOf(org.strain);
+            if (strainPos >= 0 && strainPos === (org.species.length - org.strain.length)) {
+                org.species = org.species.substr(0, strainPos);
             }
         }
-
-        var scientificName = (genus || '-') + ' ' + (species || '-') + (strain ? ' ' + strain : '');
-        // console.log('sci name', hit.source);
-        return {
-            genus: genus,
-            species: species,
-            strain: strain,
-            scientificName: scientificName
-        };
+       
+        org.value = (org.genus || '-') + ' ' + (org.species || '-') + (org.strain ? ' ' + org.strain : '');
+        return org;
     }
 
     function grokPI(hit, fileType) {
         var lastName = getProp(hit.source.metadata, 'proposal.pi.last_name');
         var firstName = getProp(hit.source.metadata, 'proposal.pi.first_name');
         if (lastName) {
-            return lastName + ', ' + firstName;
+            return {                
+                value: lastName + ', ' + firstName,
+                info: 'The PI name as provided in the proposal',            
+                first: firstName,
+                last: lastName
+            };
         }
         var piName = getProp(hit.source.metadata, 'pmo_project.pi_name');
         if (piName) {
             var names = piName.split(/\s+/);
             if (names) {
-                return names[1] + ', ' + names[0];
+                return {
+                    value: names[1] + ', ' + names[0],
+                    info: 'The PI name as provided in the proposal',            
+                    first: names[0],
+                    last: names[1]
+                };
             }
         }
-        return '-';
+        return {
+            value: null,
+            info: 'The PI name could not be found'
+        };
     }
 
     function grokMetadata(hit, fileType) {
@@ -450,6 +480,7 @@ define([
         var m = progressRe.exec(message);
         // console.log('m', m, message, message.length, typeof message);
         if (!m) {
+            console.log('unknown1...', message);
             return {
                 status: 'unknown1'
             };
@@ -613,7 +644,7 @@ define([
         var operator = null;
         // True if there is a modifier applied to this term (previously inserted)
         var modifier = null;
-        termsLoop: for (var i = 0; i < terms.length; i++) {
+        for (var i = 0; i < terms.length; i++) {
             // var term = terms[i].toLowerCase();
             var term = terms[i];
 

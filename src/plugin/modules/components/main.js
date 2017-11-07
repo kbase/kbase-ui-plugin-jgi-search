@@ -31,8 +31,6 @@ define([
     'use strict';
 
     var t = html.tag,
-        br = t('br'),
-        button = t('button'),
         p = t('p'),
         a = t('a'),
         div = t('div');
@@ -94,7 +92,7 @@ define([
                     console.error('ERROR', err, query, typeof page, typeof pageSize);
                     throw err;
                 })
-                .spread(function (result, err, status) {
+                .spread(function (result, err) {
                     if (result) {
                         return result;
                     }
@@ -296,7 +294,8 @@ define([
         // Fetch send a query and fetch the results.
         function fetchQuery(query, filter, page, pageSize) {
             var fields = [
-                'metadata.proposal_id','metadata.sequencing_project_id', 'metadata.analysis_project_id', 'metadata.pmo_project_id',
+                'metadata.proposal_id', 'metadata.proposal.title',
+                'metadata.sequencing_project_id', 'metadata.analysis_project_id', 'metadata.pmo_project_id',
                 'file_size', 'file_type', 'file_name', // file type, data type
                 'metadata.pmo_project.name', 'metadata.sequencing_project.sequencing_project_name', // title
                 'metadata.proposal.pi.last_name', 'metadata.proposal.pi.first_name', 'metadata.pmo_project.pi_name', // pi
@@ -393,10 +392,11 @@ define([
                 }
             }
 
+            // Default file type filter, now enabled by "show supported file types" checkbox.
             if (!query.query.file_type) {
-                query.query.file_type = typeFilterOptions.map(function (option) {
-                    return option.value;
-                }).join(' | ');
+                // query.query.file_type = typeFilterOptions.map(function (option) {
+                //     return option.value;
+                // }).join(' | ');
             }
 
             // search.searchState('ready');
@@ -457,7 +457,28 @@ define([
                         return job.dbId === hit.id;
                     });
                     var transferJob = jobs[0];
-
+                    console.log('HIT', hit);
+                    var analysisProject;
+                    if (utils.hasProp(hit.source.metadata, 'analysis_project')) {
+                        analysisProject = {
+                            name: utils.getProp(hit.source.metadata, 'analysis_project.analysisProjectName'),
+                            assemblyMethod: utils.getProp(hit.source.metadata, 'analysis_project.assemblyMethod'),
+                            genomeType: utils.getProp(hit.source.metadata, 'analysis_project.genomeType'),
+                            id: utils.getProp(hit.source.metadata, 'analysis_project.itsAnalysisProjectId'),
+                            modificationDate: utils.getProp(hit.source.metadata, 'analysis_project.modDate'),
+                            comments: utils.getProp(hit.source.metadata, 'analysis_project.comments')
+                        };
+                    }
+                    var sequencingProject;
+                    if (utils.hasProp(hit.source.metadata, 'sequencing_project')) {
+                        sequencingProject = {
+                            name: utils.getProp(hit.source.metadata, 'sequencing_project.sequencing_project_name'),
+                            id: utils.getProp(hit.source.metadata, 'sequencing_project.sequencing_project_id'),
+                            status: utils.getProp(hit.source.metadata, 'sequencing_project.current_status'),
+                            statusDate: utils.getProp(hit.source.metadata, 'sequencing_project.status_date'),
+                            comments: utils.getProp(hit.source.metadata, 'sequencing_project.comments')
+                        }
+                    }
                     return {
                         // rowNumber: rowNumber,
                         id: hit.id,
@@ -487,13 +508,8 @@ define([
                             types: utils.normalizeFileType(hit.source.file_type)
                         },
                         proposal: hit.source.metadata.proposal,
-                        project: {
-                            name: utils.getProp(hit.source.metadata, 'sequencing_project.sequencing_project_name'),
-                            id: utils.getProp(hit.source.metadata, 'sequencing_project.sequencing_project_id'),
-                            status: utils.getProp(hit.source.metadata, 'sequencing_project.current_status'),
-                            statusDate: utils.getProp(hit.source.metadata, 'sequencing_project.status_date'),
-                            comments: utils.getProp(hit.source.metadata, 'sequencing_project.comments')
-                        },
+                        sequencingProject: sequencingProject,
+                        analysisProject: analysisProject,
                         importSpec: getImportInfo(fileType.dataType, hit.id, hit.source.file_name, hit),
                         showInfo: ko.observable(false),
                         detailFormatted: JSON.stringify(hit.source, null, 4),
@@ -541,18 +557,41 @@ define([
         // Note that the project filter key is "project_id", even
         // though there are underlying this at least two
         // project id fields -- sequencing and analysis.
-        var seqProjectFilter = ko.observableArray();
+        var seqProjectFilter = ko.observable();
 
         seqProjectFilter.subscribe(function (newValue) {
             var filter = searchFilter();
-            if (newValue.length > 0) {
-                filter.project_id = newValue;
+            if (!newValue) {
+                delete filter.project_id;                
             } else {
-                delete filter.project_id;
+                filter.project_id = [newValue];
             }
             searchFilter(filter);
         });
 
+        var proposalFilter = ko.observable();
+        proposalFilter.subscribe(function (newValue) {
+            var filter = searchFilter();
+            if (!newValue) {
+                delete filter.proposal_id;                
+            } else {
+                filter.proposal_id = [newValue];
+            }
+            searchFilter(filter);
+        });
+
+        var piFilter = ko.observable();
+        piFilter.subscribe(function (newValue) {
+            var filter = searchFilter();
+            if (!newValue) {
+                delete filter.pi_name;                
+            } else {
+                filter.pi_name = newValue;
+            }
+            console.log('new filter is ...', filter, newValue);
+            
+            searchFilter(filter);
+        });
         // SEARCH FLAGS
 
         var searching = ko.observable(false);
@@ -584,19 +623,8 @@ define([
 
         var availableRowHeight = ko.observable();
 
-        var rowHeight = 35;
+        var pageSize = ko.observable();
 
-        var pageSize = ko.pureComputed(function () {
-            var totalHeight = availableRowHeight();
-
-            if (!totalHeight) {
-                return null;
-            }
-
-
-            var rows = Math.floor(totalHeight / rowHeight);
-            return rows;
-        });
 
         // Handling search interactions...
 
@@ -686,7 +714,7 @@ define([
         function doSearch() {
             // Search cancellation
             if (currentSearch.search) {
-                console.log('cancelling search...');
+                console.warn('cancelling search...');
                 currentSearch.search.cancel();
                 currentSearch.cancelled = true;
             }
@@ -708,7 +736,6 @@ define([
                 return;
             }
 
-            console.log('about to search', page(), pageSize());
             searching(true);
 
             return currentSearch.search = fetchQuery(query.query, query.filter, page(), pageSize())
@@ -721,7 +748,7 @@ define([
                 })
                 .spread(function (result, error, stats) {
                     if (thisSearch.cancelled) {
-                        console.log('search cancelled, ignoring results...');
+                        console.warn('search cancelled, ignoring results...');
                         return;
                     }
 
@@ -756,7 +783,8 @@ define([
 
                     if (result.total > maxSearchResults) {
                         actualSearchTotal(result.total);
-                        searchTotal(maxSearchResults);
+                        var actualMax = pageSize() * Math.floor(maxSearchResults/pageSize());
+                        searchTotal(actualMax);
                         addMessage({
                             type: 'warning',
                             message: 'Too many search results (' + result.total + '), restricted to 10,000'
@@ -779,11 +807,15 @@ define([
                         var rowNumber = (page() - 1) * pageSize() + 1 + index;
 
                         var sequencingProjectId = (function (id) {
+                            // return {
+                            //     value: id,
+                            //     addToSearch:  function () {
+                            //         seqProjectFilter.push(id);
+                            //     }
+                            // };
                             return {
                                 value: id,
-                                addToSearch:  function () {
-                                    seqProjectFilter.push(id);
-                                }
+                                info: 'Sequencing project id'
                             };
                         }(utils.getProp(hit.source.metadata, ['sequencing_project_id'])));
 
@@ -795,7 +827,10 @@ define([
 
                         var analysisProjectId = utils.getProp(hit.source.metadata, ['analysis_project_id'], '-');
 
-                        var proposalId = utils.getProp(hit.source.metadata, ['proposal_id'], '-');
+                        var proposalId = {
+                            value: utils.getProp(hit.source.metadata, ['proposal_id']),
+                            info: utils.getProp(hit.source.metadata, ['proposal.title'], 'Proposal title unavailable')
+                        };
 
                         // actual file suffix.
                         var fileExtension;
@@ -809,17 +844,27 @@ define([
                         }
                         var fileType = utils.grokFileType(fileExtension, hit.source.file_type);
 
-                        // Title
                         var title = utils.grokTitle(hit, fileType);
 
                         var scientificName = utils.grokScientificName(hit, fileType);
 
-                        // scientific name may be in different places.
-
-                        // By type metadata.
-                        var metadata = utils.grokMetadata(hit, fileType);
-
                         var pi = utils.grokPI(hit, fileType);
+
+                        // var pi = (function (id) {
+                        //     var pi = utils.grokPI(hit, fileType);
+                        //     if (!pi) {
+                        //         return '';
+                        //     }
+                            
+                        //     // return {
+                        //     //     text: pi.text,
+                        //     //     addToSearch:  function () {
+                        //     //         var oldInput = searchInput() || '';
+                        //     //         searchInput(oldInput + (pi.first ? ' ' + pi.first : '') + (pi.last ? ' ' + pi.last : '') );
+                        //     //     }
+                        //     // };
+                        //     return pi.text;
+                        // }());
 
                         // TODO move this out to a function:
                         var s1;
@@ -835,19 +880,21 @@ define([
                                     switch (portalLocation[0]) {
                                     case 'Raw Data':
                                         s1 = {
-                                            value: 'Raw',
+                                            value: 'raw',
                                             info: 'Raw Data'
                                         };
                                         break;
                                     case 'QC Filtered Raw Data':
                                         s1 = {
-                                            value: 'QCFil',
+                                            // value: 'QCFil',
+                                            value: 'filtered',
                                             info: 'QC Filtered Raw Data'
                                         };
                                         break;
                                     case 'QA Filtered Raw Data':
                                         s1 = {
-                                            value: 'QAFil',
+                                            // value: 'QAFil',
+                                            value: 'filtered',
                                             info: 'QA Filtered Raw Data'
                                         };
                                         break;
@@ -895,22 +942,30 @@ define([
                         case 'fastq':
                             // s2 = utils.getProp(hit, 'source.metadata.sow_segment.index_sequence', '-');
                             if (utils.hasProp(hit, 'source.metadata.gold_data')) {
-                              var goldUrl;
-                              if (utils.hasProp(hit, 'source.metadata.gold_data.gold_url')) {
-                                goldUrl = utils.getProp(hit, 'source.metadata.gold_data.gold_url');
-                              } else if (utils.hasProp(hit, 'source.metadata.gold_data.gold_stamp_id')) {
-                                goldUrl = 'https://gold.jgi.doe.gov/projects?id=' +
-                                           utils.getProp(hit, 'source.metadata.gold_data.gold_stamp_id');
-                              }
-                              if (goldUrl) {
-                                s2 = {
-                                  text: 'gold',
-                                  url: goldUrl
-                                };
-                              }
+                                var goldLabel;
+                                var goldUrl;
+                                if (utils.hasProp(hit, 'source.metadata.gold_data.gold_url')) {
+                                    goldUrl = utils.getProp(hit, 'source.metadata.gold_data.gold_url');
+                                    goldLabel = 'GOLD';
+                                } else if (utils.hasProp(hit, 'source.metadata.gold_data.gold_stamp_id')) {
+                                    var goldId = utils.getProp(hit, 'source.metadata.gold_data.gold_stamp_id');
+                                    goldUrl = 'https://gold.jgi.doe.gov/projects?id=' + goldId;
+                                    if (!/^Gp/.test(goldId)) {
+                                        goldLabel = 'GOLD?';
+                                    } else {
+                                        goldLabel = 'GOLD*';
+                                    }
+                                }
+                                if (goldUrl) {
+                                    s2 = {
+                                        value: goldLabel,
+                                        info: 'Link to gold record',
+                                        url: goldUrl
+                                    };
+                                }
                             }
                             if (!s2) {
-                              s2 = '-';
+                                s2 = '-';
                             }
                             break;
                         default:
@@ -926,15 +981,22 @@ define([
                             analysisProjectId: analysisProjectId,
                             pmoProjectId: pmoProjectId,
                             sequencingProjectId: sequencingProjectId,
-                            date: utils.usDate(hit.source.file_date),
+                            date: {
+                                value: new Date(hit.source.file_date),
+                                info: 'The file date'
+                            },
+                            // date: utils.usDate(hit.source.file_date),
                             modified: utils.usDate(hit.source.modified),
-                            scientificName: scientificName.scientificName,
+                            scientificName: scientificName,
                             dataType: fileType.dataType,
                             s1: s1,
                             s2: s2,
                             s3: '-',
                             // fileSize: numeral(hit.source.file_size).format('0.0 b'),
-                            fileSize: hit.source.file_size,
+                            fileSize: {
+                                value: hit.source.file_size,
+                                info: numeral(hit.source.file_size).format('0.0 b') + ' - The size of the file; may expand to larger size if compressed'
+                            },
                             // view stuff
                             selected: ko.observable(false),
                             isPublic: utils.getProp(hit, 'source._es_public_data', false),
@@ -966,8 +1028,6 @@ define([
         pageSize.subscribe(function() {
             doSearch();
         });
-
-
 
         searchQuery.subscribe(function () {
             // reset the page back to 1 because we do not konw if the
@@ -1015,6 +1075,8 @@ define([
                 typeFilterOptions: typeFilterOptions,
 
                 seqProjectFilter: seqProjectFilter,
+                proposalFilter: proposalFilter,
+                piFilter: piFilter,
 
                 jgiTermsAgreed: jgiTermsAgreed,
 
@@ -1042,8 +1104,6 @@ define([
                 monitoringJobs: monitoringJobs,
                 stagingJobs: stagingJobs,
 
-                // Defaults to 10, but the search component may sync this
-                // with a page setting control
                 pageSize: pageSize,
                 // Note, starts with 1.
                 page: page,
@@ -1065,7 +1125,8 @@ define([
             style: {
                 flex: '1 1 0px',
                 display: 'flex',
-                flexDirection: 'column'
+                flexDirection: 'column',
+                padding: '10px'
             }
         }, [
             '<!-- ko ifnot: $component.search.jgiTermsAgreed() -->',

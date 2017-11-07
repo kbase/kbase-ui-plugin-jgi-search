@@ -16,7 +16,6 @@ define([
     var t = html.tag,
         div = t('div'),
         span = t('span'),
-        blockquote = t('blockquote'),
         p = t('p'),
         a = t('a'),
         table = t('table'),
@@ -123,19 +122,30 @@ define([
             textOverflow: 'ellipsis'
         },
         titleCell: {
-            flexBasis: '25%'
+            flexBasis: '22%'
         },
         piCell: {
-            flexBasis: '10%'
+            css: {
+                flexBasis: '10%'
+            }
         },
-        // proposalId: {
-        //     flexBasis: '5%',
-        //     textAlign: 'right',
-        //     paddingRight: '3px'
-        // },
+        cellLink: {
+            pseudo: {
+                hover: {
+                    textDecoration: 'underline',
+                    backgroundColor: '#EEE',
+                    cursor: 'pointer'
+                }
+            }
+        },
+        proposalId: {
+            flexBasis: '5%',
+            textAlign: 'right',
+            paddingRight: '3px'
+        },
         sequencingProjectId: {
             css: {
-                flexBasis: '7%',
+                flexBasis: '5%',
                 textAlign: 'right',
                 paddingRight: '3px'
             },
@@ -149,7 +159,7 @@ define([
         },
         pmoProjectId: {
             css: {
-                flexBasis: '7%',
+                flexBasis: '5%',
                 textAlign: 'right',
                 paddingRight: '3px',
                 fontStyle: 'italic',
@@ -328,6 +338,10 @@ define([
             params.search.projectFilter.push(data.projectId);
         }
 
+        function doAddPi(data) {
+            console.log('adding pi last name...');
+        }
+
 
         function doStage(item) {
             // spawn the staging request
@@ -374,6 +388,7 @@ define([
             doShowTip: doShowTip,
             doShowInfo: doShowInfo,
             doAddProject: doAddProject,
+            doAddPi: doAddPi,
             doStage: doStage
         };
     }
@@ -618,6 +633,28 @@ define([
     }
 
     function buildProjectView() {
+        return div({
+            class: 'container-fluid'
+        }, [
+            div({
+                class: 'row'
+            }, [
+                div({
+                    class: 'col-md-6'
+                }, [
+                    h3('Proposal'),
+                    buildProposalInfo()
+                ]), div({
+                    class: 'col-md-6'
+                }, [
+                    h3('Sequencing Project'),
+                    buildProjectInfo()
+                ])
+            ])
+        ]);
+    }
+
+    function buildAnalysisProjectView() {
         return div({
             class: 'container-fluid'
         }, [
@@ -942,19 +979,21 @@ define([
             }, div({
                 class: [styles.classes.innerCell]
             }, span({
+                class: [styles.classes.cellLink],
                 dataBind: {
-                    text: 'pi',
+                    // text: 'pi',
                     // click: '$component.search.doAddToSearch.bind($data, $data, "pi")',
+                    text: 'pi.text',
+                    click: 'pi.addToSearch',
                     clickBubble: false
-                },
-                class: '-search-link'
+                }
             }))),
-            // div({
-            //     dataBind: {
-            //         text: 'proposalId'
-            //     },
-            //     class: [styles.classes.cell, styles.classes.proposalId]
-            // }),
+            div({
+                dataBind: {
+                    text: 'proposalId'
+                },
+                class: [styles.classes.cell, styles.classes.proposalId]
+            }),
             '<!-- ko if: sequencingProjectId.value -->',
             div({
                 dataBind: {
@@ -997,11 +1036,13 @@ define([
                 class: [styles.classes.cell, styles.classes.dateCell]
             }),
             div({
+                class: [styles.classes.cell, styles.classes.scientificNameCell]
+            }, div({
                 dataBind: {
                     text: 'scientificName'
                 },
-                class: [styles.classes.cell, styles.classes.scientificNameCell]
-            }),
+                class: [styles.classes.innerCell]
+            })),      
             div({
                 dataBind: {
                     text: 'dataType'
@@ -1022,27 +1063,27 @@ define([
             div({
                 class: [styles.classes.cell, styles.classes.s2Cell]
             }, div([
-              '<!-- ko if: s2.url -->',
-              a({
-                dataBind: {
-                  attr: {
-                    href: 's2.url',
-                    target: '"_blank"'
-                  },
-                  // Just to disable bubbling.
-                  click: 'function () {return true;}',
-                  clickBubble: false,
-                  text: 's2.text'
-                }
-              }),
-              '<!-- /ko -->',
-              '<!-- ko if: !s2.url -->',
-              span({
-                dataBind: {
-                  text: 's2'
-                }
-              }),
-              '<!-- /ko -->'
+                '<!-- ko if: s2.url -->',
+                a({
+                    dataBind: {
+                        attr: {
+                            href: 's2.url',
+                            target: '"_blank"'
+                        },
+                        // Just to disable bubbling.
+                        click: 'function () {return true;}',
+                        clickBubble: false,
+                        text: 's2.text'
+                    }
+                }),
+                '<!-- /ko -->',
+                '<!-- ko if: !s2.url -->',
+                span({
+                    dataBind: {
+                        text: 's2'
+                    }
+                }),
+                '<!-- /ko -->'
             ])),
             div({
                 class: [styles.classes.cell, styles.classes.fileSizeCell]
@@ -1066,6 +1107,7 @@ define([
             }, buildCartButton())),
         ]);
     }
+    
 
     function buildSortControl() {
         return span({
@@ -1158,9 +1200,9 @@ define([
                     class: [styles.classes.headerCell, styles.classes.piCell],
                     title: 'Principal Investigator'
                 }, [buildSortControl('pi'), 'PI']),
-                // div({
-                //     class: [styles.classes.headerCell, styles.classes.proposalId]
-                // }, [buildSortControl('proposalId'), 'Prop.']),
+                div({
+                    class: [styles.classes.headerCell, styles.classes.proposalId]
+                }, [buildSortControl('proposalId'), 'Proposal']),
                 div({
                     class: [styles.classes.headerCell, styles.classes.sequencingProjectId],
                     title: 'Sequencing project id'
