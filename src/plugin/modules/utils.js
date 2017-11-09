@@ -174,18 +174,18 @@ define([
             if (sp) {
                 return {
                     value: sp,
-                    info: 'The sequencing project name'
+                    info: sp + '\n(sequencing project name)'
                 };
             }
             if (pp) {
                 return {
                     value: pp,
-                    info: 'The PMO project name'
+                    info: pp + '\n(PMO project name)'
                 };
             }
             return {
                 value: fn,
-                info: 'No project name - showing the file name'
+                info: fn + '\n(no project name - showing the file name)'
             };
             // return getProp(hit.source.metadata, ['sequencing_project.sequencing_project_name'], hit.source.file_name);
         }
@@ -200,17 +200,17 @@ define([
                 org[key] = getProp(hit.source.metadata, key, '');
             });
         } else if (hasProp(hit.source.metadata, 'sow_segment.genus')) {
-            org.info = 'Scientific name derived from SOW Segment',
+            org.info = 'from SOW Segment',
             ['genus', 'species', 'strain'].forEach(function (key) {
                 org[key] = getProp(hit.source.metadata, 'sow_segement.' + key, '');
             });
         } else if (hasProp(hit.source.metadata, 'pmo_project.genus')) {
-            org.info = 'Scientific name derived from PMO Project',
+            org.info = 'from PMO Project',
             ['genus', 'species', 'strain'].forEach(function (key) {
                 org[key] = getProp(hit.source.metadata, 'pmo_project.' + key, '');
             });
         } else if (hasProp(hit.source.metadata, 'gold_data.genus')) {
-            org.info = 'Scientific name derived from GOLD',
+            org.info = 'from GOLD',
             ['genus', 'species', 'strain'].forEach(function (key) {
                 org[key] = getProp(hit.source.metadata, 'gold_data.' + key, '');
             });
@@ -239,7 +239,7 @@ define([
        
         var scientificName = (org.genus || '-') + ' ' + (org.species || '-') + (org.strain ? ' ' + org.strain : '');
         org.value = scientificName;
-        org.info = scientificName + ' - ' + org.info;
+        org.info = scientificName + '\n(' + org.info + ')';
         return org;
     }
 

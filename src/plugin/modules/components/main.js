@@ -1009,18 +1009,22 @@ define([
                             s2: s2,
                             fileSize: {
                                 value: hit.source.file_size,
-                                info: numeral(hit.source.file_size).format('0.0 b') + ' - The size of the file; may expand to larger size if compressed'
+                                info: numeral(hit.source.file_size).format('0.0 b') + '\n(the size of the file)'
                             },
                             // view stuff
                             selected: ko.observable(false),
                             isPublic: utils.getProp(hit, 'source._es_public_data', false),
                             doTransfer: function () {
-                                console.log('yes, do stage ...', hit.id);
                                 try {
                                     doStage(hit.id);
                                 } catch (ex) {
                                     console.error('ERROR staging', ex);
                                 }
+                            },
+                            stage: {
+                                value: hit.source.file_name,
+                                info: 'Copy this file to your staging area',
+                                fileName: hit.source.file_name
                             },
                             transferJob: ko.observable(jobMap[hit.id])
                         };

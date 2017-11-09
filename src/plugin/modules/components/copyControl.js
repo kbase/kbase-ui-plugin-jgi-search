@@ -7,13 +7,13 @@ define([
 
     var t = html.tag,
         span = t('span'),
+        div = t('div'),
         a = t('a');
 
     function viewModel(params) {
         function doCopy(data) {
             params.row.doTransfer();
         }
-
         return {
             field: params.field,
             row: params.row,
@@ -22,21 +22,31 @@ define([
     }
 
     function template() {
-        return  span([
+        return  div({
+            // style: {
+            //     flex: '1 1 0px',
+            //     display: 'flex',
+            //     flexDirection: 'column'
+            // }
+        }, [
             '<!-- ko ifnot: row.transferJob() -->',
-            a({
+            span({
+                class: 'mini-button'
+            }, a({
                 dataBind: {
                     click: '$component.doCopy', // 'function () {column.action.fn(row);}',
                     clickBubble: false,
-                    // attr: {
-                    //     title: 'row[column.name].info'
-                    // }
+                    attr: {
+                        // Note: using character 13 below because knockout has a problem with
+                        // embedded \n.
+                        title: 'row.stage.fileName + String.fromCharCode(13) + "(" + row.stage.info + ")"'
+                    }
                 },
                 style: {
                     cursor: 'pointer'
                 },
                 class: 'fa fa-download fa-rotate-270'
-            }),
+            })),
             '<!-- /ko -->',
             '<!-- ko if: row.transferJob() -->',
 

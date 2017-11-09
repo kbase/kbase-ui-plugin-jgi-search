@@ -449,7 +449,7 @@ define([
             }),            
             '<!-- /ko -->',
             
-            '<!-- ko ifnot: row[column.name].action -->',
+            '<!-- ko ifnot: row[column.name].url -->',
             span({
                 dataBind: {
                     typedText: {
@@ -570,7 +570,7 @@ define([
 
                     // COMPONENT
                     '<!-- ko if: column.component -->',
-                    span({
+                    div({
                         dataBind: {
                             component: {
                                 name: 'column.component',
@@ -581,6 +581,11 @@ define([
                                 }
                             }
                             // text: 'column.component'
+                        },
+                        style: {
+                            flex: '1 1 0px',
+                            display: 'flex',
+                            flexDirection: 'column'
                         }
                     }),
                     '<!-- /ko -->',

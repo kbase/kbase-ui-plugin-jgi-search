@@ -329,6 +329,9 @@ define([
                 sort: {
                     keyName: 'fileSize',
                     direction: 'ascending'
+                },
+                rowStyle: {
+                    textAlign: 'right'
                 }
             },
             {
