@@ -30,7 +30,7 @@ define([
             search: search,
             termsContent: termsContent,
             doAgree: doAgree
-        }
+        };
 
     }
     function template() {
@@ -74,13 +74,13 @@ define([
                 //     }
                 // }, 'Cancel')
             ])
-        ])
+        ]);
     }
     function component() {
         return {
             viewModel: viewModel,
             template: template()
-        }
+        };
     }
 
     return component;

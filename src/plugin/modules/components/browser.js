@@ -60,6 +60,8 @@ define([
         var pageSize = search.pageSize;
         var page = search.page;
 
+        console.log('staging state', search);
+
         var pageFrom = ko.pureComputed(function () {
             if (!page()) {
                 return '';
@@ -295,6 +297,208 @@ define([
         });
     }
 
+    function buildStagingStatus() {
+        return [
+            '<!-- ko if: search.stagingJobsState().pending -->',
+            html.loading(),
+            '<!-- /ko -->',
+            '<!-- ko ifnot: search.stagingJobsState().pending -->',
+
+            '<!-- ko if: search.stagingJobsState().completed -->',
+            span({
+                dataBind: {
+                    text: 'search.stagingJobsState().completed'
+                }
+            }), 
+            ' file',  
+            '<!-- ko if: search.stagingJobsState().completed > 1 -->',
+            's',
+            '<!-- /ko -->',            
+            ' copied',
+            '<!-- /ko -->',
+            
+            '<!-- /ko -->'
+        ];
+        
+    }
+
+    // function buildStagingStatusx() {
+    //     return [
+    //         '<!-- ko if: search.stagingJobs().length === 0 -->',
+    //         div({
+    //             style: {
+    //                 display: 'inline-block',
+    //                 height: '25px'
+    //             }
+    //         }, [
+    //             'No current transfers'
+    //         ]),
+    //         '<!-- /ko -->',
+
+    //         '<!-- ko if: search.stagingJobs().length > 0 -->',
+
+    //         '<!-- ko ifnot: search.monitoringJobs() -->',
+    //         div({
+    //             style: {
+    //                 display: 'inline-block',
+    //                 height: '25px'
+    //             }
+    //         }, [
+    //             'Transferred ',
+    //             span({
+    //                 dataBind: {
+    //                     text: 'search.stagingJobStates.completed'
+    //                 },
+    //                 style: {
+    //                     fontWeight: 'bold'
+    //                 }
+    //             }),
+    //             ' file',
+    //             '<!-- ko if: search.stagingJobs().length > 1 -->',
+    //             's',
+    //             '<!-- /ko -->',
+    //             ' to your staging area'
+    //         ]),
+    //         '<!-- /ko -->',
+
+    //         '<!-- ko if: search.monitoringJobs() -->',
+    //         div({
+    //             style: {
+    //                 display: 'inline-block',
+    //                 height: '25px'
+    //             }
+    //         }, [
+    //             'Transferring ',
+    //             span({
+    //                 style: {
+    //                     fontSize: '80%'
+    //                 }
+    //             }, html.loading())
+    //         ]),
+    //         div({
+    //             style: {
+    //                 display: 'inline-block'
+    //             }
+    //         }, 'sending'),
+    //         div({
+    //             dataBind: {
+    //                 text: 'search.stagingJobStates.sent',
+    //                 style: {
+    //                     'font-weight': 'search.stagingJobStates.sent() > 0 ? "bold" : "normal"',
+    //                     color: 'search.stagingJobStates.sent() > 0 ? "green" : "black"',
+    //                     border: 'search.stagingJobStates.sent() > 0 ? "1px green solid" : "1px silver dashed"'
+    //                 }
+    //             },
+    //             style: {
+    //                 display: 'inline-block',
+    //                 width: '25px',
+    //                 height: '25px',
+    //                 border: '1px silver solid',
+    //                 fontFamily: 'monospace',
+    //                 textAlign: 'center'
+    //             }
+    //         }),
+    //         div({
+    //             style: {
+    //                 display: 'inline-block',
+    //                 marginLeft: '4px'
+    //             }
+    //         }, 'queued'),
+    //         div({
+    //             dataBind: {
+    //                 text: 'search.stagingJobStates.queued',
+    //                 style: {
+    //                     'font-weight': 'search.stagingJobStates.queued() > 0 ? "bold" : "normal"',
+    //                     color: 'search.stagingJobStates.queued() > 0 ? "green" : "black"',
+    //                     border: 'search.stagingJobStates.queued() > 0 ? "1px green solid" : "1px silver dashed"'
+    //                 }
+    //             },
+    //             style: {
+    //                 display: 'inline-block',
+    //                 width: '25px',
+    //                 height: '25px',
+    //                 border: '1px silver solid',
+    //                 fontFamily: 'monospace',
+    //                 textAlign: 'center'
+    //             }
+    //         }),
+    //         div({
+    //             style: {
+    //                 display: 'inline-block',
+    //                 marginLeft: '4px'
+    //             }
+    //         }, 'restoring'),
+    //         div({
+    //             dataBind: {
+    //                 text: 'search.stagingJobStates.restoring',
+    //                 style: {
+    //                     'font-weight': 'search.stagingJobStates.restoring() > 0 ? "bold" : "normal"',
+    //                     color: 'search.stagingJobStates.restoring() > 0 ? "green" : "black"',
+    //                     border: 'search.stagingJobStates.restoring() > 0 ? "1px green solid" : "1px silver dashed"'
+    //                 }
+    //             },
+    //             style: {
+    //                 display: 'inline-block',
+    //                 width: '25px',
+    //                 height: '25px',
+    //                 border: '1px silver solid',
+    //                 fontFamily: 'monospace',
+    //                 textAlign: 'center'
+    //             }
+    //         }),
+    //         div({
+    //             style: {
+    //                 display: 'inline-block',
+    //                 marginLeft: '4px'
+    //             }
+    //         }, 'copying'),
+    //         div({
+    //             dataBind: {
+    //                 text: 'search.stagingJobStates.copying',
+    //                 style: {
+    //                     'font-weight': 'search.stagingJobStates.copying() > 0 ? "bold" : "normal"',
+    //                     color: 'search.stagingJobStates.copying() > 0 ? "green" : "black"',
+    //                     border: 'search.stagingJobStates.copying() > 0 ? "1px green solid" : "1px silver dashed"'
+    //                 }
+    //             },
+    //             style: {
+    //                 display: 'inline-block',
+    //                 width: '25px',
+    //                 height: '25px',
+    //                 border: '1px silver solid',
+    //                 fontFamily: 'monospace',
+    //                 textAlign: 'center'
+    //             }
+    //         }),
+    //         div({
+    //             style: {
+    //                 display: 'inline-block'
+    //             }
+    //         }, 'completed'),
+    //         div({
+    //             dataBind: {
+    //                 text: 'search.stagingJobStates.completed',
+    //                 style: {
+    //                     'font-weight': 'search.stagingJobStates.completed() > 0 ? "bold" : "normal"',
+    //                     color: 'search.stagingJobStates.completed() > 0 ? "green" : "black"',
+    //                     border: 'search.stagingJobStates.completed() > 0 ? "1px green solid" : "1px silver dashed"'
+    //                 }
+    //             },
+    //             style: {
+    //                 display: 'inline-block',
+    //                 width: '25px',
+    //                 height: '25px',
+    //                 border: '1px silver solid',
+    //                 fontFamily: 'monospace',
+    //                 textAlign: 'center'
+    //             }
+    //         }),
+    //         '<!-- /ko -->',
+
+    //         '<!-- /ko -->'
+    //     ];
+    // }
+
     function buildPagingControls() {
         return div({
             class: 'btn-toolbar ' + styles.classes.toolbar
@@ -302,7 +506,7 @@ define([
             div({
                 style: {
                     display: 'inline-block',
-                    width: '30%',
+                    width: '34%',
                     verticalAlign: 'middle',
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
@@ -375,7 +579,11 @@ define([
                             ' of ',
                             span({
                                 dataBind: {
-                                    text: 'totalCount()'
+                                    typedText: {
+                                        value: 'totalCount',
+                                        type: '"number"',
+                                        format: '"0,0"'
+                                    }
                                 },
                                 style: {
                                     verticalAlign: 'middle'
@@ -390,7 +598,11 @@ define([
                                 ' (truncated from ',
                                 span({
                                     dataBind: {
-                                        text: 'actualTotalCount'
+                                        typedText: {
+                                            value: 'actualTotalCount',
+                                            type: '"number"',
+                                            format: '"0,0"'
+                                        }
                                     }
                                 }),
                                 ')'
@@ -406,7 +618,7 @@ define([
             div({
                 style: {
                     display: 'inline-block',
-                    width: '20%',
+                    width: '33%',
                     verticalAlign: 'middle',
                     textAlign: 'center',
                     whiteSpace: 'nowrap',
@@ -463,7 +675,7 @@ define([
             div({
                 style: {
                     display: 'inline-block',
-                    width: '50%',
+                    width: '33%',
                     verticalAlign: 'middle',
                     textAlign: 'right',
                     paddingRight: '10px',
@@ -471,180 +683,7 @@ define([
                     overflow: 'hidden',
                     textOverflow: 'ellipsis'
                 }
-            }, [
-                '<!-- ko if: search.stagingJobs().length === 0 -->',
-                div({
-                    style: {
-                        display: 'inline-block',
-                        height: '25px'
-                    }
-                }, [
-                    'No current transfers'
-                ]),
-                '<!-- /ko -->',
-
-                '<!-- ko if: search.stagingJobs().length > 0 -->',
-
-                '<!-- ko ifnot: search.monitoringJobs() -->',
-                div({
-                    style: {
-                        display: 'inline-block',
-                        height: '25px'
-                    }
-                }, [
-                    'Transferred ',
-                    span({
-                        dataBind: {
-                            text: 'search.stagingJobStates.completed'
-                        },
-                        style: {
-                            fontWeight: 'bold'
-                        }
-                    }),
-                    ' file',
-                    '<!-- ko if: search.stagingJobs().length > 1 -->',
-                    's',
-                    '<!-- /ko -->',
-                    ' to your staging area'
-                ]),
-                '<!-- /ko -->',
-
-                '<!-- ko if: search.monitoringJobs() -->',
-                div({
-                    style: {
-                        display: 'inline-block',
-                        height: '25px'
-                    }
-                }, [
-                    'Transferring ',
-                    span({
-                        style: {
-                            fontSize: '80%'
-                        }
-                    }, html.loading())
-                ]),
-                div({
-                    style: {
-                        display: 'inline-block'
-                    }
-                }, 'sending'),
-                div({
-                    dataBind: {
-                        text: 'search.stagingJobStates.sent',
-                        style: {
-                            'font-weight': 'search.stagingJobStates.sent() > 0 ? "bold" : "normal"',
-                            color: 'search.stagingJobStates.sent() > 0 ? "green" : "black"',
-                            border: 'search.stagingJobStates.sent() > 0 ? "1px green solid" : "1px silver dashed"'
-                        }
-                    },
-                    style: {
-                        display: 'inline-block',
-                        width: '25px',
-                        height: '25px',
-                        border: '1px silver solid',
-                        fontFamily: 'monospace',
-                        textAlign: 'center'
-                    }
-                }),
-                div({
-                    style: {
-                        display: 'inline-block',
-                        marginLeft: '4px'
-                    }
-                }, 'queued'),
-                div({
-                    dataBind: {
-                        text: 'search.stagingJobStates.queued',
-                        style: {
-                            'font-weight': 'search.stagingJobStates.queued() > 0 ? "bold" : "normal"',
-                            color: 'search.stagingJobStates.queued() > 0 ? "green" : "black"',
-                            border: 'search.stagingJobStates.queued() > 0 ? "1px green solid" : "1px silver dashed"'
-                        }
-                    },
-                    style: {
-                        display: 'inline-block',
-                        width: '25px',
-                        height: '25px',
-                        border: '1px silver solid',
-                        fontFamily: 'monospace',
-                        textAlign: 'center'
-                    }
-                }),
-                div({
-                    style: {
-                        display: 'inline-block',
-                        marginLeft: '4px'
-                    }
-                }, 'restoring'),
-                div({
-                    dataBind: {
-                        text: 'search.stagingJobStates.restoring',
-                        style: {
-                            'font-weight': 'search.stagingJobStates.restoring() > 0 ? "bold" : "normal"',
-                            color: 'search.stagingJobStates.restoring() > 0 ? "green" : "black"',
-                            border: 'search.stagingJobStates.restoring() > 0 ? "1px green solid" : "1px silver dashed"'
-                        }
-                    },
-                    style: {
-                        display: 'inline-block',
-                        width: '25px',
-                        height: '25px',
-                        border: '1px silver solid',
-                        fontFamily: 'monospace',
-                        textAlign: 'center'
-                    }
-                }),
-                div({
-                    style: {
-                        display: 'inline-block',
-                        marginLeft: '4px'
-                    }
-                }, 'copying'),
-                div({
-                    dataBind: {
-                        text: 'search.stagingJobStates.copying',
-                        style: {
-                            'font-weight': 'search.stagingJobStates.copying() > 0 ? "bold" : "normal"',
-                            color: 'search.stagingJobStates.copying() > 0 ? "green" : "black"',
-                            border: 'search.stagingJobStates.copying() > 0 ? "1px green solid" : "1px silver dashed"'
-                        }
-                    },
-                    style: {
-                        display: 'inline-block',
-                        width: '25px',
-                        height: '25px',
-                        border: '1px silver solid',
-                        fontFamily: 'monospace',
-                        textAlign: 'center'
-                    }
-                }),
-                div({
-                    style: {
-                        display: 'inline-block'
-                    }
-                }, 'completed'),
-                div({
-                    dataBind: {
-                        text: 'search.stagingJobStates.completed',
-                        style: {
-                            'font-weight': 'search.stagingJobStates.completed() > 0 ? "bold" : "normal"',
-                            color: 'search.stagingJobStates.completed() > 0 ? "green" : "black"',
-                            border: 'search.stagingJobStates.completed() > 0 ? "1px green solid" : "1px silver dashed"'
-                        }
-                    },
-                    style: {
-                        display: 'inline-block',
-                        width: '25px',
-                        height: '25px',
-                        border: '1px silver solid',
-                        fontFamily: 'monospace',
-                        textAlign: 'center'
-                    }
-                }),
-                '<!-- /ko -->',
-
-                '<!-- /ko -->'
-            ])
+            }, buildStagingStatus())
         ]);
     }
 

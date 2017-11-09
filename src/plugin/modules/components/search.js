@@ -4,18 +4,21 @@ define([
     'kb_common/html',
     'kb_common/ui',
     '../utils',
-    'yaml!../helpData.yml'
+    'yaml!../helpData.yml',
+    'kb_plugin_jgi-search'
 ], function (
     ko,
     Promise,
     html,
     ui,
     utils,
-    helpData
+    helpData,
+    Plugin
 ) {
     'use strict';
 
     var t = html.tag,
+        img = t('img'),
         select = t('select'),
         option = t('option'),
         div = t('div'),
@@ -239,31 +242,46 @@ define([
         }, div({
             class: 'input-group'
         }, [
-            input({
-                class: 'form-control',
-                style: {
-                    margin: '0 4px'
-                },
-                dataBind: {
-                    textInput: 'searchInput',
-                    hasFocus: true
-                },
-                placeholder: 'Search JGI Public Data'
-            }),
             div({
                 class: 'input-group-addon',
                 style: {
-                    cursor: 'pointer'
+                    padding: '0',
+                    border: 'none',
+                    backgroundColor: 'transparent'
+                }
+            }, img({
+                src: Plugin.plugin.fullPath  + '/images/jgi-short-logo.jpg',
+                style: {
+                    display: 'inline',
+                    height: '30px',
+                    marginRight: '6px'
+                }
+            })),
+            div({
+                class: 'input-group-addon',
+                style: {
+                    cursor: 'pointer',
+                    borderRadius: '4px',
+                    borderTopRightRadius: '0',
+                    borderBottomRightRadius: '0',
+                    paddingLeft: '8px',
+                    paddingRight: '8px'
                 },
                 dataBind: {
                     click: 'doSearch'
                 }
             }, span({
+                style: {
+                    display: 'inline-block',
+                    width: '2em',
+                    textAlign: 'center'
+                }
+            }, span({
                 class: 'fa',
                 style: {
-                    fontSize: '125%',
+                    fontSize: '100%',
                     color: '#000',
-                    width: '2em'
+                    // width: '2em'
                 },
                 dataBind: {
                     // style: {
@@ -274,7 +292,19 @@ define([
                         'fa-spinner fa-pulse': 'searching()',
                     }
                 }
-            })),
+            }))),
+            input({
+                class: 'form-control',
+                style: {
+                    // margin: '0 4px'
+                },
+                dataBind: {
+                    textInput: 'searchInput',
+                    hasFocus: true
+                },
+                placeholder: 'Search JGI Public Data'
+            }),
+           
             div({
                 class: 'input-group-addon',
                 style: {

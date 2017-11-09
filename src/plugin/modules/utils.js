@@ -220,7 +220,7 @@ define([
             org.info = 'No scientific name available';
             org.value = '-';
             return org;
-        }
+        } 
 
         // for gold_data (and perhaps others) the species is actually Genus species.
         // handle the general case of the genus being a prefix of the species and fix
@@ -237,7 +237,9 @@ define([
             }
         }
        
-        org.value = (org.genus || '-') + ' ' + (org.species || '-') + (org.strain ? ' ' + org.strain : '');
+        var scientificName = (org.genus || '-') + ' ' + (org.species || '-') + (org.strain ? ' ' + org.strain : '');
+        org.value = scientificName;
+        org.info = scientificName + ' - ' + org.info;
         return org;
     }
 
@@ -464,6 +466,7 @@ define([
         var queuedRe = /^In_Queue$/;
         var progressRe = /^In Progress\. Total files = ([\d]+)\. Copy complete = ([\d]+)\. Restore in progress = ([\d]+)\. Copy in progress = ([\d]+)$/;
         var completedRe = /^Transfer Complete\. Transfered ([\d]+) files\.$/;
+        var errorRe = /^Transfer Complete. Transfered ([\d]+) files. Scp failed for files = \[u'(.*?)'\]$/;
 
         if (queuedRe.test(message)) {
             return {
@@ -480,9 +483,17 @@ define([
         var m = progressRe.exec(message);
         // console.log('m', m, message, message.length, typeof message);
         if (!m) {
-            console.log('unknown1...', message);
+            var em = errorRe.test(message);
+
+            if (!em) {
+                console.log('unknown1...', message);
+                return {
+                    status: 'unknown1'
+                };
+            }
+
             return {
-                status: 'unknown1'
+                status: 'error'
             };
         }
 

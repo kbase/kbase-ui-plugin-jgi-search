@@ -257,6 +257,10 @@ define([
                 },
                 action: {
                     fn: doAddProposal
+                },
+                sort: {
+                    keyName: 'proposalId',
+                    direction: 'asencing'
                 }
             },
             {
@@ -270,6 +274,10 @@ define([
                 },
                 action: {
                     fn: doAddProject
+                },
+                sort: {
+                    keyName: 'sequencingProjectId',
+                    direction: 'ascending'
                 }
             },
             {
@@ -279,7 +287,7 @@ define([
                 format: 'MM/DD/YYYY',
                 sort: {
                     keyName: 'date',
-                    isTimestamp: true,
+                    // isTimestamp: true,
                     direction: 'descending'
                 },
                 width: 10
@@ -288,7 +296,11 @@ define([
                 name: 'scientificName',
                 label: 'Scientific Name',
                 type: 'string',
-                width: 21
+                width: 21,
+                sort: {
+                    keyName: 'scientificName',
+                    direction: 'descending'
+                }
             },
             {
                 name: 'dataType',
@@ -313,19 +325,24 @@ define([
                 label: 'Size',
                 type: 'number',
                 format: '0.0 b',
-                width: 8
+                width: 8,
+                sort: {
+                    keyName: 'fileSize',
+                    direction: 'ascending'
+                }
             },
             {
                 name: 'copy',
                 label: 'Copy',
                 type: 'action',
                 width: 5,
-                action: {
-                    fn: doStage, //'actions.doCopy',
-                    // label: 'COPY',
-                    icon: 'fa-download fa-rotate-270',
-                    newWindow: false
-                },
+                component: 'jgi-search/copy-control',
+                // action: {
+                //     fn: doStage, //'actions.doCopy',
+                //     // label: 'COPY',
+                //     icon: 'fa-download fa-rotate-270',
+                //     newWindow: false
+                // },
                 rowStyle: {
                     textAlign: 'center'
                 },
@@ -334,9 +351,6 @@ define([
                 }
             }
         ];
-
-      
-        console.log('search pageSize?', params.search.pageSize());
 
         return {
             search: params.search,

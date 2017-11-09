@@ -1,11 +1,9 @@
 define([
     'knockout-plus',
-    'kb_common/html',
-    'kb_common/bootstrapUtils'
+    'kb_common/html'
 ], function (
     ko,
-    html,
-    BS
+    html
 ) {
     'use strict';
     var t = html.tag,
@@ -373,15 +371,12 @@ define([
                 class: [styles.classes.innerCell]
             }, [
                 '<!-- ko if: column.sort -->',
+                
+                '<!-- ko if: $component.sortColumn() !== column.name -->',
                 span({
-                    dataBind: {
-                        text: 'column.label',
-                        click: '$component.doSort'
-                    },
-                    style: {
-                        cursor: 'pointer'
-                    }
+                    class: 'fa fa-sort'
                 }),
+                '<!-- /ko -->',
                 '<!-- ko if: $component.sortColumn() === column.name -->',
                 '<!-- ko if: $component.sortDirection() === "descending" -->',
                 span({
@@ -394,6 +389,17 @@ define([
                 }),
                 '<!-- /ko -->',
                 '<!-- /ko -->',
+
+                span({
+                    dataBind: {
+                        text: 'column.label',
+                        click: '$component.doSort'
+                    },
+                    style: {
+                        cursor: 'pointer',
+                        marginLeft: '2px'
+                    },
+                }),
                 '<!-- /ko -->',
                 '<!-- ko if: !column.sort -->',
                 span({
@@ -561,9 +567,28 @@ define([
                     // NOT ACTION COLUMN
                     // (but maybe has action invocation in the col value!)
                     '<!-- ko ifnot: column.action -->',
-                    '<!-- ko if: typeof row[column.name] === "object" && row[column.name] !== null -->',
-                    
-                    '<!-- ko if: column.type -->',
+
+                    // COMPONENT
+                    '<!-- ko if: column.component -->',
+                    span({
+                        dataBind: {
+                            component: {
+                                name: 'column.component',
+                                params: {
+                                    field: 'row[column.name]',
+                                    row: 'row',
+                                    search: '$component.search'
+                                }
+                            }
+                            // text: 'column.component'
+                        }
+                    }),
+                    '<!-- /ko -->',
+
+
+                    '<!-- ko ifnot: column.component -->',
+
+                    '<!-- ko if: row[column.name]  -->',                    
                     buildColValue(),                    
                     '<!-- /ko -->',
 
@@ -579,13 +604,13 @@ define([
                     '<!-- /ko -->',
                     
                     '<!-- /ko -->',
-                    '<!-- ko ifnot: typeof row[column.name] === "object" && row[column.name] !== null  -->',
-                    span({
-                        dataBind: {
-                            text: 'row[column.name]'
-                        }
-                    }),
-                    '<!-- /ko -->',
+                    // '<!-- ko ifnot: typeof row[column.name] === "object" && row[column.name] !== null  -->',
+                    // span({
+                    //     dataBind: {
+                    //         text: 'row[column.name]'
+                    //     }
+                    // }),
+                    // '<!-- /ko -->',
                     '<!-- /ko -->'
                 ]))
             ])

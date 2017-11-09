@@ -9,11 +9,12 @@ define([
     'marked',
     // kbase deps
     'kb_common/html',
+    'kb_common/jsonRpc/genericClient',
+    'kb_common/props',
     // local deps
     '../rpc',
     '../errorWidget',
     '../utils',
-    '../nanoBus',
     // local data
     'yaml!../import.yml',
 ], function (
@@ -22,10 +23,11 @@ define([
     numeral,
     marked,
     html,
+    GenericClient,
+    Props,
     Rpc,
     ErrorWidget,
     utils,
-    NanoBus,
     Import
 ) {
     'use strict';
@@ -127,9 +129,23 @@ define([
             queued: ko.observable(0),
             restoring: ko.observable(0),
             copying: ko.observable(0),
-            completed: ko.observable(0)
+            completed: ko.observable(0),
+            error: ko.observable(0)
         };
 
+        var stagingJobsState = ko.pureComputed(function () {
+            var pending = stagingJobStates.sent() +
+                stagingJobStates.queued() +
+                stagingJobStates.restoring() +
+                stagingJobStates.copying();
+        
+            return {
+                pending: pending,
+                completed: stagingJobStates.completed()
+            };
+        });
+
+        // console.log('staging job state', stagingJobsState());
 
         function updateStagingJobStates() {
             var states = {
@@ -137,13 +153,16 @@ define([
                 queued: 0,
                 restoring: 0,
                 copying: 0,
-                completed: 0
+                completed: 0,
+                error: 0
             };
             stagingJobs().forEach(function (job) {
                 var newState = job.status();
                 if (newState in states) {
                     states[newState] += 1;
                 } else {
+                    // hack for now, get the service to return this.
+                    states['error'] += 1;
                     console.warn('Staging job state unrecognized: ', newState);
                 }
             });
@@ -205,7 +224,7 @@ define([
                     .then(function (result) {
                         // should be list of statuses...
                         var runAgain = result.some(function (status) {
-                            return (status !== 'completed');
+                            return (status !== 'completed' && status !== 'error' && status !== 'unknown1');
                         });
                         // console.log('stage status is', result, stats);
                         // hmph, value comes back as a simple string.
@@ -222,6 +241,7 @@ define([
                         // if (stageStats.status === 'completed') {
                         //     return;
                         // }
+                        console.log('monitored', result);
                         if (runAgain) {
                             window.setTimeout(checkProgress, 5000);
                         } else {
@@ -457,7 +477,7 @@ define([
                         return job.dbId === hit.id;
                     });
                     var transferJob = jobs[0];
-                    console.log('HIT', hit);
+                    // console.log('HIT', hit);
                     var analysisProject;
                     if (utils.hasProp(hit.source.metadata, 'analysis_project')) {
                         analysisProject = {
@@ -477,7 +497,7 @@ define([
                             status: utils.getProp(hit.source.metadata, 'sequencing_project.current_status'),
                             statusDate: utils.getProp(hit.source.metadata, 'sequencing_project.status_date'),
                             comments: utils.getProp(hit.source.metadata, 'sequencing_project.comments')
-                        }
+                        };
                     }
                     return {
                         // rowNumber: rowNumber,
@@ -962,16 +982,11 @@ define([
                                         info: 'Link to gold record',
                                         url: goldUrl
                                     };
-                                }
-                            }
-                            if (!s2) {
-                                s2 = '-';
-                            }
+                                } 
+                            }                           
                             break;
-                        default:
-                            s2 = '-';
+                        
                         }
-
                         var resultItem = {
                             id: hit.id,
                             rowNumber: rowNumber,
@@ -985,14 +1000,13 @@ define([
                                 value: new Date(hit.source.file_date),
                                 info: 'The file date'
                             },
-                            // date: utils.usDate(hit.source.file_date),
-                            modified: utils.usDate(hit.source.modified),
                             scientificName: scientificName,
-                            dataType: fileType.dataType,
+                            dataType: {
+                                value: fileType.dataType,
+                                info: 'The file format'
+                            },
                             s1: s1,
                             s2: s2,
-                            s3: '-',
-                            // fileSize: numeral(hit.source.file_size).format('0.0 b'),
                             fileSize: {
                                 value: hit.source.file_size,
                                 info: numeral(hit.source.file_size).format('0.0 b') + ' - The size of the file; may expand to larger size if compressed'
@@ -1000,8 +1014,17 @@ define([
                             // view stuff
                             selected: ko.observable(false),
                             isPublic: utils.getProp(hit, 'source._es_public_data', false),
+                            doTransfer: function () {
+                                console.log('yes, do stage ...', hit.id);
+                                try {
+                                    doStage(hit.id);
+                                } catch (ex) {
+                                    console.error('ERROR staging', ex);
+                                }
+                            },
                             transferJob: ko.observable(jobMap[hit.id])
                         };
+                        
                         searchResults.push(resultItem);
                     });
                 })
@@ -1064,7 +1087,94 @@ define([
             }
         });
 
+        var status = ko.observable('none');
+
         var jgiTermsAgreed = ko.observable(false);
+
+        function saveJgiAgreement(agreed) {
+            var username = runtime.service('session').getUsername();
+            var profileService = new GenericClient({
+                // Note now using the module name for the service id in the services config.
+                url: runtime.config('services.UserProfile.url'),
+                token: runtime.service('session').getAuthToken(),
+                module: 'UserProfile'
+            });
+            profileService.callFunc('get_user_profile', [[username]])
+                .spread(function (profiles) {
+                    var profile = Props.make({
+                        data: profiles[0]
+                    });
+
+                    var prefs = Props.make({data: profile.getItem('profile.preferences', {})});
+
+                    prefs.setItem('agreements.jgiData',  {
+                        agreed: agreed,
+                        time: new Date().getTime()
+                    });
+
+                    var profileUpdate = {
+                        profile: {
+                            profile: {
+                                preferences: prefs.debug()
+                            },
+                            user: profile.getItem('user')
+                        }
+                    };
+
+                    // Don't want to really replace, but update_user_profile only 
+                    return profileService.callFunc('update_user_profile', [profileUpdate])
+                        .then(function () {
+                            // successfully saved profile
+                            // console.log('saved profile...');
+                            if (agreed) {
+                                status('agreed');
+                            } else {
+                                status('needagreement');
+                            }
+                        })
+                        .catch(function (err) {
+                            // TODO: need error message!
+                            console.error('failed to save profile...', err);
+                        });
+                })
+                .catch(function (err) {
+                    console.error('error getting profile', err);
+                });
+        }
+        function getJgiAgreement() {
+            var username = runtime.service('session').getUsername();
+            var profileService = new GenericClient({
+                // Note now using the module name for the service id in the services config.
+                url: runtime.config('services.UserProfile.url'),
+                token: runtime.service('session').getAuthToken(),
+                module: 'UserProfile'
+            });
+            profileService.callFunc('get_user_profile', [[username]])
+                .spread(function (profiles) {
+                    var profile = Props.make({
+                        data: profiles[0]
+                    });
+
+                    var agreed = profile.getItem('profile.preferences.agreements.jgiData.agreed', false);
+                    if (agreed) {
+                        status('agreed');
+                    } else {
+                        status('needagreement');
+                    }
+                })
+                .catch(function (err) {
+                    console.error('error getting profile', err);
+                    return false;
+                });
+        }
+
+        jgiTermsAgreed.subscribe(function (newValue) {
+            // save the agreed-to-state in the user's profile.
+            console.log('saving to profile...');
+            saveJgiAgreement(newValue);
+        });
+
+        getJgiAgreement();
 
         var vm = {
             search: {
@@ -1101,6 +1211,7 @@ define([
 
                 // Staging
                 stagingJobStates: stagingJobStates,
+                stagingJobsState: stagingJobsState,
                 monitoringJobs: monitoringJobs,
                 stagingJobs: stagingJobs,
 
@@ -1114,7 +1225,8 @@ define([
                 addMessage: addMessage,
                 doStage: doStage,
 
-                doSearch: doSearch
+                doSearch: doSearch,
+                status: status
             }
         };
         return vm;
@@ -1129,7 +1241,18 @@ define([
                 padding: '10px'
             }
         }, [
-            '<!-- ko ifnot: $component.search.jgiTermsAgreed() -->',
+            '<!-- ko switch: search.status -->',
+            // possible states:
+            // awaiting agreement status
+            // agreed
+            // not agreed
+
+            '<!-- ko case: "none" -->', 
+            'loading...',
+            '<!-- /ko -->',
+
+            '<!-- ko case: "needagreement" -->', 
+            // '<!-- ko ifnot: $component.search.jgiTermsAgreed() -->',
             utils.komponent({
                 name: 'jgi-search/terms',
                 params: {
@@ -1137,13 +1260,27 @@ define([
                 }
             }),
             '<!-- /ko -->',
-            '<!-- ko if: $component.search.jgiTermsAgreed() -->',
+
+            '<!-- ko case: "agreed" -->', 
+            // '<!-- ko if: $component.search.jgiTermsAgreed() -->',
             utils.komponent({
                 name: 'jgisearch/search',
                 params: {
                     search: 'search'
                 }
             }),
+            '<!-- /ko -->',
+
+           
+            // '<!-- ko case: $default -->', 
+            // 'hmm',
+            // div({
+            //     dataBind: {
+            //         text: 'search.status'
+            //     }
+            // }),
+            // '<!-- /ko -->',
+
             '<!-- /ko -->'
         ]);
     }

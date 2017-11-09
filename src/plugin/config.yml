@@ -70,6 +70,10 @@ install:
       module: components/terms
       type: factory
       css: true
+    -
+      name: jgi-search/copy-control
+      module: components/copyControl
+      type: factory
   routes:
     -
       path: ['jgi', 'search']
