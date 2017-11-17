@@ -201,7 +201,21 @@ define([
         //     params.search.seqProjectFilter.remove(data);
         // }
 
-        console.log('in search, page size is', pageSize());
+
+        var piFilter = ko.observable().extend({
+            rateLimit: 300
+        }).syncWith(params.search.piFilter);
+
+        var seqProjectFilter = ko.observable().extend({
+            rateLimit: 300
+        }).syncWith(params.search.seqProjectFilter);
+
+        var proposalFilter = ko.observable().extend({
+            rateLimit: 300
+        }).syncWith(params.search.proposalFilter);
+
+       
+    
 
         return {
             // The top level search is included so that it can be
@@ -219,9 +233,9 @@ define([
             typeFilterOptions: typeFilterOptions,
             // Project filter
             // newSeqProject: newSeqProject,
-            seqProjectFilter: params.search.seqProjectFilter,
-            proposalFilter: params.search.proposalFilter,
-            piFilter: params.search.piFilter,
+            seqProjectFilter: seqProjectFilter,
+            proposalFilter: proposalFilter,
+            piFilter: piFilter,
 
             // doRemoveSeqProject: doRemoveSeqProject,
 
@@ -295,12 +309,10 @@ define([
             }))),
             input({
                 class: 'form-control',
-                style: {
-                    // margin: '0 4px'
-                },
                 dataBind: {
                     textInput: 'searchInput',
-                    hasFocus: true
+                    hasFocus: true,
+                    css: 'searchInput() ? "' + styles.classes.activeFilterInput + '" : null',
                 },
                 placeholder: 'Search JGI Public Data'
             }),
@@ -362,18 +374,17 @@ define([
             }, [
                 span({
                     style: {
-                        border: '1px silver solid',
-                        borderRadius: '3px',
-                        padding: '3px'
-                    }
+                        // border: '1px silver solid',
+                        // borderRadius: '3px',
+                        // padding: '3px'
+                    },
+                    
                 }, [
                     span(({
                         dataBind: {
                             text: '$data'
                         },
-                        style: {
-                            padding: '3px'
-                        }
+                        class: ['form-control', styles.classes.activeFilterInput]
                     })),
                     span({
                         dataBind: {
@@ -385,54 +396,6 @@ define([
             ])
         ]);
     }
-
-    // function buildSeqProjectFilter() {
-    //     return div({
-    //         class: 'form-group',
-    //         style: {
-    //             margin: '0 4px'
-    //         }
-    //     }, [
-    //         label({}, 'Projects'),
-    //         input({
-    //             dataBind: {
-    //                 value: 'newSeqProject'
-    //             },
-    //             placeholder: 'Filter by seq. project id'
-    //         }),
-    //         div({
-    //             style: {
-    //                 display: 'inline-block'
-    //             },
-    //             dataBind: {
-    //                 foreach: 'seqProjectFilter'
-    //             }
-    //         }, [
-    //             span({
-    //                 style: {
-    //                     border: '1px silver solid',
-    //                     borderRadius: '3px',
-    //                     padding: '3px'
-    //                 }
-    //             }, [
-    //                 span(({
-    //                     dataBind: {
-    //                         text: '$data'
-    //                     },
-    //                     style: {
-    //                         padding: '3px'
-    //                     }
-    //                 })),
-    //                 span({
-    //                     dataBind: {
-    //                         click: '$component.doRemoveSeqProject'
-    //                     },
-    //                     class: 'kb-btn-mini'
-    //                 }, 'x')
-    //             ])
-    //         ])
-    //     ]);
-    // }
 
     function buildFilterControl(arg) {
         return div({
@@ -477,22 +440,6 @@ define([
     }
 
     function buildSeqProjectFilter() {
-        // return span({
-        //     dataBind: {
-        //         let: '{filter: seqProjectFilter}'
-        //     }
-        // }, buildFilterControl({
-        //     label: 'Project',
-        //     placeholder: 'Filter by seq. project id'
-        // }));
-        // return [
-        //     '<!-- ko let: {filter: seqProjectFilter} -->',
-        //     buildFilterControl({
-        //         label: 'Project',
-        //         placeholder: 'Filter by seq. project id'
-        //     }),
-        //     '<!-- /ko -->'
-        // ];
         return div({
             class: 'form-group',
             style: {
@@ -501,17 +448,16 @@ define([
         }, [
             label({
                 style: {
-                    marginRight: '2px'
+                    marginRight: '4px'
                 }
             }, 'Project'),
             input({
                 dataBind: {
                     value: 'seqProjectFilter',
-                    style: {
-                        'font-family': 'seqProjectFilter() ? "monospace": "inherit"'
-                    }
+                    css: 'seqProjectFilter() ? "' + styles.classes.activeFilterInput + '" : null'
                 },
                 placeholder: 'Filter by seq. project id',
+                class: 'form-control',
                 style: {
                     width: '8em'
                 }
@@ -543,17 +489,16 @@ define([
         }, [
             label({
                 style: {
-                    marginRight: '2px'
+                    marginRight: '4px'
                 }
             }, 'Proposal'),
             input({
                 dataBind: {
                     value: 'proposalFilter',
-                    style: {
-                        'font-family': 'proposalFilter() ? "monospace": "inherit"'
-                    }
+                    css: 'proposalFilter() ? "' + styles.classes.activeFilterInput + '" : null'
                 },
                 placeholder: 'Filter by proposal id',
+                class: 'form-control',
                 style: {
                     width: '8em'
                 }
@@ -585,17 +530,16 @@ define([
         }, [
             label({
                 style: {
-                    marginRight: '2px'
+                    marginRight: '4px'
                 }
             }, 'PI'),
             input({
                 dataBind: {
-                    value: 'piFilter',
-                    style: {
-                        'font-family': 'piFilter() ? "monospace": "inherit"'
-                    }
+                    textInput: 'piFilter',
+                    css: 'piFilter() ? "' + styles.classes.activeFilterInput + '" : null',
                 },
                 placeholder: 'Filter by PI last name',
+                class: 'form-control',
                 style: {
                     width: '8em'
                 }
@@ -696,18 +640,6 @@ define([
         });
     }
 
-    function buildExample(text) {
-        return span({
-            style: {
-                fontFamily: 'monospace',
-                backgroundColor: 'rgba(247, 242, 225, 0.5)',
-                fontWeight: 'bold',
-                border: '1px gray solid',
-                padding: '4px'
-            }
-        }, text);
-    }
-
     var styles = html.makeStyles({
         component: {
             flex: '1 1 0px',
@@ -727,6 +659,11 @@ define([
             // border: '1px green dotted',
             display: 'flex',
             flexDirection: 'column'
+        },
+        activeFilterInput: {
+            // fontFamily: 'monospace',
+            backgroundColor: 'rgba(209, 226, 255, 1)',
+            color: '#000'
         }
     });
 

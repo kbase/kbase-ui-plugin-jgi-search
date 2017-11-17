@@ -1,17 +1,18 @@
 define([
-    'kb_common/html'
+    'kb_common/html',
+    '../utils'
 ], function (
-    html
+    html,
+    utils
 ) {
     'use strict';
 
     var t = html.tag,
         span = t('span'),
-        div = t('div'),
-        a = t('a');
+        div = t('div');
 
     function viewModel(params) {
-        function doCopy(data) {
+        function doCopy() {
             params.row.doTransfer();
         }
         return {
@@ -23,16 +24,11 @@ define([
 
     function template() {
         return  div({
-            // style: {
-            //     flex: '1 1 0px',
-            //     display: 'flex',
-            //     flexDirection: 'column'
-            // }
         }, [
             '<!-- ko ifnot: row.transferJob() -->',
             span({
                 class: 'mini-button'
-            }, a({
+            }, span({
                 dataBind: {
                     click: '$component.doCopy', // 'function () {column.action.fn(row);}',
                     clickBubble: false,
@@ -50,38 +46,13 @@ define([
             '<!-- /ko -->',
             '<!-- ko if: row.transferJob() -->',
 
-
-            '<!-- ko switch: row.transferJob().status -->',
+            utils.komponent({
+                name: 'jgi-search/copy-status-indicator',
+                params: {
+                    transferJob: 'row.transferJob()'
+                }
+            }),
             
-            '<!-- ko case: "complete" -->',
-            span({
-                class: 'fa fa-check',
-                style: {
-                    color: 'green'
-                }
-            }),
-            '<!-- /ko -->',
-
-            '<!-- ko case: "error" -->',
-            span({
-                class: 'fa fa-times',
-                style: {
-                    color: 'red'
-                }
-            }),
-            '<!-- /ko -->',
-
-            '<!-- ko case: $default -->',
-            span({
-                style: {
-                    fontSize: '80%',
-                }
-            }, html.loading()),
-            '<!-- /ko -->',
-
-            '<!-- /ko -->',
-
-
             '<!-- /ko -->',
         ]);
     }

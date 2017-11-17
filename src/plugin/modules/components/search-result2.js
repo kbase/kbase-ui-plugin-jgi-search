@@ -163,17 +163,15 @@ define([
 
         function doAddProject(data) {
             // console.log('filtering on ', data);
-            params.search.seqProjectFilter(data.sequencingProjectId.value);
+            params.search.seqProjectFilter(data.value);
         }
 
         function doAddProposal(data) {
-            params.search.proposalFilter(data.proposalId.value);
+            params.search.proposalFilter(data.value);
         }
 
         function doAddPi(data) {
-            // params.search.piFilter(data..value);
-            params.search.piFilter(data.pi.last);
-            // console.log('adding pi last name...', data);
+            params.search.piFilter(data.last);
         }
 
         function doStage(item) {
@@ -213,12 +211,6 @@ define([
                 });
         }
 
-        // function doCopy(row) {
-        //     alert('copying...');
-        //     console.log('copying row...', row);
-        // }
-
-
         var columns = [
             {
                 name: 'title',
@@ -226,7 +218,8 @@ define([
                 type: 'string',
                 sort: {
                     keyName: 'title',
-                    direction: 'ascending'
+                    direction: ko.observable('ascending'),
+                    active: ko.observable(false)
                 },
                 // width is more like a weight... for all current columns the
                 // widths are summed, and each column's actual width attribute
@@ -239,7 +232,8 @@ define([
                 type: 'string',
                 sort: {
                     keyName: 'pi',
-                    direction: 'ascending'
+                    direction: ko.observable('ascending'),
+                    active: ko.observable(false)
                 },
                 width:15,
                 action: {
@@ -260,7 +254,8 @@ define([
                 },
                 sort: {
                     keyName: 'proposalId',
-                    direction: 'asencing'
+                    direction: ko.observable('ascending'),
+                    active: ko.observable(false)
                 }
             },
             {
@@ -277,7 +272,8 @@ define([
                 },
                 sort: {
                     keyName: 'sequencingProjectId',
-                    direction: 'ascending'
+                    direction: ko.observable('ascending'),
+                    active: ko.observable(false)
                 }
             },
             {
@@ -288,7 +284,8 @@ define([
                 sort: {
                     keyName: 'date',
                     // isTimestamp: true,
-                    direction: 'descending'
+                    direction: ko.observable('ascending'),
+                    active: ko.observable(false)
                 },
                 width: 10
             },
@@ -299,7 +296,8 @@ define([
                 width: 21,
                 sort: {
                     keyName: 'scientificName',
-                    direction: 'descending'
+                    direction: ko.observable('ascending'),
+                    active: ko.observable(false)
                 }
             },
             {
@@ -328,7 +326,8 @@ define([
                 width: 8,
                 sort: {
                     keyName: 'fileSize',
-                    direction: 'ascending'
+                    direction: ko.observable('ascending'),
+                    active: ko.observable(false)
                 },
                 rowStyle: {
                     textAlign: 'right'
@@ -340,12 +339,6 @@ define([
                 type: 'action',
                 width: 5,
                 component: 'jgi-search/copy-control',
-                // action: {
-                //     fn: doStage, //'actions.doCopy',
-                //     // label: 'COPY',
-                //     icon: 'fa-download fa-rotate-270',
-                //     newWindow: false
-                // },
                 rowStyle: {
                     textAlign: 'center'
                 },

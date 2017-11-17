@@ -63,6 +63,7 @@
     padding: 2px;
     border: 2px transparent solid;
     cursor: pointer;
+    color: #555
 }
 
 .mini-button:hover {

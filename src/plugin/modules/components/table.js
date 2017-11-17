@@ -6,9 +6,11 @@ define([
     html
 ) {
     'use strict';
+
     var t = html.tag,
         div = t('div'),
         span = t('span'),
+        p = t('p'),
         a = t('a');
 
     var styles = html.makeStyles({
@@ -45,7 +47,8 @@ define([
             css: {
                 flex: '1 1 0px',
                 display: 'flex',
-                flexDirection: 'column'
+                flexDirection: 'column',
+                position: 'relative'
             }
         },
         itemRow: {
@@ -77,16 +80,10 @@ define([
                 }
             }
         },
-        // cell: {
-        //     styles: {
-        //         flex: '1 1 0px'
-        //     }
-        // },
         cell: {
             flex: '0 0 0px',
             overflow: 'hidden',
             whiteSpace: 'nowrap',
-            // textOverflow: 'ellipsis',
             border: '1px silver solid',
             height: '35px',
             padding: '2px',
@@ -98,7 +95,6 @@ define([
             flex: '0 0 0px',
             overflow: 'hidden',
             whiteSpace: 'nowrap',
-            // textOverflow: 'ellipsis',
             border: '1px silver solid',
             height: '35px',
             padding: '2px',
@@ -108,88 +104,10 @@ define([
         },
         innerCell: {
             flex: '1 1 0px',
-            // display: 'flex',
-            // flexDirection: 'column',
             overflow: 'hidden',
             whiteSpace: 'nowrap',
             textOverflow: 'ellipsis'
         },
-        // titleCell: {
-        //     flexBasis: '22%'
-        // },
-        // piCell: {
-        //     css: {
-        //         flexBasis: '10%'
-        //     }
-        // },
-        // cellLink: {
-        //     pseudo: {
-        //         hover: {
-        //             textDecoration: 'underline',
-        //             backgroundColor: '#EEE',
-        //             cursor: 'pointer'
-        //         }
-        //     }
-        // },
-        // proposalId: {
-        //     flexBasis: '5%',
-        //     textAlign: 'right',
-        //     paddingRight: '3px'
-        // },
-        // sequencingProjectId: {
-        //     css: {
-        //         flexBasis: '5%',
-        //         textAlign: 'right',
-        //         paddingRight: '3px'
-        //     },
-        //     pseudo: {
-        //         hover: {
-        //             textDecoration: 'underline',
-        //             backgroundColor: '#EEE',
-        //             cursor: 'pointer'
-        //         }
-        //     }
-        // },
-        // pmoProjectId: {
-        //     css: {
-        //         flexBasis: '5%',
-        //         textAlign: 'right',
-        //         paddingRight: '3px',
-        //         fontStyle: 'italic',
-        //         color: 'gray'
-        //     }
-        // },
-        // // analysisProjectId: {
-        // //     flexBasis: '7%',
-        // //     textAlign: 'right',
-        // //     paddingRight: '3px'
-        // // },
-
-        // dateCell: {
-        //     flexBasis: '10%'
-        // },
-        // scientificNameCell: {
-        //     flexBasis: '17%'
-        // },
-        // dataTypeCell: {
-        //     flexBasis: '5%'
-        // },
-        // s1Cell: {
-        //     flexBasis: '7%'
-        // },
-        // s2Cell: {
-        //     flexBasis: '7%'
-        // },
-        // // s3Cell: {
-        // //     flexBasis: '5%'
-        // // },
-        // fileSizeCell: {
-        //     flexBasis: '7%'
-        // },
-        // transferCell: {
-        //     flexBasis: '5%',
-        //     textAlign: 'center'
-        // },
         sectionHeader: {
             padding: '4px',
             fontWeight: 'bold',
@@ -222,13 +140,15 @@ define([
     });
 
     function viewModel(params, componentInfo) {
+        var slowLoadingThreshold = 300;
+        
         var table = params.table;
         var columns = table.columns;
         // calculate widths...
         var totalWidth = columns.reduce(function (tw, column) {
             return tw + column.width;
         }, 0);
-        var columnsMap = columns.reduce(function (map, column) {
+        columns.forEach(function (column) {
             var width = String(100 * column.width / totalWidth) + '%';
 
             // Header column style
@@ -240,52 +160,28 @@ define([
             s = column.rowStyle || {};
             s.flexBasis = width;
             column.rowStyle = s;
-
-            map[column.name] = column;
-            return map;
-        }, {});
-
+        });
 
         var sortColumn = ko.observable('timestamp');
 
         var sortDirection = ko.observable('descending');
 
-        function doSort(data) {
-            console.log('woudl sort...', data);
+        /*
+            Sorting is managed here in the table, and we 
+            communicate changes via the table.sortColumn() call.
+             We don't know whether the implementation supports
+             single or multiple column sorts, etc. 
+             In turn, the sorted property may be set to asending,
+             descending, or falsy.
+        */
+        function doSort(column) {
+            table.sortBy(column);
         }
-
-        // function doSort(data) {
-        //     var columnName = data.name;
-        //     if (columnName === sortColumn()) {
-        //         if (sortDirection() === 'ascending') {
-        //             sortDirection('descending');
-        //         } else {
-        //             sortDirection('ascending');
-        //         }
-        //     } else {
-        //         sortColumn(columnName);
-        //         sortDirection(columnsMap[columnName].sort.direction);
-        //     }
-
-        //     var column = columnsMap[columnName];
-
-        //     // Maybe do this through a subscription to the individual 
-        //     // observables...
-        //     var sortRule = {
-        //         is_timestamp: column.sort.isTimestamp ? 1 : 0,
-        //         is_object_name: column.sort.isObjectName ? 1 : 0,
-        //         key_name: column.sort.keyName,
-        //         descending: sortDirection() === 'descending' ? 1 : 0
-        //     };
-        //     params.search.sortingRules.removeAll();
-        //     params.search.sortingRules.push(sortRule);
-        // }
 
         // AUTO SIZING
 
         // we hinge upon the height, which is updated when we start and when the ...
         var height = ko.observable();
-        
         
         function calcHeight() {
             return componentInfo.element.querySelector('.' + styles.classes.tableBody).clientHeight;
@@ -298,30 +194,29 @@ define([
             if (resizerTimer) {
                 return;
             }
-            window.setTimeout(function () {
+            resizerTimer = window.setTimeout(function () {
                 resizerTimer = null;
                 height(calcHeight());
             }, resizerTimeout);
         }
-        window.addEventListener('resize', resizer, false);
+        var resizeListener = window.addEventListener('resize', resizer, false);
 
+        // TODO: bind this to the table styles
         var rowHeight = 35;
 
         height.subscribe(function (newValue) {
             if (!newValue) {
                 table.pageSize(null);
             }            
-            var rows = Math.floor(newValue / rowHeight);
-            table.pageSize(rows);
+
+            
+            var rowCount = Math.floor(newValue / rowHeight);
+
+            table.pageSize(rowCount);
         });        
 
         // Calculate the height immediately upon component load
         height(calcHeight());
-
-        table.rows.subscribe(function () {
-            // console.log('table rows??', table.rows());
-            
-        });
 
         function doOpenUrl(data) {
             if (!data.url) {
@@ -338,17 +233,55 @@ define([
                 console.warn('No row action...', table, data);
             }
         }
+
+        // LIFECYCLE
+
+        function dispose() {
+            if (resizeListener) {
+                window.removeEventListener('resize', resizer, false);
+            }
+        }
+
+        var isLoadingSlowly = ko.observable(false);
+
+        var loadingTimer;
+        function timeLoading() {
+            loadingTimer = window.setTimeout(function () {
+                if (table.isLoading()) {
+                    isLoadingSlowly(true);
+                }
+                loadingTimer = null;
+            }, slowLoadingThreshold);
+        }
+        function cancelTimeLoading() {
+            if (loadingTimer) {
+                window.clearTimeout(loadingTimer);
+                loadingTimer = null;
+            }
+            isLoadingSlowly(false);
+        }
+        
+        table.isLoading.subscribe(function (loading) {
+            if (loading) {
+                timeLoading();
+            } else {
+                cancelTimeLoading();
+            }
+        });
         
         return {
             rows: table.rows,
             isLoading: table.isLoading,
+            isLoadingSlowly: isLoadingSlowly,
             columns: columns,
             doSort: doSort,
             sortColumn: sortColumn,
             sortDirection: sortDirection,
             state: table.state,
             doOpenUrl: doOpenUrl,
-            doRowAction: doRowAction
+            doRowAction: doRowAction,
+            // lifecycle hooks
+            dispose: dispose
         };
     }
 
@@ -372,18 +305,18 @@ define([
             }, [
                 '<!-- ko if: column.sort -->',
                 
-                '<!-- ko if: $component.sortColumn() !== column.name -->',
+                '<!-- ko if: !column.sort.active() -->',
                 span({
                     class: 'fa fa-sort'
                 }),
                 '<!-- /ko -->',
-                '<!-- ko if: $component.sortColumn() === column.name -->',
-                '<!-- ko if: $component.sortDirection() === "descending" -->',
+                '<!-- ko if: column.sort.active() -->',
+                '<!-- ko if: column.sort.direction() === "descending" -->',
                 span({
                     class: 'fa fa-sort-desc'
                 }),
                 '<!-- /ko -->',
-                '<!-- ko if: $component.sortDirection() === "ascending" -->',
+                '<!-- ko if: column.sort.direction() === "ascending" -->',
                 span({
                     class: 'fa fa-sort-asc'
                 }),
@@ -393,7 +326,7 @@ define([
                 span({
                     dataBind: {
                         text: 'column.label',
-                        click: '$component.doSort'
+                        click: 'function () {$component.doSort(column);}'
                     },
                     style: {
                         cursor: 'pointer',
@@ -470,8 +403,6 @@ define([
 
     function buildResultsRows() {
         var rowClass = {};
-        rowClass[styles.classes.selected] = 'selected()';
-        rowClass[styles.classes.private] = '!isPublic';
         return div({
             dataBind: {
                 foreach: {
@@ -480,7 +411,7 @@ define([
                 }
             },
             class: styles.classes.itemRows
-        }, [
+        }, [            
             div({
                 dataBind: {
                     foreach: {
@@ -511,7 +442,7 @@ define([
                                 type: 'column.type',
                                 format: 'column.format'
                             },
-                            click: 'function () {column.action.fn(row);}',
+                            click: 'function () {column.action.fn(row[column.name], row); return true;}',
                             clickBubble: false,
                             attr: {
                                 title: 'row[column.name].info'
@@ -544,7 +475,7 @@ define([
                     a({
                         dataBind: {
                             css: 'column.action.icon',
-                            click: 'function () {column.action.fn(row);}',
+                            click: 'function () {column.action.fn(row); return true;}',
                             clickBubble: false,
                             // attr: {
                             //     title: 'row[column.name].info'
@@ -556,9 +487,6 @@ define([
                         class: 'fa'
                     }),
                     '<!-- /ko -->',
-
-
-
 
                     '<!-- /ko -->',
 
@@ -623,18 +551,38 @@ define([
     }
 
     function buildLoading() {
-        // return tbody({}, [
-        //     tr([
-        //         td({
-        //             dataBind: {
-        //                 attr: {
-        //                     colspan: 'columns.length'
-        //                 }
-        //             }
-        //         }, html.loading())
-        //     ])
-        // ]);
-        return html.loading();
+        return [
+            '<!-- ko if: $component.isLoading -->',
+            div({
+                style: {
+                    position: 'absolute',
+                    left: '0',
+                    right: '0',
+                    top: '0',
+                    bottom: '0',
+                    backgroundColor: 'rgba(255, 255, 255, 0.5)',                    
+                    fontSize: '300%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    zIndex: '5'
+                }
+            }, [
+                div({
+                    style: {
+                        flex: '1 1 0px',
+                        display: 'flex',
+                        flexDirection: 'row',
+                        justifyContent: 'center',
+                        alignItems: 'center'
+                    }
+                }, [
+                    '<!-- ko if: $component.isLoadingSlowly -->',
+                    html.loading(),
+                    '<!-- /ko -->'
+                ])
+            ]),
+            '<!-- /ko -->'
+        ];
     }
 
     // function buildError() {
@@ -656,6 +604,17 @@ define([
     //     ]);
     // }
 
+    function buildNoActiveSearch() {
+        return div([
+            p('NO ACTIVE SEARCH - PLACEHOLDER')
+        ]);
+    }
+
+    function buildNoResults() {
+        return div([
+            p('NO RESULTS FROM SEARCH - PLACEHOLDER')
+        ]);
+    }
 
     function template() {
         return div({
@@ -671,44 +630,56 @@ define([
                 class: styles.classes.tableBody
             }, [
                 // Handle case of a search having been run, but nothing found.
-                '<!-- ko if: $component.state() === "notfound" -->',
+                '<!-- ko switch: $component.state() -->', 
+
+                '<!-- ko case: "notfound" -->',
                 div({
                     style: {
                         padding: '12px',
                         backgroundColor: 'silver',
                         textAlign: 'center'
                     }
-                }, 'no results, keep trying!'),
+                }, buildNoResults()),
                 '<!-- /ko -->',
 
                 // Handle case of no active search. We don't want to confuse the user 
                 // by indicating that nothing was found.
-                '<!-- ko if: $component.state() === "none" -->',
+                '<!-- ko case: "none" -->',
                 div({
                     style: {
                         padding: '12px',
                         backgroundColor: 'silver',
                         textAlign: 'center'
                     }
-                }, 'no active search'), // buildNoActiveSearch()),
+                }, buildNoActiveSearch()), // buildNoActiveSearch()),
                 '<!-- /ko -->',
 
                 // Handle case of a search being processed
-                // '<!-- ko if: $component.isLoading() -->',
+
+                '<!-- ko case: $default -->',
+
                 // buildLoading(),
-                // '<!-- /ko -->',
+                div({
+                    style: {
+                        flex: '1 1 0px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        position: 'relative'
+                    }
+                }, [
+                    buildLoading(),
+                    '<!-- ko if: $component.rows().length > 0 -->',
+                    buildResultsRows(),
+                    '<!-- /ko -->',
+                ]),
 
-                // '<!-- ko ifnot: $component.isLoading() -->',
-                // We have results!
-                '<!-- ko if: $component.rows().length > 0 -->',
-                buildResultsRows(),
                 '<!-- /ko -->',
-                // '<!-- /ko -->'
-            ])
-            
 
+                '<!-- /ko -->'
+            ])
         ]);
     }
+
     function component() {
         return {
             viewModel: {

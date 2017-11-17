@@ -74,6 +74,10 @@ install:
       name: jgi-search/copy-control
       module: components/copyControl
       type: factory
+    -
+      name: jgi-search/copy-status-indicator
+      module: components/copyStatusIndicator
+      type: factory
   routes:
     -
       path: ['jgi', 'search']

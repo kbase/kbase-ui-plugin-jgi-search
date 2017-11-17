@@ -300,7 +300,20 @@ define([
     function buildStagingStatus() {
         return [
             '<!-- ko if: search.stagingJobsState().pending -->',
-            html.loading(),
+            // html.loading(),
+
+            '<!-- ko foreach: search.stagingJobs -->',
+
+            utils.komponent({
+                name: 'jgi-search/copy-status-indicator',
+                params: {
+                    transferJob: '$data'
+                }
+            }),
+
+            '<!-- /ko -->',
+
+
             '<!-- /ko -->',
             '<!-- ko ifnot: search.stagingJobsState().pending -->',
 

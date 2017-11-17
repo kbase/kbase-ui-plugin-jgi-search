@@ -147,7 +147,7 @@ define([
             container.classList.add('plugin-jgi-search');
         }
 
-        function start(params) {
+        function start() {
             runtime.send('ui', 'setTitle', 'JGI Search (beta)');
 
             container.innerHTML = utils.komponent({
