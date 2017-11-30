@@ -3,8 +3,7 @@ define([
     'bluebird',
     'kb_common/html',
     'kb_common/ui',
-    '../utils',
-    'yaml!../helpData.yml',
+    '../lib/utils',
     'kb_plugin_jgi-search'
 ], function (
     ko,
@@ -12,131 +11,17 @@ define([
     html,
     ui,
     utils,
-    helpData,
     Plugin
 ) {
     'use strict';
 
     var t = html.tag,
-        img = t('img'),
         select = t('select'),
         option = t('option'),
         div = t('div'),
         span = t('span'),
-        button = t('button'),
         input = t('input'),
         label = t('label');
-
-    function buildHelpDialog(title) {
-        return div({
-            class: 'modal fade',
-            tabindex: '-1',
-            role: 'dialog'
-        }, [
-            div({ class: 'modal-dialog' }, [
-                div({ class: 'modal-content' }, [
-                    div({ class: 'modal-header' }, [
-                        button({
-                            type: 'button',
-                            class: 'close',
-                            // dataDismiss: 'modal',
-                            ariaLabel: 'Done',
-                            dataBind: {
-                                click: 'close'
-                            }
-                        }, [
-                            span({ ariaHidden: 'true' }, '&times;')
-                        ]),
-                        span({ class: 'modal-title' }, title)
-                    ]),
-                    div({ class: 'modal-body' }, [
-                        div({
-                            dataBind: {
-                                component: {
-                                    name: '"help"',
-                                    params: {
-                                        helpDb: 'helpDb'
-                                    }
-                                }
-                            }
-                        })
-                    ]),
-                    div({ class: 'modal-footer' }, [
-                        button({
-                            type: 'button',
-                            class: 'btn btn-default',
-                            // dataDismiss: 'modal',
-                            // dataElement: 'ok',
-                            dataBind: {
-                                click: 'close'
-                            }
-                        }, 'Done')
-                    ])
-                ])
-            ])
-        ]);
-    }
-
-    function helpVM(node) {
-        // var helpTopics = helpData.topics.map(function(topic) {
-        //     return {
-        //         id: topic.id,
-        //         title: topic.title,
-        //         content: topic.content
-        //             // content: topic.content.map(function(paragraph) {
-        //             //     return p(paragraph);
-        //             // }).join('\n')
-        //     };
-        // });
-
-        function close() {
-            var backdrop = document.querySelector('.modal-backdrop');
-            backdrop.parentElement.removeChild(backdrop);
-            node.parentElement.removeChild(node);
-        }
-
-        return {
-            helpDb: helpData,
-            close: close
-        };
-    }
-
-    function showHelpDialog() {
-        var dialog = buildHelpDialog('JGI Search Help'),
-            dialogId = html.genId(),
-            helpNode = document.createElement('div'),
-            kbaseNode, modalNode, modalDialogNode;
-
-        helpNode.id = dialogId;
-        helpNode.innerHTML = dialog;
-
-        // top level element for kbase usage
-        kbaseNode = document.querySelector('[data-element="kbase"]');
-        if (!kbaseNode) {
-            kbaseNode = document.createElement('div');
-            kbaseNode.setAttribute('data-element', 'kbase');
-            document.body.appendChild(kbaseNode);
-        }
-
-        // a node upon which to place Bootstrap modals.
-        modalNode = kbaseNode.querySelector('[data-element="modal"]');
-        if (!modalNode) {
-            modalNode = document.createElement('div');
-            modalNode.setAttribute('data-element', 'modal');
-            kbaseNode.appendChild(modalNode);
-        }
-
-        modalNode.appendChild(helpNode);
-
-        var backdropNode = document.createElement('div');
-        backdropNode.classList.add('modal-backdrop', 'fade', 'in');
-        document.body.appendChild(backdropNode);
-
-        ko.applyBindings(helpVM(modalNode), helpNode);
-        modalDialogNode = modalNode.querySelector('.modal');
-        modalDialogNode.classList.add('in');
-        modalDialogNode.style.display = 'block';
-    }
 
     /*
     This view model establishes the primary search context, including the
@@ -167,10 +52,6 @@ define([
             enabled: true
         });
 
-        function doHelp() {
-            showHelpDialog();
-        }
-
         function doRemoveTypeFilter(data) {
             params.search.typeFilter.remove(data);
         }
@@ -182,25 +63,6 @@ define([
             params.search.typeFilter.push(data.typeFilterInput());
             data.typeFilterInput('_select_');
         }
-
-        // var seqProjectFilter = ko.observable();
-
-        // Disable - simplify to single project filter
-        // var newSeqProject = ko.observable();
-
-        // newSeqProject.subscribe(function (newValue) {
-        //     newValue = newValue.trim(' ');
-        //     if (newValue.length === 0) {
-        //         return;
-        //     }
-        //     params.search.seqProjectFilter.push(parseInt(newValue));
-        //     newSeqProject('');
-        // });
-
-        // function doRemoveSeqProject(data) {
-        //     params.search.seqProjectFilter.remove(data);
-        // }
-
 
         var piFilter = ko.observable().extend({
             rateLimit: 300
@@ -214,9 +76,6 @@ define([
             rateLimit: 300
         }).syncWith(params.search.proposalFilter);
 
-       
-    
-
         return {
             // The top level search is included so that it can be
             // propagated.
@@ -228,107 +87,33 @@ define([
             searching: searching,
             pageSize: pageSize,
             page: page,
+
+            logo: Plugin.plugin.fullPath  + '/images/jgi-short-logo.jpg',
+
             // Type filter
             typeFilterInput: ko.observable('_select_'),
             typeFilterOptions: typeFilterOptions,
+
             // Project filter
-            // newSeqProject: newSeqProject,
             seqProjectFilter: seqProjectFilter,
             proposalFilter: proposalFilter,
             piFilter: piFilter,
 
-            // doRemoveSeqProject: doRemoveSeqProject,
-
             // ACTIONS
-            doHelp: doHelp,
             doSearch: params.search.doSearch,
             doRemoveTypeFilter: doRemoveTypeFilter,
             doSelectTypeFilter: doSelectTypeFilter
         };
     }
 
-    /*
-        Builds the search input area using bootstrap styling and layout.
-    */
     function buildInputArea() {
-        return div({
-            class: 'form'
-        }, div({
-            class: 'input-group'
-        }, [
-            div({
-                class: 'input-group-addon',
-                style: {
-                    padding: '0',
-                    border: 'none',
-                    backgroundColor: 'transparent'
-                }
-            }, img({
-                src: Plugin.plugin.fullPath  + '/images/jgi-short-logo.jpg',
-                style: {
-                    display: 'inline',
-                    height: '30px',
-                    marginRight: '6px'
-                }
-            })),
-            div({
-                class: 'input-group-addon',
-                style: {
-                    cursor: 'pointer',
-                    borderRadius: '4px',
-                    borderTopRightRadius: '0',
-                    borderBottomRightRadius: '0',
-                    paddingLeft: '8px',
-                    paddingRight: '8px'
-                },
-                dataBind: {
-                    click: 'doSearch'
-                }
-            }, span({
-                style: {
-                    display: 'inline-block',
-                    width: '2em',
-                    textAlign: 'center'
-                }
-            }, span({
-                class: 'fa',
-                style: {
-                    fontSize: '100%',
-                    color: '#000',
-                    // width: '2em'
-                },
-                dataBind: {
-                    // style: {
-                    //     color: 'searching() ? "green" : "#000"'
-                    // }
-                    css: {
-                        'fa-search': '!searching()',
-                        'fa-spinner fa-pulse': 'searching()',
-                    }
-                }
-            }))),
-            input({
-                class: 'form-control',
-                dataBind: {
-                    textInput: 'searchInput',
-                    hasFocus: true,
-                    css: 'searchInput() ? "' + styles.classes.activeFilterInput + '" : null',
-                },
-                placeholder: 'Search JGI Public Data'
-            }),
-           
-            div({
-                class: 'input-group-addon',
-                style: {
-                    cursor: 'pointer'
-                },
-                dataBind: {
-                    click: 'doHelp'
-                }
-            }, span({
-                class: 'fa fa-info'
-            }))
-        ]));
+        return utils.komponent({
+            name: 'generic/search-bar',
+            params: {
+                logo: 'logo',
+                search: 'search'
+            }
+        });
     }
 
     function buildTypeFilter() {
@@ -372,14 +157,7 @@ define([
                     display: 'inline-block'
                 }
             }, [
-                span({
-                    style: {
-                        // border: '1px silver solid',
-                        // borderRadius: '3px',
-                        // padding: '3px'
-                    },
-                    
-                }, [
+                span([
                     span(({
                         dataBind: {
                             text: '$data'
@@ -648,25 +426,20 @@ define([
         },
         searchArea: {
             flex: '0 0 50px',
-            // border: '1px red solid'
         },
         filterArea: {
             flex: '0 0 50px',
-            // border: '1px blue dashed'
         },
         resultArea: {
             flex: '1 1 0px',
-            // border: '1px green dotted',
             display: 'flex',
             flexDirection: 'column'
         },
         activeFilterInput: {
-            // fontFamily: 'monospace',
             backgroundColor: 'rgba(209, 226, 255, 1)',
             color: '#000'
         }
     });
-
 
     function template() {
         return div({

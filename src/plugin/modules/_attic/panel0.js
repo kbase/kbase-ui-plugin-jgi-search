@@ -16,7 +16,7 @@ define([
     './utils',
     '../nanoBus',
     // local data
-    'yaml!./import.yml',
+    'yaml!./lib/import.yml',
 ], function (
     Promise,
     ko,

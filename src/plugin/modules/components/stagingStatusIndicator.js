@@ -10,16 +10,25 @@ define([
 
     function viewModel(params) {
         return {
-            transferJob: params.transferJob
+            status: params.status,
+            verbose: params.verbose || false
         };
+    }
+
+    function buildSpinner() {
+        return span({
+            style: {
+                fontSize: '130%'
+            }
+        }, span({ 
+            class: 'fa fa-spinner fa-pulse fa-fw' 
+        }));
     }
 
     function template() {
         return  span({
         }, [
-            '<!-- ko if: transferJob -->',
-
-            '<!-- ko switch: transferJob.status -->',
+            '<!-- ko switch: status -->',
             
             '<!-- ko case: "completed" -->',
             span({
@@ -49,7 +58,7 @@ define([
                     color: 'gray'
                 },
                 title: 'File transfer request has been sent'
-            }, html.loading()),
+            }, buildSpinner()),
             '<!-- /ko -->',
 
 
@@ -60,7 +69,7 @@ define([
                     color: 'orange'
                 },
                 title: 'File transfer request has been queued'
-            }, html.loading()),
+            }, buildSpinner()),
             '<!-- /ko -->',
 
             '<!-- ko case: "restoring" -->',
@@ -70,7 +79,7 @@ define([
                     color: 'blue'
                 },
                 title: 'Restoring the file from JAMO archive'
-            }, html.loading()),
+            }, buildSpinner()),
             '<!-- /ko -->',
 
             '<!-- ko case: "copying" -->',
@@ -80,7 +89,7 @@ define([
                     color: 'green'
                 },
                 title: 'Copying the file to your staging area'
-            }, html.loading()),
+            }, buildSpinner()),
             '<!-- /ko -->',
 
             '<!-- ko case: "$default" -->',
@@ -90,14 +99,22 @@ define([
                     color: 'red'
                 },
                 dataBind: {
-                    text: 'transferJob.status()'
+                    text: 'status'
                 }
             }),
             '<!-- /ko -->',
 
             '<!-- /ko -->',
-
-            '<!-- /ko -->',
+            '<!-- ko if: verbose -->',
+            span({
+                dataBind: {
+                    text: 'status'
+                },
+                style: {
+                    marginLeft: '4px'
+                }
+            }),
+            '<!-- /ko -->'
         ]);
     }
 

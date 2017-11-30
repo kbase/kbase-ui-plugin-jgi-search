@@ -159,8 +159,6 @@ define([
         }
     }
 
-
-
     function grokTitle(hit, fileType) {
         var sp = getProp(hit.source.metadata, ['sequencing_project.sequencing_project_name']);
         var pp = getProp(hit.source.metadata, ['pmo_project.name']);
@@ -192,7 +190,6 @@ define([
     }
 
     function grokScientificName(hit) {
-
         var org = {};
         if (hasProp(hit.source.metadata, 'genus')) {
             org.info = 'Scientific name',
@@ -384,7 +381,8 @@ define([
             extensionToDataType[extension] = dataType;
         });
     });
-    function grokFileType(extension, indexedFileTypes) {
+
+    function grokFileTypex(extension, indexedFileTypes) {
         // The file type provided by the metadata may be a string,
         // array, or missing.
         if (!indexedFileTypes) {
@@ -452,6 +450,236 @@ define([
             encoding: null
         };
     }
+
+    var supportedTypes = {
+        fasta: {
+            name: 'fasta',
+            extensions: ['fasta', 'fna']                
+        },
+        fastq: {
+            name: 'fastq',
+            extensions: ['fastq']
+        },
+        bam: {
+            name: 'bam',
+            extensions: ['bam']
+        }
+    };
+    var extToType = {};
+    Object.keys(supportedTypes).forEach(function (key) {
+        var type = supportedTypes[key];
+        type.extensions.forEach(function (ext) {
+            extToType[ext] = type;
+        });
+    });
+    var supportedEncodings = {
+        gzip: {
+            name: 'gzip',
+            extensions: ['gz']
+        },
+        zip: {
+            name: 'zip',
+            extensions: ['zip']
+        }
+    };
+    var extToEncoding = {};
+    Object.keys(supportedEncodings).forEach(function (key) {
+        var encoding = supportedEncodings[key];
+        encoding.extensions.forEach(function (ext) {
+            extToEncoding[ext] = encoding;
+        });        
+    });
+    
+    /*
+        grokFileParts has the job of taking a file name and determing the type extension,
+        the encoding extension, the full extension, and the basename.
+        The type extension is the file extension which matches one of the supported types.
+        You see, since a file name is often composed of dots, it is impossible to know what is a file
+        extension and what is a dotted file name component. Many files end in two extensions, the fineal
+        one being the compression, and the penultimate one being the actual data type extension.
+        But we can't distinguish that case unless we can match the data type extension with one
+        of the supported ones, either in the whitelist of supported extensions or the blacklist of
+        non-supported ones.
+    */
+    function grokFileParts(filename) {
+        var base = null, 
+            type = null, 
+            typeExt = null,
+            encoding = null,
+            encodingExt = null,
+            extension = null;
+
+        var parts = filename.split(/\./);
+        var pos = parts.length - 1;
+        var ext = parts[pos];
+
+        if (pos >= 2) {
+            // we _may_ have a file type and compression extension.
+            if (extToEncoding[ext]) {
+                encoding = extToEncoding[ext].name;
+                encodingExt = ext;
+                pos -= 1;
+                ext = parts[pos];
+
+                if (extToType[ext]) {
+                    typeExt = ext;
+                    type = extToType[ext].name;
+                    base = parts.slice(0, pos).join('.');
+                } else {
+                    base = parts.slice(0, pos + 1).join('.');
+                }
+            // Just type, possibly.            
+            } else if (extToType[ext]) {
+                typeExt = ext;
+                type = extToType[ext].name;
+                base = parts.slice(0, pos).join('.');
+            } else {
+                base = filename;
+            }
+        } else if (pos === 1) {
+            // assume just a file type
+            if (extToType[ext]) {
+                typeExt = ext;
+                type = parts[1];
+                base = parts[0];
+            } else {
+                base = filename;
+            }
+        } else if (pos === 0) {
+            // assume just a file with no type
+            base = filename;
+        } else {
+            // no file name at all!
+        }
+
+        extension = [typeExt, encodingExt].filter(function (x) {return x;}).join('.');
+
+        return {
+            name: filename,
+            base: base,
+            type: type,
+            typeExt: typeExt,
+            encoding: encoding,
+            encodingExt: encodingExt,
+            extension: extension
+        };
+    }
+
+    function grokFileType(fileTypes, fileParts) {
+        // var supportedTypes = ['fasta', 'fastq', 'bam'];
+        var encodings = ['gz', 'zip'];
+        var error = null;
+        // var encodings = {
+        //     'fastq.gz': 'gz',
+        // }
+        
+
+        // Should be a list, but you never know...
+        if (typeof fileTypes === 'string') {
+            fileTypes = [fileTypes];
+        }
+
+        var fileType, encoding;
+
+        // is file type in supported types?
+        // may be more than one item in file type, if so the non-matching 
+        // should be an encoding (compression)
+        var matchingTypes = fileTypes
+            .map(function (type) {
+                return supportedTypes[type];
+            })
+            .filter(function (type) {
+                return type ? true : false;
+            });
+        if (matchingTypes.length > 1) {
+            // too many matching types -- what to do?
+            throw new Error('Too many matching file types for ' + fileTypes.join(','));
+        } else if (matchingTypes.length === 1) {
+            fileType = matchingTypes[0].name;
+        } else {
+            fileType = null;
+        }
+
+        if (fileType) {
+            var fileTypeEncodings = fileTypes.filter(function (type) {
+                return (type !== fileType);
+            }).map(function (type) {
+                return type.split(/\./)[1];
+            });
+            if (fileTypeEncodings.length === 1) {
+                var matchingEncodings = extToEncoding[fileTypeEncodings[0]];
+                // encoding = fileTypeEncodings[0];
+                // var matchingEncodings = encodings.filter(function (enc) {
+                //     return enc === encoding;
+                // });
+                if (matchingEncodings) {                    
+                    encoding = matchingEncodings.name;
+                } else {
+                    encoding = null;
+                }
+            } else if (fileTypeEncodings.length > 1) {
+                console.error('too many file type encodings!', fileTypeEncodings);
+                error = {
+                    code: 'too-many-encodings', 
+                    message: 'Too many file type encodings: ' + fileTypeEncodings.join(','),
+                    info: {
+                        encodings: encodings,
+                        matching: fileTypeEncodings
+                    }
+                };
+                // throw new Error('Too many file type encodings: ' + fileTypeEncodings.join(','));
+            } else {
+                encoding = null;
+            }
+        } else {
+            encoding = null;
+        }
+
+        if (!fileParts.type) {
+            error = {
+                code: 'unsupported-extension',
+                message: 'The file type "' + fileType + '" does not support extension "' + fileParts.extension + '"',
+                info: {
+                    fileTypes: fileTypes,
+                    fileParts: fileParts
+                }
+            };
+        } else {
+            if (fileType !== fileParts.type) {
+                console.error('file type and part mismatch', fileType, fileParts.type, fileTypes, fileParts);
+                error = {
+                    code: 'file-type-part-mismatch',
+                    message: 'File type does not match file part for type',
+                    info: {
+                        fileTypes: fileTypes,
+                        fileParts: fileParts
+                    }
+                };
+                // throw new Error('File type does not match file part for type');
+            }
+        }
+
+        if (encoding !== fileParts.encoding) {
+            console.error('file encoding and part mismatch', fileTypes, encoding, fileParts);
+            error = {
+                code: 'file-encoding-part-mismatch',
+                message: 'File encoding does not match file part for type',
+                info: {
+                    fileTypes: fileTypes,
+                    fileParts: fileParts
+                }
+            };
+            // throw new Error('File encoding does not match file part for type');
+        }
+
+        // ensure that the file type matches the extensions
+        return {
+            dataType: fileType,
+            encoding: encoding,
+            error: error
+        };
+    }
+
 
     /*
         staging status is currently returned as a message string.
@@ -814,6 +1042,7 @@ define([
         grokMetadata: grokMetadata,
         grokField: grokField,
         grokFileType: grokFileType,
+        grokFileParts: grokFileParts,
         grokStageStats: grokStageStats,
         normalizeFileType: normalizeFileType,
         usDate: usDate,

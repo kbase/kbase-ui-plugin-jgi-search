@@ -2,7 +2,7 @@ define([
     'knockout-plus',
     'jquery',
     'kb_common/html',
-    '../utils',
+    '../lib/utils',
     '../componentDialog'
 ], function (
     ko,
@@ -83,7 +83,7 @@ define([
         },
         miniButton: {
             css: {
-                padding: '2px',
+                padding: '2px 4px',
                 border: '2px transparent solid',
                 cursor: 'pointer'
             },
@@ -334,11 +334,24 @@ define([
                 }
             },
             {
+                name: 'inspect',
+                label: 'Inspect',
+                type: 'action',
+                width: 5,
+                component: 'jgi-search/inspect-control',
+                rowStyle: {
+                    textAlign: 'center'
+                },
+                headerStyle: {
+                    textAlign: 'center'
+                }
+            },
+            {
                 name: 'copy',
                 label: 'Copy',
                 type: 'action',
                 width: 5,
-                component: 'jgi-search/copy-control',
+                component: 'jgi-search/stage-control',
                 rowStyle: {
                     textAlign: 'center'
                 },
@@ -357,7 +370,12 @@ define([
                 isLoading: search.searching,
                 pageSize: search.pageSize,
                 state: search.searchState,
-                rowAction: doShowInfo,
+                // rowAction: doShowInfo,
+                // try this: thread an environment through, like
+                // runtime...
+                env: {
+                    search: params.search
+                }
                 // actions: {
                 //     doCopy: doCopy
                 // }
@@ -430,19 +448,19 @@ define([
     //     });
     // }
 
-    function buildNoActiveSearch() {
-        return div({
-            style: {
-                textAlign: 'left',
-                maxWidth: '50em',
-                margin: '0 auto'
-            }
-        }, [
-            p('PLACEHOLDER - for search instructions'),
-            p('PLACEHOLDER - for disclaimer about missing data')
+    // function buildNoActiveSearch() {
+    //     return div({
+    //         style: {
+    //             textAlign: 'left',
+    //             maxWidth: '50em',
+    //             margin: '0 auto'
+    //         }
+    //     }, [
+    //         p('PLACEHOLDER - for search instructions'),
+    //         p('PLACEHOLDER - for disclaimer about missing data')
 
-        ]);
-    }
+    //     ]);
+    // }
 
     function template() {
         return div({
@@ -452,7 +470,7 @@ define([
             div({
                 dataBind: {
                     component: {
-                        name: '"jgi-search/table"',
+                        name: '"generic/table"',
                         params: {
                             table: 'table'
                         }

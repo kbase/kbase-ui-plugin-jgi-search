@@ -2,7 +2,7 @@ define([
     'knockout-plus',
     'kb_common/html',
     'kb_common/bootstrapUtils',
-    '../utils'
+    '../lib/utils'
 ], function (
     ko,
     html,

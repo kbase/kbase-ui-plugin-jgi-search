@@ -46,10 +46,10 @@ install:
       name: 'jgisearch/search-result2'
       module: components/search-result2
       type: factory
-    -
-      name: 'jgi-search/table'
-      module: components/table
-      type: factory
+    # -
+    #   name: 'jgi-search/table'
+    #   module: components/table
+    #   type: factory
       
     -
       name: 'jgisearch/json-viewer'
@@ -71,21 +71,54 @@ install:
       type: factory
       css: true
     -
-      name: jgi-search/copy-control
-      module: components/copyControl
+      name: jgi-search/stage-control
+      module: components/stageControl
       type: factory
     -
-      name: jgi-search/copy-status-indicator
-      module: components/copyStatusIndicator
+      name: jgi-search/staging-status-indicator
+      module: components/stagingStatusIndicator
+      type: factory
+    -
+      name: jgi-search/stage-file
+      module: components/stageFile
+      type: factory
+    -
+      name: jgi-search/stage-file-control
+      module: components/stageFileControl
+      type: factory
+    -
+      name: jgi-search/staging-status-viewer
+      module: components/stagingStatusViewer
+      type: factory
+    -
+      name: jgi-search/staging-status
+      module: components/stagingStatus
+      type: factory
+    -
+      name: generic/elapsed-clock
+      module: components/generic/elapsedClock
+      type: factory
+    -
+      name: jgi-search/inspect-control
+      module: components/inspectControl
+      type: factory
+    -
+      name: jgi-search/inspector
+      module: components/inspector
+      type: factory
+    -
+      name: jgi-search/search-help
+      module: components/searchHelp
+      type: factory
+    # GENERIC
+    -
+      name: generic/search-bar
+      module: components/generic/searchBar
       type: factory
   routes:
     -
       path: ['jgi', 'search']
       widget: jgi-search_panel
-      authorization: true
-    -
-      path: ['jgi', 'search2']
-      widget: 'kb_jgi_search2_panel'
       authorization: true
     -
       path: ['jgi', 'listjobs']

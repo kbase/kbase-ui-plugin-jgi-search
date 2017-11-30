@@ -2,7 +2,7 @@ define([
     'knockout-plus',
     'jquery',
     'kb_common/html',
-    '../utils',
+    '../lib/utils',
     '../componentDialog'
 ], function (
     ko,

@@ -12,11 +12,11 @@ define([
     'kb_common/jsonRpc/genericClient',
     'kb_common/props',
     // local deps
-    '../rpc',
+    '../lib/rpc',
     '../errorWidget',
-    '../utils',
+    '../lib/utils',
     // local data
-    'yaml!../import.yml',
+    'yaml!../lib/import.yml'
 ], function (
     Promise,
     ko,
@@ -76,38 +76,6 @@ define([
 
         var maxSearchResults = 10000;
 
-        // Fetch details for a given search result item.
-        function fetchDetail(id) {
-            var query = {
-                _id: id
-            };
-            var param = {
-                query: query,
-                filter: null,
-                fields: null,
-                limit: 1,
-                page: 1,
-                include_private: 0
-            };
-            return rpc.call('jgi_gateway_eap', 'search', param)
-                .catch(function (err) {
-                    console.error('ERROR', err, query, typeof page, typeof pageSize);
-                    throw err;
-                })
-                .spread(function (result, err) {
-                    if (result) {
-                        return result;
-                    }
-                    if (err) {
-                        console.error('error fetching search detail ', err);
-                        throw new Error('Need to handle this error: ' + err.message);
-                    } else {
-                        throw new Error('Hmm, should have a result or an error!');
-                    }
-                });
-        }
-
-
         var stagingJobs = ko.observableArray();
         // var stagingJobsMap = {};
         stagingJobs.subscribe(function (changes) {
@@ -141,7 +109,8 @@ define([
         
             return {
                 pending: pending,
-                completed: stagingJobStates.completed()
+                completed: stagingJobStates.completed(),
+                some: pending + stagingJobStates.completed() + stagingJobStates.error()
             };
         });
 
@@ -214,6 +183,7 @@ define([
                         })
                         .then(function (result) {
                             var status = utils.grokStageStats(result);
+                            job.updated(new Date());
                             job.status(status.status);
                             return status.status;
                         });
@@ -241,7 +211,7 @@ define([
                         // if (stageStats.status === 'completed') {
                         //     return;
                         // }
-                        console.log('monitored', result);
+                        // console.log('monitored', result);
                         if (runAgain) {
                             window.setTimeout(checkProgress, 5000);
                         } else {
@@ -260,7 +230,8 @@ define([
             checkProgress();
         }
 
-        function doStage(id) {
+        function doStage(id, fileName) {
+            console.log('staging...', id, fileName);
             return rpc.call('jgi_gateway_eap', 'stage', {
                 ids: [id]
             })
@@ -270,10 +241,16 @@ define([
                         // console.log('got result', result);
                         var job = {
                             dbId: id,
+                            filename: fileName,
                             jobId: result.job_id,
                             started: new Date(),
+                            updated: ko.observable(new Date()),
                             status: ko.observable('sent')
                         };
+                        job.elapsed = ko.pureComputed(function () {
+                            // var now = new Date().getTime();
+                            return this.updated().getTime() - this.started.getTime();
+                        }.bind(job));
                         stagingJobs.push(job);
 
                         // Set it it the results item as well.
@@ -414,9 +391,9 @@ define([
 
             // Default file type filter, now enabled by "show supported file types" checkbox.
             if (!query.query.file_type) {
-                // query.query.file_type = typeFilterOptions.map(function (option) {
-                //     return option.value;
-                // }).join(' | ');
+                query.query.file_type = typeFilterOptions.map(function (option) {
+                    return option.value;
+                }).join(' | ');
             }
 
             // search.searchState('ready');
@@ -432,6 +409,38 @@ define([
             return query;
         });
 
+        // Fetch details for a given search result item.
+        function fetchDetail(id) {
+            var query = {
+                _id: id
+            };
+            var param = {
+                query: query,
+                filter: null,
+                fields: null,
+                limit: 1,
+                page: 1,
+                include_private: 0
+            };
+            return rpc.call('jgi_gateway_eap', 'search', param)
+                .catch(function (err) {
+                    console.error('ERROR', err, query, typeof page, typeof pageSize);
+                    throw err;
+                })
+                .spread(function (result, err) {
+                    if (result) {
+                        return result;
+                    }
+                    if (err) {
+                        console.error('error fetching search detail ', err);
+                        throw new Error('Need to handle this error: ' + err.message);
+                    } else {
+                        throw new Error('Hmm, should have a result or an error!');
+                    }
+                });
+        }
+
+       
         function getDetail(id) {
             return fetchDetail(id)
                 .then(function (result) {
@@ -448,16 +457,22 @@ define([
                     var proposalId = utils.getProp(hit.source.metadata, ['proposal_id'], '-');
 
                     // actual file suffix.
-                    var fileExtension;
-                    var reExtension = /^(.*)\.(.*)$/;
-                    var fileName = hit.source.file_name;
-                    var m = reExtension.exec(fileName);
-                    if (m) {
-                        fileExtension = m[2];
-                    } else {
-                        fileExtension = null;
-                    }
-                    var fileType = utils.grokFileType(fileExtension, hit.source.file_type);
+
+                    var fileParts = utils.grokFileParts(hit.source.file_name);
+                    console.log('file parts', fileParts);
+                
+                    // var fileBaseName, fileExtension;
+                    // var reExtension = /^(.*)\.(.*)$/;
+                    // var fileName = hit.source.file_name;
+                    // var m = reExtension.exec(fileName);
+                    // if (m) {
+                    //     fileBaseName = m[1];
+                    //     fileExtension = m[2];
+                    // } else {
+                    //     fileBaseName = null;
+                    //     fileExtension = null;
+                    // }
+                    var fileType = utils.grokFileType(hit.source.file_type, fileParts);
 
                     // Title
                     var title = utils.grokTitle(hit, fileType);
@@ -507,7 +522,7 @@ define([
                         title: title,
                         date: utils.usDate(hit.source.file_date),
                         modified: utils.usDate(hit.source.modified),
-                        fileExtension: fileExtension,
+                        // fileExtension: fileExtension,
                         fileType: utils.normalizeFileType(hit.source.file_type),
                         // TODO: these should all be in just one place.
                         dataType: fileType.dataType,
@@ -517,20 +532,23 @@ define([
                         metadata: metadata,
                         scientificName: scientificName.scientificName,
                         file: {
+                            parts: fileParts,
                             name: hit.source.file_name,
-                            extension: fileExtension,
+                            // baseName: fileBaseName,
+                            // extension: fileExtension,
                             dataType: fileType.dataType,
                             encoding: fileType.encoding,
                             indexedType: utils.normalizeFileType(hit.source.file_type),
                             size: numeral(hit.source.file_size).format('0.0 b'),
                             added: utils.usDate(hit.source.added_date),
                             status: hit.source.file_status,
-                            types: utils.normalizeFileType(hit.source.file_type)
+                            types: utils.normalizeFileType(hit.source.file_type),
+                            typing: fileType
                         },
                         proposal: hit.source.metadata.proposal,
                         sequencingProject: sequencingProject,
                         analysisProject: analysisProject,
-                        importSpec: getImportInfo(fileType.dataType, hit.id, hit.source.file_name, hit),
+                        // importSpec: getImportInfo(fileType.dataType, hit.id, hit.source.file_name, hit),
                         showInfo: ko.observable(false),
                         detailFormatted: JSON.stringify(hit.source, null, 4),
                         source: hit.source,
@@ -703,7 +721,7 @@ define([
 
             // TODO: do this better!
             // if (!newQuery.file_type) {
-            //     newQuery.file_type = ['fastq', 'fasta', 'gbk', 'gff', 'bam'].join(' | ');
+            //     newQuery.file_type = ['fastq', 'fasta', 'bam'].join(' | ');
             // }
 
             if (utils.isEqual(newQuery, searchAutoQuery())) {
@@ -711,6 +729,7 @@ define([
             }
             searchAutoQuery(newQuery);
         });
+        // typeFilter([]);
 
         var currentSearch = {
             search: null,
@@ -853,16 +872,17 @@ define([
                         };
 
                         // actual file suffix.
-                        var fileExtension;
-                        var reExtension = /^(.*)\.(.*)$/;
-                        var fileName = hit.source.file_name;
-                        var m = reExtension.exec(fileName);
-                        if (m) {
-                            fileExtension = m[2];
-                        } else {
-                            fileExtension = null;
-                        }
-                        var fileType = utils.grokFileType(fileExtension, hit.source.file_type);
+                        // var fileExtension;
+                        // var reExtension = /^(.*)\.(.*)$/;
+                        // var fileName = hit.source.file_name;
+                        // var m = reExtension.exec(fileName);
+                        // if (m) {
+                        //     fileExtension = m[2];
+                        // } else {
+                        //     fileExtension = null;
+                        // }
+                        var fileParts = utils.grokFileParts(hit.source.file_name);
+                        var fileType = utils.grokFileType(hit.source.file_type, fileParts);
 
                         var title = utils.grokTitle(hit, fileType);
 
@@ -1016,7 +1036,7 @@ define([
                             isPublic: utils.getProp(hit, 'source._es_public_data', false),
                             doTransfer: function () {
                                 try {
-                                    doStage(hit.id);
+                                    doStage(hit.id, hit.source.file_name);
                                 } catch (ex) {
                                     console.error('ERROR staging', ex);
                                 }
@@ -1180,6 +1200,15 @@ define([
 
         getJgiAgreement();
 
+
+        var overlayComponent = ko.observable();
+        
+        var showOverlay = ko.observable();
+
+        showOverlay.subscribe(function (newValue) {
+            overlayComponent(newValue);
+        });
+
         var vm = {
             search: {
                 // INPUTS
@@ -1197,6 +1226,9 @@ define([
                 // SYNTHESIZED INPUTS
                 searchQuery: searchQuery,
                 searchState: searchState,
+
+                // OVERLAY
+                showOverlay: showOverlay,
 
                 // RESULTS
                 searchResults: searchResults,
@@ -1231,7 +1263,8 @@ define([
 
                 doSearch: doSearch,
                 status: status
-            }
+            },
+            overlayComponent: overlayComponent
         };
         return vm;
     }
@@ -1285,7 +1318,14 @@ define([
             // }),
             // '<!-- /ko -->',
 
-            '<!-- /ko -->'
+            '<!-- /ko -->',
+            utils.komponent({
+                name: 'generic/overlay-panel',
+                params: {
+                    component: 'overlayComponent',
+                    hostVm: 'search'
+                }
+            })
         ]);
     }
 

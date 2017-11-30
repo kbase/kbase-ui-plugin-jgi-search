@@ -35,10 +35,10 @@ define([
 
         return {
             call: call
-        }
+        };
     }
 
     return {
         make: factory
-    }
+    };
 });

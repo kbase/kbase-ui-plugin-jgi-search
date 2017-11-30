@@ -5,7 +5,7 @@ define([
     'kb_common/html',
     'kb_common/jsonRpc/genericClient',
     'kb_service/utils',
-    '../utils',
+    '../lib/utils',
     'css!./browser.css'
 ], function (
     Promise,
@@ -44,11 +44,6 @@ define([
         return target;
     };
 
-    function dateString(date) {
-        return [date.getMonth() + 1, date.getDate(), date.getFullYear()].join('/');
-        // return date.toLocaleString();
-    }
-
     // NB: hmm, it looks like the params are those active in the tab which spawned
     // this component...
     function viewModel(params) {
@@ -59,8 +54,6 @@ define([
         var searching = search.searching;
         var pageSize = search.pageSize;
         var page = search.page;
-
-        console.log('staging state', search);
 
         var pageFrom = ko.pureComputed(function () {
             if (!page()) {
@@ -250,6 +243,26 @@ define([
             });
         }
 
+        function doShowStagingStatus() {
+            params.search.showOverlay({
+                name: 'jgi-search/staging-status-viewer',
+                // TODO: short this out ... I don't think we need all this
+                params: {
+                    // id: 'id',
+                    // doStage: 'doStage',
+                    // transferJob: 'transferJob',
+                    // getDetail: 'getDetail'
+                    stagingJobs: 'staginJobs'
+                },
+                viewModel: {
+                    // id: params.row.id,
+                    // doStage: params.env.search.doStage,
+                    // transferJob: params.row.transferJob,
+                    // getDetail: params.env.search.getDetail
+                    stagingJobs: params.search.stagingJobs
+                }
+            });
+        }
         return {
             search: params.search,
             // Search (shared)
@@ -285,6 +298,7 @@ define([
 
             // Actions
             doSearch: params.search.doSearch,
+            doShowStagingStatus: doShowStagingStatus,
 
             // Knockout lifecycle
             dispose: dispose
@@ -299,15 +313,16 @@ define([
 
     function buildStagingStatus() {
         return [
+            // NB stagingJobsState is computed based on the counts of current jobs in
+            // various states, which in turn is updated by the job state monitor.
             '<!-- ko if: search.stagingJobsState().pending -->',
-            // html.loading(),
 
             '<!-- ko foreach: search.stagingJobs -->',
 
             utils.komponent({
-                name: 'jgi-search/copy-status-indicator',
+                name: 'jgi-search/staging-status-indicator',
                 params: {
-                    transferJob: '$data'
+                    status: 'status'
                 }
             }),
 
@@ -330,6 +345,18 @@ define([
             ' copied',
             '<!-- /ko -->',
             
+            '<!-- /ko -->',
+
+            '<!-- ko if: search.stagingJobsState().some -->',
+            button({
+                dataBind: {
+                    click: 'doShowStagingStatus',
+                },
+                class: 'btn btn-default',
+                style: {
+                    float: 'none'
+                }
+            }, 'View Staging Jobs'),
             '<!-- /ko -->'
         ];
         

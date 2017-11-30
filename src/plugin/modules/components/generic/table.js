@@ -225,13 +225,19 @@ define([
             }
             window.open(data.url, '_blank');
         }
-
-        function doRowAction(data) {
-            if (table.rowAction) {
-                table.rowAction(data);
-            } else {
-                console.warn('No row action...', table, data);
-            }
+ 
+        var doRowAction;
+        if (table.rowAction) {
+            console.log('ROW ACTION', table.rowAction);
+            doRowAction = function (data) {
+                if (table.rowAction) {
+                    table.rowAction(data);
+                } else {
+                    console.warn('No row action...', table, data);
+                }
+            };
+        } else {
+            doRowAction = null;
         }
 
         // LIFECYCLE

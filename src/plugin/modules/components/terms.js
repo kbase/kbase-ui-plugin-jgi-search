@@ -31,8 +31,8 @@ define([
             termsContent: termsContent,
             doAgree: doAgree
         };
-
     }
+
     function template() {
         return div({
             class: 'component-terms'
