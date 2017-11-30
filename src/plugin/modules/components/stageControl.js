@@ -30,7 +30,8 @@ define([
                     id: params.row.id,
                     doStage: params.env.search.doStage,
                     transferJob: params.row.transferJob,
-                    getDetail: params.env.search.getDetail
+                    getDetail: params.env.search.getDetail,
+                    checkFilename: params.env.search.checkFilename
                 }
             });
         }

@@ -11,6 +11,7 @@ define([
     'kb_common/html',
     'kb_common/jsonRpc/genericClient',
     'kb_common/props',
+    'kb_common_ts/HttpClient',
     // local deps
     '../lib/rpc',
     '../errorWidget',
@@ -25,6 +26,7 @@ define([
     html,
     GenericClient,
     Props,
+    Http,
     Rpc,
     ErrorWidget,
     utils,
@@ -557,6 +559,64 @@ define([
                         transferJob: ko.observable(transferJob)
                     };
                 });
+        }
+
+        function validateFilename(filename) {
+            if (/\//.test(filename)) {
+                return 'Invalid character in filename: /';
+            }
+            if (/[\\/:*?"<>|]/.test(filename)) {
+                return 'Invalid character in filename: \\ / : * ? " < > | ';
+            }
+            if (/[[\\u0000-\\u001F\\u007F\\u0080-\\u009F]]/.test(filename)) {
+                return 'File contains non-printable characters';
+            }
+            return null;
+        }
+
+        function checkFilename(filename) {
+            return Promise.try(function () {
+                try {
+                    var error = validateFilename(filename);
+
+                    if (error) {
+                        return error;
+                    }
+                } catch (ex) {
+                    return ex.message;
+                }
+
+                // make a rest call to the staging service...
+                // var url = [runtime.config('services.staging.url'), 'existance', encodeURIComponent(filename)].join('/');
+                var url = [runtime.config('services.staging.url'), 'search', encodeURIComponent(filename)].join('/');
+                // var url = [runtime.config('services.ftp_service.url'), 'list', runtime.service('session').getUsername()].join('/');
+                var http = new Http.HttpClient();
+                return http.request({
+                    url: url,
+                    method: 'GET',
+                    header: new Http.HttpHeader({
+                        'Authorization': runtime.service('session').getAuthToken()
+                    })
+                })
+                    .then(function (result) {
+                        switch (result.status) {
+                        case 200:
+                            var files = JSON.parse(result.response);
+                            if (files.length === 0) {
+                                return null;
+                            }
+                            return 'Sorry, this file already exists.';
+                        default:
+                            return result.response;
+                        }
+                    })
+                    .catch(function (err) {
+                        return err.message;
+                        // console.log('error', err);
+                        // return 'some error! ' + err.message
+                    });
+            });
+
         }
 
         // FILTERS
@@ -1244,6 +1304,9 @@ define([
 
                 // for fetching details of a serach result item.
                 getDetail: getDetail,
+
+                // check whether filename exists or not.
+                checkFilename: checkFilename,
 
                 // Staging
                 stagingJobStates: stagingJobStates,

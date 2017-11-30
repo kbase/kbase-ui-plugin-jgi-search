@@ -14,10 +14,10 @@ define([
         button = t('button');
 
     function viewModel(params) {
-        console.log('inside stage file control!', params);
         var id = params.id;
         var fileName = params.fileName;
         var transferJob = params.transferJob;
+        var enabled = params.enabled;
 
         var stagingStatus = ko.observable();
         var error = ko.observable();
@@ -54,7 +54,8 @@ define([
             doStage: doStage,
             stagingStatus: stagingStatus,
             transferJob: transferJob,
-            error: error
+            error: error,
+            enabled: enabled
         };
     }
 
@@ -76,7 +77,7 @@ define([
                     button({
                         dataBind: {
                             click: '$component.doStage',
-                            disable: 'transferJob()'
+                            disable: 'transferJob() || !enabled()'
                         },
                         class: 'btn btn-primary'
                     }, [

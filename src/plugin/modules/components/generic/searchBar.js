@@ -280,7 +280,7 @@ define([
                             keyup: 'doKeyUp'
                         }
                     },
-                    placeholder: 'Search KBase Data'
+                    placeholder: 'Search JGI Data'
                 }),
                 '<!-- ko if: showHistory -->',
                 div({

@@ -28,7 +28,55 @@ define([
         var isImportable = ko.observable();
         var error = ko.observable();
         var fileName = ko.observable();
-    
+
+        var filenameStatus = {
+            error: ko.observable(),
+            loading: ko.observable()
+        };
+
+        destinationFileBaseName.extend({
+            rateLimit: {
+                timeout: 500,
+                method: 'notifyWhenChangesStop'
+            }
+        });
+
+        destinationFileBaseName.subscribe(function (newValue) {
+            if (!newValue || newValue.length === 0) {
+                filenameStatus.error('Cannot have empty filename');
+                return;
+            }
+
+            var actualFilename = [newValue, '.',  destinationFileExtension()].join('');
+
+            // detect duplicate filename here, and set status accordingly.
+            filenameStatus.loading(true);
+            params.checkFilename(actualFilename)
+                .then(function (error) {
+                    if (error) {
+                        filenameStatus.error(error);
+                    } else {
+                        filenameStatus.error(null);
+                    }                    
+                })
+                .catch(function (err) {
+                    filenameStatus.error(err.message);
+                })
+                .finally(function () {
+                    filenameStatus.loading(false);
+                });
+        });
+
+        var stageButtonEnabled = ko.pureComputed(function () {
+            if (filenameStatus.error()) {
+                return false;
+            }
+            if (filenameStatus.loading()) {
+                return false;
+            }
+            return true;
+        });
+
         params.getDetail(params.id)
             .then(function (result) {
                 item(result);
@@ -56,8 +104,10 @@ define([
             //  pass through...
             id: params.id,
             fileName: fileName,
+            filenameStatus: filenameStatus,
             doStage: params.doStage,
-            transferJob: params.transferJob            
+            transferJob: params.transferJob,
+            stageButtonEnabled: stageButtonEnabled
         };
     }
 
@@ -162,7 +212,43 @@ define([
         ]);
     }
 
-   
+    function buildFilenameStatusIndicator() {
+        return [
+            '<!-- ko ifnot: filenameStatus.loading -->',
+
+            '<!-- ko ifnot: filenameStatus.error -->',
+            span([
+                span({
+                    class: 'fa fa-check',
+                    style: {
+                        color: 'green'
+                    }
+                }),
+                ' This filename is ok :)'
+            ]),
+            '<!-- /ko -->',
+
+            '<!-- ko if: filenameStatus.error -->',
+            span({
+                class: 'alert alert-danger',
+                style: {
+                    width: '100%'
+                },
+                dataBind: {
+                    text: 'filenameStatus.error'
+                }
+            }),
+            '<!-- /ko -->',
+
+            '<!-- /ko -->',
+
+            '<!-- ko if: filenameStatus.loading -->',
+            span({ 
+                class: 'fa fa-spinner fa-pulse'
+            }),
+            '<!-- /ko -->'
+        ];
+    }
 
     function buildDestinationFileTable() {
         return div({
@@ -225,7 +311,7 @@ define([
                         }, [
                             input({
                                 dataBind: {
-                                    value: 'destinationFileBaseName'
+                                    textInput: 'destinationFileBaseName'
                                 },
                                 style: {
                                     flex: '1 1 0px'
@@ -250,6 +336,16 @@ define([
                                 }
                             }, 'n/a'),
                             '<!-- /ko -->'
+                        ]),
+                        div({
+                            style: {
+                                display: 'flex',
+                                flexDirection: 'row',
+                                width: '100%',
+                                alignItems: 'baseline'
+                            }
+                        }, [
+                            buildFilenameStatusIndicator()
                         ])
                     ])
                 ])
@@ -388,7 +484,8 @@ define([
                                     id: 'id',
                                     fileName: 'fileName',
                                     doStage: 'doStage',
-                                    transferJob: 'transferJob'
+                                    transferJob: 'transferJob',
+                                    enabled: 'stageButtonEnabled'
                                 }
                             }
                         }
