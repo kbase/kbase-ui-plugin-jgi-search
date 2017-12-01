@@ -1298,6 +1298,7 @@ define([
                 searching: searching,
                 userSearch: userSearch,
                 availableRowHeight: availableRowHeight,
+                
                 // showResults: showResults,
                 // noSearch: noSearch,
                 doAddToSearch: doAddToSearch,

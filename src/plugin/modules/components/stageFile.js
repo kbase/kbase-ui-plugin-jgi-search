@@ -93,12 +93,23 @@ define([
                 }
             });
 
+        var showDetail = ko.observable(false);
+
+        var showDetailClass = ko.pureComputed(function () {
+            if (showDetail()) {
+                return styles.classes.textin;
+            }
+            return styles.classes.textout;
+        });
+
         return {
             item: item,
             destinationFileBaseName: destinationFileBaseName,
             destinationFileExtension: destinationFileExtension,
             isImportable: isImportable,
             error: error,
+            showDetail: showDetail,
+            showDetailClass: showDetailClass,
 
             onClose: params.onClose,
             //  pass through...
@@ -112,16 +123,78 @@ define([
     }
 
     var styles = html.makeStyles({
-        component: {
-            css: {
-                flex: '1 1 0px',
-                display: 'flex',
-                flexDirection: 'column'
-            }
+        classes: {
+            component: {
+                css: {
+                    flex: '1 1 0px',
+                    display: 'flex',
+                    flexDirection: 'column'
+                }
+            },
+            sectionHeader: {
+                css: {
+                    fontWeight: 'bold'
+                }
+            },
+            textin: {
+                css: {
+                    animationDuration: '0.5s',
+                    animationName: 'appear',
+                    animationIterationCount: '1',
+                    animationDirection: 'normal',
+                    opacity: '1',
+                    height: 'auto'
+                    // maxHeight: '300px'
+                }
+            },
+            textout: {
+                css: {
+                    animationDuration: '0.5s',
+                    animationName: 'disappear',
+                    animationIterationCount: '1',
+                    animationDirection: 'normal',
+                    opacity: '0',
+                    // transformOrigin: 'top',
+                    // transform: 'scaleY(0)'
+                    height: '0px'
+                    // maxHeight: '0px'
+                }
+            },
         },
-        sectionHeader: {
-            css: {
-                fontWeight: 'bold'
+        rules: {
+            keyframes: {
+                appear: {
+                    from: {
+                        // transform: 'scaleY(0)',
+                        // transformOrigin: 'top',
+                        height: '0px',
+                        // maxHeight: '0px',
+                        opacity: '0'
+                    },
+                    to: {
+                        // transform: 'scaleY(1)',
+                        // transformOrigin: 'top',
+                        height: 'auto',
+                        // maxHeight: '300px',
+                        opacity: '1'
+                    }
+                },
+                disappear: {
+                    from: {
+                        // transform: 'scaleY(1)',
+                        // transformOrigin: 'top',
+                        height: 'auto',
+                        // maxHeight: '300px',
+                        opacity: '1'
+                    },
+                    to: {
+                        // transform: 'scaleY(0)',
+                        // transformOrigin: 'top',
+                        height: '0px',
+                        // maxHeight: '0px',
+                        opactiy: '0'
+                    }
+                }
             }
         }
     });
@@ -441,7 +514,14 @@ define([
                 div({
                     class: 'col-md-6'
                 }, [
-                    p([
+                    p({
+                        dataBind: {
+                            css: 'showDetailClass'                            
+                        },
+                        style: {
+                            overflowY: 'hidden'
+                        }
+                    }, [
                         'The file is stored at the JGI Archive and Metadata Organizer (JAMO) and ',
                         'may be copied into your KBase File Staging Area.'
                     ])
@@ -449,7 +529,11 @@ define([
                 div({
                     class: 'col-md-6'
                 }, [
-                    p([
+                    p({
+                        dataBind: {
+                            css: 'showDetailClass' 
+                        }
+                    }, [
                         'The JGI JAMO file will be copied into your KBase Staging Area ',
                         'from where it may be imported into one or more KBase Narratives for ',
                         'further analysis and inspection.'
@@ -514,9 +598,14 @@ define([
     function buildBody() {
         return div([
             p([
-                'Copy a file from JGI JAMO to your KBase Staging Area.'
+                'Copy a file from JGI JAMO to your KBase Staging Area.',
+                
             ]),
-            p([
+            p({
+                dataBind: {
+                    css: 'showDetailClass' 
+                }
+            }, [
                 'Copying a file from JGI JAMO into your Staging area may take anywhere from a few seconds to ',
                 'several minutes. If the file is not readily available on disk at JAMO, it will be fetched from ',
                 'the tape archive, a process which may take several minutes by itself. In addition, large files will ',
@@ -563,6 +652,7 @@ define([
                 }
             }, button({
                 type: 'button',
+                class: 'btn btn-default',
                 dataBind: {
                     click: 'onClose'
                 }
@@ -571,8 +661,32 @@ define([
         ]);
     }
 
+    function buildTitle() {
+        return div([
+            'Copy File to Staging',
+            span({
+                style: {
+                    float: 'right',
+                    fontSize: '80%',
+                    paddingTop: '8px'
+                }
+            }, [
+                'Show details? ',
+                input({
+                    type: 'checkbox',
+                    dataBind: {
+                        checked: 'showDetail'
+                    }
+                })
+            ])
+        ]);
+    }
+
     function template() {
-        return buildDialog('Copy File to Staging', buildBody());
+        return div([
+            styles.sheet,
+            buildDialog(buildTitle(), buildBody())
+        ]);
     }
 
     function component() {

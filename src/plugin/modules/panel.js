@@ -44,7 +44,7 @@ define([
                 label: 'Feedback',
                 style: 'default',
                 icon: 'bullhorn',
-                toggle: true,
+                toggle: false,
                 params: {
                     // ref: objectInfo.ref
                 },

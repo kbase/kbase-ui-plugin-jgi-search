@@ -96,27 +96,29 @@ define([
     function viewModel(params) {
         var startTime = params.startTime.getTime();
 
-        var currentTime = ko.observable(new Date().getTime());
+        // var currentTime = ko.observable(new Date().getTime());
+        var currentTime = params.clock;
 
         var elapsed = ko.pureComputed(function () {
+            console.log('got clock time', currentTime());
             var e =  currentTime() - startTime;
             return niceDuration(e);
         });
         
-        var timer = window.setInterval(function () {
-            currentTime(new Date().getTime());
-        }, 500);
+        // var timer = window.setInterval(function () {
+        //     currentTime(new Date().getTime());
+        // }, 500);
 
-        function dispose() {
-            if (timer) {
-                window.clearInterval(timer);
-            }
-        }
+        // function dispose() {
+        //     if (timer) {
+        //         window.clearInterval(timer);
+        //     }
+        // }
 
         return Object.freeze({
-            elapsed: elapsed,
+            elapsed: elapsed
             // LIFECYCLE
-            dispose: dispose
+            // dispose: dispose
         });
     }
     

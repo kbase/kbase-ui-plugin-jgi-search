@@ -23,9 +23,26 @@ define([
     function viewModel(params) {
         var stagingJobs = params.stagingJobs;
 
+        var clock = ko.observable();
+
+        // generate a clock ...
+        var clockInterval = window.setInterval(function () {
+            var time = new Date().getTime();
+            clock(time);
+        }, 1000);
+
+        
+        function dispose() {
+            if (clockInterval) {
+                window.clearInterval(clockInterval);
+            }
+        }
+
         return {
             stagingJobs: stagingJobs,
-            onClose: params.onClose
+            onClose: params.onClose,
+            clock: clock,
+            dispose: dispose
         };
     }
 
@@ -101,7 +118,8 @@ define([
                                     name: '"generic/elapsed-clock"',
                                     params: {
                                         type: '"elapsed"',
-                                        startTime: 'started'
+                                        startTime: 'started',
+                                        clock: '$component.clock'
                                     }
                                 }
                             }
