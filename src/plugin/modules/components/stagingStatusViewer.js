@@ -193,6 +193,7 @@ define([
                 }
             }, button({
                 type: 'button',
+                class: 'btn btn-default',
                 dataBind: {
                     click: 'onClose'
                 }
