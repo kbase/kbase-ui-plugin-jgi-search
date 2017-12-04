@@ -454,15 +454,21 @@ define([
     var supportedTypes = {
         fasta: {
             name: 'fasta',
-            extensions: ['fasta', 'fna']                
+            extensions: ['fasta', 'fna'],
+            excludedExtensions: [{
+                extension: 'faa',
+                name: 'FASTA Amino Acid'
+            }]
         },
         fastq: {
             name: 'fastq',
-            extensions: ['fastq']
+            extensions: ['fastq'],
+            excludedExtensions: []
         },
         bam: {
             name: 'bam',
-            extensions: ['bam']
+            extensions: ['bam'],
+            excludedExtensions: []
         }
     };
     var extToType = {};
@@ -470,6 +476,13 @@ define([
         var type = supportedTypes[key];
         type.extensions.forEach(function (ext) {
             extToType[ext] = type;
+        });
+    });
+    var blacklistExtToType = {};
+    Object.keys(supportedTypes).forEach(function (key) {
+        var type = supportedTypes[key];
+        type.excludedExtensions.forEach(function (ext) {
+            blacklistExtToType[ext.extension] = type;
         });
     });
     var supportedEncodings = {
@@ -504,6 +517,8 @@ define([
     function grokFileParts(filename) {
         var base = null, 
             type = null, 
+            blacklisted = false,
+            unsupported = false,
             typeExt = null,
             encoding = null,
             encodingExt = null,
@@ -525,7 +540,13 @@ define([
                     typeExt = ext;
                     type = extToType[ext].name;
                     base = parts.slice(0, pos).join('.');
+                } else if (blacklistExtToType[ext]) {
+                    blacklisted = true;
+                    typeExt = ext;
+                    type = blacklistExtToType[ext].name;
+                    base = parts.slice(0, pos).join('.');
                 } else {
+                    unsupported = true;
                     base = parts.slice(0, pos + 1).join('.');
                 }
             // Just type, possibly.            
@@ -533,7 +554,13 @@ define([
                 typeExt = ext;
                 type = extToType[ext].name;
                 base = parts.slice(0, pos).join('.');
+            } else if (blacklistExtToType[ext]) {
+                blacklisted = true;
+                typeExt = ext;
+                type = blacklistExtToType[ext].name;
+                base = parts.slice(0, pos).join('.');                
             } else {
+                unsupported = true;
                 base = filename;
             }
         } else if (pos === 1) {
@@ -542,13 +569,21 @@ define([
                 typeExt = ext;
                 type = parts[1];
                 base = parts[0];
+            } else if (blacklistExtToType[ext]) {
+                blacklisted = true;
+                typeExt = ext;
+                type = parts[1];
+                base = parts[0];                
             } else {
+                unsupported = true;
                 base = filename;
             }
         } else if (pos === 0) {
             // assume just a file with no type
+            unsupported = true;
             base = filename;
         } else {
+            unsupported = true;
             // no file name at all!
         }
 
@@ -559,6 +594,8 @@ define([
             base: base,
             type: type,
             typeExt: typeExt,
+            blacklisted: blacklisted,
+            unsupported: unsupported,
             encoding: encoding,
             encodingExt: encodingExt,
             extension: extension
@@ -635,10 +672,19 @@ define([
             encoding = null;
         }
 
-        if (!fileParts.type) {
+        if (fileParts.blacklisted) {
+            error = {
+                code: 'excluded-extension',
+                message: 'The file type "' + fileType + '" does not support extension "' + fileParts.extension + '"',
+                info: {
+                    fileTypes: fileTypes,
+                    fileParts: fileParts
+                }
+            };
+        } else if (fileParts.unsupported) {
             error = {
                 code: 'unsupported-extension',
-                message: 'The file type "' + fileType + '" does not support extension "' + fileParts.extension + '"',
+                message: 'The file type "' + fileType + '" does not recognize the extension of this file "' + fileParts.name + '"',
                 info: {
                     fileTypes: fileTypes,
                     fileParts: fileParts
