@@ -66,6 +66,17 @@ define([
                     color: '#FFF'
                 }
             }
+        },
+        disabledMiniButton: {
+            css: {
+                padding: '2px 4px',
+                border: '2px transparent solid',
+                cursor: 'pointer',
+                display: 'inline-block',
+                backgroundColor: 'transparent',
+                textAlign: 'center',
+                color: 'rgba(150,150,150,1)'
+            }            
         }
     });
 
@@ -74,6 +85,36 @@ define([
         return  div({
         }, [
             styles.sheet,
+
+            '<!-- ko if: row.fileType.error -->', 
+            span({
+                class: styles.classes.disabledMiniButton,
+                dataBind: {
+                    attr: {
+                        title: 'row.stage.fileName + String.fromCharCode(13) + "(" + row.stage.info + ")"'
+                    }
+                },
+            }, span({
+                style: {
+                    cursor: 'not-allowed',
+                    // fontSize: '80%'
+                },
+                class: 'fa fa-stack fa-lg'
+            }, [
+                span({
+                    class: 'fa fa-download fa-rotate-270 fa-stack-1x'
+                }),
+                span({
+                    class: 'fa fa-times fa-stack-2x',
+                    style: {
+                        color: 'rgba(100,100,100,0.3)'
+                    }
+                })
+            ])),
+            '<!-- /ko -->',
+
+            '<!-- ko ifnot: row.fileType.error -->', 
+
             '<!-- ko ifnot: row.transferJob() -->',
             span({
                 class: styles.classes.miniButton,
@@ -101,6 +142,8 @@ define([
                     status: 'row.transferJob().status'
                 }
             }),
+            '<!-- /ko -->',
+
             '<!-- /ko -->'
         ]);
     }

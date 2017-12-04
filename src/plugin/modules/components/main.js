@@ -1129,9 +1129,17 @@ define([
                                     };
                                 } 
                             }                           
-                            break;
-                        
+                            break;                        
                         }
+
+                        var stagingInfo;
+                    
+                        if (fileType.error) {
+                            stagingInfo = fileType.error.message;
+                        } else {
+                            stagingInfo = 'Copy this file to your staging area';
+                        }
+
                         var resultItem = {
                             id: hit.id,
                             rowNumber: rowNumber,
@@ -1168,10 +1176,12 @@ define([
                             },
                             stage: {
                                 value: hit.source.file_name,
-                                info: 'Copy this file to your staging area',
+                                info: stagingInfo,
                                 fileName: hit.source.file_name
                             },
-                            transferJob: ko.observable(jobMap[hit.id])
+                            // For reference, not direct display
+                            transferJob: ko.observable(jobMap[hit.id]),
+                            fileType: fileType
                         };
                         
                         searchResults.push(resultItem);
