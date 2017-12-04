@@ -315,37 +315,37 @@ define([
         return [
             // NB stagingJobsState is computed based on the counts of current jobs in
             // various states, which in turn is updated by the job state monitor.
-            '<!-- ko if: search.stagingJobsState().pending -->',
+            // '<!-- ko if: search.stagingJobsState().pending -->',
 
-            '<!-- ko foreach: search.stagingJobs -->',
+            // '<!-- ko foreach: search.stagingJobs -->',
 
-            utils.komponent({
-                name: 'jgi-search/staging-status-indicator',
-                params: {
-                    status: 'status'
-                }
-            }),
+            // utils.komponent({
+            //     name: 'jgi-search/staging-status-indicator',
+            //     params: {
+            //         status: 'status'
+            //     }
+            // }),
 
-            '<!-- /ko -->',
+            // '<!-- /ko -->',
 
 
-            '<!-- /ko -->',
-            '<!-- ko ifnot: search.stagingJobsState().pending -->',
+            // '<!-- /ko -->',
+            // '<!-- ko ifnot: search.stagingJobsState().pending -->',
 
-            '<!-- ko if: search.stagingJobsState().completed -->',
-            span({
-                dataBind: {
-                    text: 'search.stagingJobsState().completed'
-                }
-            }), 
-            ' file',  
-            '<!-- ko if: search.stagingJobsState().completed > 1 -->',
-            's',
-            '<!-- /ko -->',            
-            ' copied',
-            '<!-- /ko -->',
+            // '<!-- ko if: search.stagingJobsState().completed -->',
+            // span({
+            //     dataBind: {
+            //         text: 'search.stagingJobsState().completed'
+            //     }
+            // }), 
+            // ' file',  
+            // '<!-- ko if: search.stagingJobsState().completed > 1 -->',
+            // 's',
+            // '<!-- /ko -->',            
+            // ' copied',
+            // '<!-- /ko -->',
             
-            '<!-- /ko -->',
+            // '<!-- /ko -->',
 
             '<!-- ko if: search.stagingJobsState().some -->',
             button({
@@ -356,7 +356,17 @@ define([
                 style: {
                     float: 'none'
                 }
-            }, 'View Staging Jobs'),
+            }, [
+                '<!-- ko if: search.stagingJobsState().pending -->',
+                span({
+                    class: 'fa fa-spinner fa-pulse',
+                    style: {
+                        marginRight: '4px'
+                    }
+                }),
+                '<!-- /ko -->',
+                'View Staging Jobs'
+            ]),
             '<!-- /ko -->'
         ];
         

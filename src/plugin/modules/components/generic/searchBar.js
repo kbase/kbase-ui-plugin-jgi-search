@@ -33,12 +33,7 @@ define([
 
         var searchHistory = ko.observableArray();
 
-        // This is the obervable in the actual search input.
-        var searchControlValue = ko.observable();
 
-        // This is the search value the user has commited by clicking
-        // the search button or pressing the Enter key.
-        var searchInput = ko.observable();
 
         function addToSearchHistory(value) {
             if (searchHistory.indexOf(value) !== -1) {
@@ -55,18 +50,31 @@ define([
         // When it is updated by either of those methods, we save
         // it in the search history, and also forward the value to
         // the search query.
-        searchInput.subscribe(function (newValue) {
-            // add to history if not already there...
-            addToSearchHistory(newValue);
-            params.search.searchInput(newValue);
-        });
+
+        // This is the search value the user has commited by clicking
+        // the search button or pressing the Enter key.
+       
+        // var searchInput = ko.observable().syncWith(params.search.searchInput);
+        
+        // searchInput.subscribe(function (newValue) {
+        //     addToSearchHistory(newValue);
+        // });
+
+        ko.subscribable.fn.syncFrom = function (targetObservable, callbackTarget, event) {
+            var sourceObservable = this; 
+            targetObservable.subscribe(function (v) { 
+                sourceObservable(v); 
+            }, callbackTarget, event); 
+            return sourceObservable; 
+        };
+
+        // This is the obervable in the actual search input.
+        var searchControlValue = ko.observable().syncFrom(params.search.searchInput);
 
         function useFromHistory(data) {
-            searchControlValue(data);
-            // TODO: way for this to actually flow from the 
-            // control after the searchInput is updated?
-            searchInput(data);
             showHistory(false);
+            searchControlValue(data);
+            doRunSearch();
         }
 
         function doToggleHistory() {
@@ -74,11 +82,11 @@ define([
         }
 
         var searchInputClass = ko.pureComputed(function () {
-            if (searchControlValue() !== searchInput()) {
+            if (searchControlValue() !== params.search.searchInput()) {
                 return styles.classes.modifiedFilterInput;
             }
 
-            if (searchInput()) {
+            if (params.search.searchInput()) {
                 return styles.classes.activeFilterInput;
             }
 
@@ -86,7 +94,8 @@ define([
         });
 
         function doRunSearch() {
-            searchInput(searchControlValue());
+            addToSearchHistory(searchControlValue());
+            params.search.searchInput(searchControlValue());
         }
 
         function doKeyUp(data, ev) {

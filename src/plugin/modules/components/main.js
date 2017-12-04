@@ -318,10 +318,10 @@ define([
                 include_private: 0
             };
             return rpc.call('jgi_gateway_eap', 'search', param)
-                .catch(function (err) {
-                    console.error('ERROR', err, query, typeof page, typeof pageSize);
-                    throw err;
-                });
+                // .catch(function (err) {
+                //     console.error('ERROR', err, query, typeof page, typeof pageSize);
+                //     throw err;
+                // });
         }
 
         function doRemoveError(data) {
@@ -341,12 +341,6 @@ define([
         var searchResults = ko.observableArray();
 
         var searchInput = ko.observable();
-        searchInput.extend({
-            rateLimit: {
-                timeout: 300,
-                method: 'notifyWhenChangesStop'
-            }
-        });
 
         var searchTotal = ko.observable();
         var actualSearchTotal = ko.observable();
@@ -356,13 +350,17 @@ define([
         var errors = ko.observableArray();
         var messages = ko.observableArray();
 
+        function clearQuery() {
+            seqProjectFilter(null);
+            proposalFilter(null);
+            searchInput('');
+        }
 
         var searchQuery = ko.pureComputed(function () {
             // Search input dependencies
             // We make deep copies of our search inputs so we can
             // play with them.
             var query = JSON.parse(JSON.stringify(searchExpression()));
-
 
             var autoQuery = searchAutoQuery();
             var filter = searchFilter();
@@ -376,7 +374,6 @@ define([
                 query.query[key] = autoQuery[key];
             });
 
-
             // If we have a filter but no query, we just assume the query
             // selects all
             if (Object.keys(query.query).length === 0) {
@@ -384,8 +381,6 @@ define([
                     query.query._all = '*';
                 } else {
                     // nothing to do, just reset the search
-                    // search.userSearch(false);
-                    // search.searching(false);
                     clearSearch();
                     return null;
                 }
@@ -398,9 +393,6 @@ define([
                 }).join(' | ');
             }
 
-            // search.searchState('ready');
-
-            // search.userSearch(true);
             if (Object.keys(query.query).length > 0) {
                 query.query.operator = 'AND';
             }
@@ -810,6 +802,46 @@ define([
             };
         }
 
+        var error = ko.observable();
+        function showError(err) {
+            if (err instanceof utils.JGISearchError || err.info) {
+                error({
+                    source: err.source,
+                    code: err.code,
+                    message: err.message,
+                    detail: err.detail,
+                    info: err.info
+                });
+            } else if (err instanceof Error) {
+                error({
+                    code: 'error',
+                    message: err.name + ': ' + err.message,
+                    detail: 'trace here',
+                    info: {
+                        stackTrace: err.stack.split('\n')
+                    }
+                });
+            } else {
+                error({
+                    code: 'unknown',
+                    message: err.message,
+                    detail: '',
+                    info: err
+                });
+            }
+            showOverlay({
+                name: 'jgi-search/search-error',
+                type: 'error',
+                params: {
+                    type: '"error"',
+                    hostVm: 'search'
+                },
+                viewModel: {
+                    error: error
+                }
+            });
+        }
+
         function doSearch() {
             // Search cancellation
             if (currentSearch.search) {
@@ -838,41 +870,74 @@ define([
             searching(true);
 
             return currentSearch.search = fetchQuery(query.query, query.filter, page(), pageSize())
-                .then(function (result) {
-                    // TODO: make better error object
-                    if (result.error) {
-                        throw new Error(result.error.message);
-                    }
-                    return result;
-                })
+                // .then(function (result) {
+                //     // TODO: make better error object
+                //     if (result.error) {
+                //         throw new Error(result.error.message);
+                //     }
+                //     return result;
+                // })
                 .spread(function (result, error, stats) {
                     if (thisSearch.cancelled) {
                         console.warn('search cancelled, ignoring results...');
                         return;
                     }
 
-                    // console.log('search results', result, error, stats);
-
                     // TODO: handle better!
                     if (error) {
-                        ErrorWidget.show({
-                            title: 'Error',
-                            body: div([
-                                p('An error has occurred processing your JGI Search.'),
-                                p('The search details are shown below. '),
-                                p([
-                                    'If this problem persists, you may consider ',
-                                    a({
-                                        href: runtime.config('resources.help.url'),
-                                        target: '_blank'
-                                    }, 'filing a bug report'),
-                                    '.'
-                                ])
-                            ]),
-                            error: error
-                            // body: error.message + '(' + error.type + ',' + error.code + ')'
-                        });
+                        // code, message, detail, info
+                        
+                        // console.log('ERROR', error);
+                        thisSearch.search.cancel();
+                        thisSearch.cancelled = true;
+                        currentSearch = {
+                            search: null,
+                            cancelled: false
+                        };
+                        try {
+                            clearQuery();
+                        } catch (ex) {
+                            console.error('huh?', ex);
+                        }
+                        showError(new utils.JGISearchError(
+                            'dynamic_service:jgi_search_gateway',
+                            error.code,
+                            error.message,
+                            'An error was encountered processing your search request.',
+                            error.info
+                        ));
+                        // showError(error, div([
+                        //     p('An error has occurred processing your JGI Search.'),
+                        //     p('The search details are shown below. '),
+                        //     p([
+                        //         'If this problem persists, you may consider ',
+                        //         a({
+                        //             href: runtime.config('resources.help.url'),
+                        //             target: '_blank'
+                        //         }, 'filing a bug report'),
+                        //         '.'
+                        //     ])
+                        // ]));
+                        // clearSearch();
                         return;
+                        // ErrorWidget.show({
+                        //     title: 'Error',
+                        //     body: div([
+                        //         p('An error has occurred processing your JGI Search.'),
+                        //         p('The search details are shown below. '),
+                        //         p([
+                        //             'If this problem persists, you may consider ',
+                        //             a({
+                        //                 href: runtime.config('resources.help.url'),
+                        //                 target: '_blank'
+                        //             }, 'filing a bug report'),
+                        //             '.'
+                        //         ])
+                        //     ]),
+                        //     error: error
+                        //     // body: error.message + '(' + error.type + ',' + error.code + ')'
+                        // });
+                        // return;
                         // throw new Error(error.message + '(' + error.type + ',' + error.code + ')');
                     }
 
@@ -1114,16 +1179,16 @@ define([
                 })
                 .catch(function (err) {
                     console.error('ERROR', err);
-                    errors.push({
-                        message: err.message
-                    });
+                    showError(error);
                 })
                 .finally(function () {
-                    currentSearch = {
-                        search: null,
-                        cancelled: false
-                    };
-                    searching(false);
+                    // currentSearch = {
+                    //     search: null,
+                    //     cancelled: false
+                    // };
+                    // if (!thisSearch.cancelled) {
+                        searching(false);
+                    // }
                 });
         }
 
@@ -1150,8 +1215,6 @@ define([
         // TRY COMPUTING UBER-STATE
         var searchState = ko.pureComputed(function () {
             // TODO: error
-
-            // console.log('state change triggered', searching(), searchQuery(), searchResults().length, pageSize());
 
             if (searching()) {
                 return 'inprogress';
@@ -1282,6 +1345,8 @@ define([
                 piFilter: piFilter,
 
                 jgiTermsAgreed: jgiTermsAgreed,
+
+                error: error,
 
                 // SYNTHESIZED INPUTS
                 searchQuery: searchQuery,

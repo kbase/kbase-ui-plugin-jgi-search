@@ -130,18 +130,17 @@ define([
                         padding: '10px'
                     }
                 }, [
-                    div({
-                        dataBind: {
-                            component: {
-                                name: '"jgi-search/staging-status-indicator"',
-                                params: {
-                                    status: 'transferJob().status'
+                    p([
+                        span({
+                            dataBind: {
+                                component: {
+                                    name: '"jgi-search/staging-status-indicator"',
+                                    params: {
+                                        status: 'transferJob().status'
+                                    }
                                 }
                             }
-                        }
-                    }),
-    
-                    p([
+                        }),
                         'Transfer is in progress. You may close this window and monitor it from the main results window.'
                     ])
                 ]),
