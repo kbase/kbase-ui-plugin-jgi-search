@@ -453,19 +453,7 @@ define([
                     // actual file suffix.
 
                     var fileParts = utils.grokFileParts(hit.source.file_name);
-                    console.log('file parts', fileParts);
                 
-                    // var fileBaseName, fileExtension;
-                    // var reExtension = /^(.*)\.(.*)$/;
-                    // var fileName = hit.source.file_name;
-                    // var m = reExtension.exec(fileName);
-                    // if (m) {
-                    //     fileBaseName = m[1];
-                    //     fileExtension = m[2];
-                    // } else {
-                    //     fileBaseName = null;
-                    //     fileExtension = null;
-                    // }
                     var fileType = utils.grokFileType(hit.source.file_type, fileParts);
 
                     // Title

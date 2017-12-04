@@ -2,21 +2,21 @@
 define([
     'knockout-plus',
     'kb_common/html',
+    '../lib/ui',
     'yaml!../helpData.yml'
 ], function (
     ko,
     html,
+    ui,
     helpDb
 ) {
     'use strict';
 
     var t = html.tag,
         div = t('div'),
-        button = t('button');
+        span = t('span');
 
     function viewModel(params) {
-        var hostVm = params.hostVm;
-
         function doClose() {
             params.onClose();
         }
@@ -30,8 +30,7 @@ define([
                 }
             ],
             helpDb: helpDb,
-            close: close,
-            hostVm: hostVm
+            onClose: params.onClose
         };
     }
 
@@ -42,7 +41,7 @@ define([
                     name: '"generic/help"',
                     params: {
                         helpDb: 'helpDb',
-                        hostVm: 'hostVm'
+                        onClose: 'onClose'
                     }
                 }
             }
@@ -50,47 +49,7 @@ define([
     }
 
     function template() {
-        return div({
-        }, [
-            // title
-            div({
-                dataBind: {
-                    text: 'title'
-                },
-                style: {
-                    color: 'white',
-                    backgroundColor: 'rgba(0,0,0,0.6)',
-                    fontSize: '150%',
-                    padding: '8px',
-                    borderBottom: '1px green solid'
-                }
-            }),
-            // body
-            div({
-                style: {
-                    padding: '8px',
-                    minHeight: '10em',
-                    backgroundColor: 'rgba(255,255,255,0.8)',
-                }
-            }, buildHelpViewer()),
-            div({
-                dataBind: {
-                    foreach: 'buttons'
-                },
-                style: {
-                    padding: '8px',
-                    textAlign: 'right',
-                    backgroundColor: 'transparent'
-                }
-            }, button({
-                type: 'button',
-                class: 'btn btn-default',
-                dataBind: {
-                    text: 'title',
-                    click: 'action'
-                }
-            }))
-        ]);
+        return ui.buildDialog(span({dataBind: {text: 'title'}}), buildHelpViewer());        
     }
 
     function component() {

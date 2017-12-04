@@ -869,7 +869,7 @@ define([
         return div({
             dataBind: {
                 component: {
-                    name: '"jgisearch/json-viewer"',
+                    name: '"generic/json-viewer"',
                     params: {
                         value: '$component.item.source.metadata',
                         open: true

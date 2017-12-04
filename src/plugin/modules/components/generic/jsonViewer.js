@@ -193,7 +193,7 @@ define([
                     div({
                         dataBind: {
                             component: {
-                                name: '"jgisearch/json-viewer"',
+                                name: '"generic/json-viewer"',
                                 params: {
                                     key: 'key',
                                     value: 'value',
@@ -274,7 +274,7 @@ define([
                     div({
                         dataBind: {
                             component: {
-                                name: '"jgisearch/json-viewer"',
+                                name: '"generic/json-viewer"',
                                 params: {
                                     key: '"[" + $index() + "]"',
                                     value: '$data',

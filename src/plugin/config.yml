@@ -51,11 +51,7 @@ install:
     #   module: components/table
     #   type: factory
       
-    -
-      name: 'jgisearch/json-viewer'
-      module: 'components/json-viewer'
-      css: true
-      type: factory
+
     -
       name: 'help'
       module: 'components/help'
@@ -120,6 +116,11 @@ install:
       name: generic/search-bar
       module: components/generic/searchBar
       type: factory
+    -
+      name: 'generic/json-viewer'
+      module: 'components/generic/jsonViewer'
+      css: true
+      type: factory      
 
   routes:
     -

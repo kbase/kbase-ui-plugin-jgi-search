@@ -18,8 +18,7 @@ define([
                     color: 'white',
                     backgroundColor: 'rgba(0,0,0,0.6)',
                     fontSize: '150%',
-                    padding: '8px',
-                    borderBottom: '1px green solid'
+                    padding: '8px'
                 }
             }, title),
             // body
@@ -27,7 +26,7 @@ define([
                 style: {
                     padding: '8px',
                     minHeight: '10em',
-                    backgroundColor: 'rgba(255,255,255,0.8)',
+                    backgroundColor: 'rgba(255,255,255,1)',
                 }
             }, body),
             // buttons
@@ -39,6 +38,7 @@ define([
                 }
             }, button({
                 type: 'button',
+                class: 'btn btn-default',
                 dataBind: {
                     click: 'onClose'
                 }
