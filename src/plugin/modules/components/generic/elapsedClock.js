@@ -100,7 +100,7 @@ define([
         var currentTime = params.clock;
 
         var elapsed = ko.pureComputed(function () {
-            console.log('got clock time', currentTime());
+            // console.log('got clock time', currentTime());
             var e =  currentTime() - startTime;
             return niceDuration(e);
         });
