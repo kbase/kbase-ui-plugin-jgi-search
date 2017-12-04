@@ -668,7 +668,8 @@ define([
                 style: {
                     float: 'right',
                     fontSize: '80%',
-                    paddingTop: '8px'
+                    paddingTop: '8px',
+                    marginRight: '40px'
                 }
             }, [
                 'Show details? ',
