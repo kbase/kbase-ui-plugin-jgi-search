@@ -110,11 +110,17 @@ install:
       name: jgi-search/search-help
       module: components/searchHelp
       type: factory
+    -
+      name: jgi-search/search-error
+      module: components/searchError
+      type: factory      
+      
     # GENERIC
     -
       name: generic/search-bar
       module: components/generic/searchBar
       type: factory
+
   routes:
     -
       path: ['jgi', 'search']

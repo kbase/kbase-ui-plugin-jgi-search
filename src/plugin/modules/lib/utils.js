@@ -1033,6 +1033,17 @@ define([
         return iseq(v1, v2);
     }
 
+    function JGISearchError(source, code, message, detail, info) {
+        this.source = source;
+        this.code = code;
+        this.message = message;
+        this.detail = detail;
+        this.info = info;
+    }
+    JGISearchError.prototype = Object.create(Error.prototype);
+    JGISearchError.prototype.constructor = JGISearchError;
+    JGISearchError.prototype.name = 'JGISearchError';
+
     return {
         komponent: komponent,
         grokTitle: grokTitle,
@@ -1049,6 +1060,7 @@ define([
         getProp: getProp,
         hasProp: hasProp,
         parseSearchExpression: parseSearchExpression,
-        isEqual: isEqual
+        isEqual: isEqual,
+        JGISearchError: JGISearchError
     };
 });
