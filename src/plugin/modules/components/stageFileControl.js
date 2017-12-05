@@ -31,7 +31,7 @@ define([
 
             // TODO: need to work on the detail item structure!
 
-            params.doStage(id, fileName)
+            params.doStage(id, fileName())
                 .then(function (result) {
                     if ('jobId' in result) {
                         transferJob(result);

@@ -235,7 +235,10 @@ define([
         function doStage(id, fileName) {
             console.log('staging...', id, fileName);
             return rpc.call('jgi_gateway_eap', 'stage', {
-                ids: [id]
+                files: [{
+                    id: id,
+                    filename: fileName
+                }]
             })
                 .spread(function (result, error) {
                     if (result) {
