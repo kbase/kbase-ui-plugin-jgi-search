@@ -194,22 +194,6 @@ define([
                         var runAgain = result.some(function (status) {
                             return (status !== 'completed' && status !== 'error' && status !== 'unknown1');
                         });
-                        // console.log('stage status is', result, stats);
-                        // hmph, value comes back as a simple string.
-                        // if (!result) {
-                        //     progress('hmm, no progress.');
-                        //     return;
-                        // }
-                        // var stageStats = utils.grokStageStats(result.message);
-                        // // console.log('grokked status', stageStats);
-                        // progress(stageStats.status);
-                        //
-                        // color(statusConfig[stageStats.status].color);
-                        //
-                        // if (stageStats.status === 'completed') {
-                        //     return;
-                        // }
-                        // console.log('monitored', result);
                         if (runAgain) {
                             window.setTimeout(checkProgress, 5000);
                         } else {
@@ -645,9 +629,7 @@ define([
                 delete filter.pi_name;                
             } else {
                 filter.pi_name = newValue;
-            }
-            console.log('new filter is ...', filter, newValue);
-            
+            }            
             searchFilter(filter);
         });
         // SEARCH FLAGS
@@ -764,8 +746,10 @@ define([
             searchResults.removeAll();
             searchTotal(0);
             actualSearchTotal(0);
+            page(null);
             currentSearch = {
                 search: null,
+                query: null,
                 cancelled: false
             };
         }
@@ -817,12 +801,6 @@ define([
                 currentSearch.search.cancel();
                 currentSearch.cancelled = true;
             }
-            currentSearch = {
-                search: null,
-                cancelled: false
-            };
-            var thisSearch = currentSearch;
-            var searchStart = new Date().getTime();
 
             var query = searchQuery();
 
@@ -830,43 +808,52 @@ define([
                 return;
             }
 
+            // TODO: compare previous to current query ... if same, do not do another search, just 
+            //   return. The problem is stuttering -- duplicate updates to the search query 
+            //   via observables.
+
+            // TODO: eliminate stuttering!
+            // Sometimes observables cause duplicate updates to the search query ... 
+            // stop that.
+
             if (!pageSize()) {
                 console.warn('ditching search request - no page size yet', pageSize());
                 return;
             }
 
+            currentSearch = {
+                search: null,
+                query: query,
+                cancelled: false
+            };
+            var thisSearch = currentSearch;
+            var searchStart = new Date().getTime();
+
+
             searching(true);
 
             return currentSearch.search = fetchQuery(query.query, query.filter, page(), pageSize())
-                // .then(function (result) {
-                //     // TODO: make better error object
-                //     if (result.error) {
-                //         throw new Error(result.error.message);
-                //     }
-                //     return result;
-                // })
                 .spread(function (result, error, stats) {
                     if (thisSearch.cancelled) {
                         console.warn('search cancelled, ignoring results...');
-                        return;
+                        return false;
                     }
 
                     // TODO: handle better!
                     if (error) {
-                        // code, message, detail, info
-                        
-                        // console.log('ERROR', error);
-                        thisSearch.search.cancel();
-                        thisSearch.cancelled = true;
+                        // thisSearch.search.cancel();
+                        // thisSearch.cancelled = true;
                         currentSearch = {
                             search: null,
                             cancelled: false
                         };
                         try {
                             clearQuery();
+                            clearSearch();
                         } catch (ex) {
                             console.error('huh?', ex);
                         }
+                        
                         showError(new utils.JGISearchError(
                             'dynamic_service:jgi_search_gateway',
                             error.code,
@@ -874,39 +861,7 @@ define([
                             'An error was encountered processing your search request.',
                             error.info
                         ));
-                        // showError(error, div([
-                        //     p('An error has occurred processing your JGI Search.'),
-                        //     p('The search details are shown below. '),
-                        //     p([
-                        //         'If this problem persists, you may consider ',
-                        //         a({
-                        //             href: runtime.config('resources.help.url'),
-                        //             target: '_blank'
-                        //         }, 'filing a bug report'),
-                        //         '.'
-                        //     ])
-                        // ]));
-                        // clearSearch();
-                        return;
-                        // ErrorWidget.show({
-                        //     title: 'Error',
-                        //     body: div([
-                        //         p('An error has occurred processing your JGI Search.'),
-                        //         p('The search details are shown below. '),
-                        //         p([
-                        //             'If this problem persists, you may consider ',
-                        //             a({
-                        //                 href: runtime.config('resources.help.url'),
-                        //                 target: '_blank'
-                        //             }, 'filing a bug report'),
-                        //             '.'
-                        //         ])
-                        //     ]),
-                        //     error: error
-                        //     // body: error.message + '(' + error.type + ',' + error.code + ')'
-                        // });
-                        // return;
-                        // throw new Error(error.message + '(' + error.type + ',' + error.code + ')');
+                        return true;
                     }
 
                     var searchCallElapsed = new Date().getTime() - searchStart;
@@ -935,16 +890,9 @@ define([
                     });
 
                     result.hits.forEach(function (hit, index) {
-                        // var project = hit.source.metadata;
                         var rowNumber = (page() - 1) * pageSize() + 1 + index;
 
                         var sequencingProjectId = (function (id) {
-                            // return {
-                            //     value: id,
-                            //     addToSearch:  function () {
-                            //         seqProjectFilter.push(id);
-                            //     }
-                            // };
                             return {
                                 value: id,
                                 info: 'Sequencing project id'
@@ -964,16 +912,6 @@ define([
                             info: utils.getProp(hit.source.metadata, ['proposal.title'], 'Proposal title unavailable')
                         };
 
-                        // actual file suffix.
-                        // var fileExtension;
-                        // var reExtension = /^(.*)\.(.*)$/;
-                        // var fileName = hit.source.file_name;
-                        // var m = reExtension.exec(fileName);
-                        // if (m) {
-                        //     fileExtension = m[2];
-                        // } else {
-                        //     fileExtension = null;
-                        // }
                         var fileParts = utils.grokFileParts(hit.source.file_name);
                         var fileType = utils.grokFileType(hit.source.file_type, fileParts);
 
@@ -983,25 +921,8 @@ define([
 
                         var pi = utils.grokPI(hit, fileType);
 
-                        // var pi = (function (id) {
-                        //     var pi = utils.grokPI(hit, fileType);
-                        //     if (!pi) {
-                        //         return '';
-                        //     }
-                            
-                        //     // return {
-                        //     //     text: pi.text,
-                        //     //     addToSearch:  function () {
-                        //     //         var oldInput = searchInput() || '';
-                        //     //         searchInput(oldInput + (pi.first ? ' ' + pi.first : '') + (pi.last ? ' ' + pi.last : '') );
-                        //     //     }
-                        //     // };
-                        //     return pi.text;
-                        // }());
-
                         // TODO move this out to a function:
                         var s1;
-                        // console.log('PORTAL', fileType.dataType, utils.getProp(hit, 'source.metadata.portal.display_location'));
                         var portalLocation = utils.getProp(hit, 'source.metadata.portal.display_location');
                         if (portalLocation && portalLocation instanceof Array) {
                             if (portalLocation.length > 0) {
@@ -1152,11 +1073,18 @@ define([
                             fileType: fileType
                         };
                         
-                        searchResults.push(resultItem);
+                        searchResults.push(resultItem);                        
                     });
+                    return true;
+                })
+                .then(function (searched) {
+                    if (searched) {
+                        searching(false);
+                    }
                 })
                 .catch(function (err) {
                     console.error('ERROR', err);
+                    searching(false);
                     showError(error);
                 })
                 .finally(function () {
@@ -1164,9 +1092,6 @@ define([
                         search: null,
                         cancelled: false
                     };
-                    // if (!thisSearch.cancelled) {
-                    searching(false);
-                    // }
                 });
         }
 
@@ -1179,9 +1104,13 @@ define([
             doSearch();
         });
 
-        searchQuery.subscribe(function () {
-            // reset the page back to 1 because we do not konw if the
+        searchQuery.subscribe(function (newValue) {
+            // reset the page back to 1 because we do not know if the
             // new search will extend this far.
+            if (!newValue) {
+                page(null);
+                return;
+            }
             if (!page()) {
                 page(1);
             } else if (page() > 1) {
@@ -1431,16 +1360,6 @@ define([
                 }
             }),
             '<!-- /ko -->',
-
-           
-            // '<!-- ko case: $default -->', 
-            // 'hmm',
-            // div({
-            //     dataBind: {
-            //         text: 'search.status'
-            //     }
-            // }),
-            // '<!-- /ko -->',
 
             '<!-- /ko -->',
             utils.komponent({

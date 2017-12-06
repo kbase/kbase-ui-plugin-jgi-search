@@ -9,8 +9,6 @@ define([
 ) {
     'use strict';
 
-    console.log('plugin?', Plugin);
-
     function factory(config) {
         var runtime = config.runtime;
 
@@ -91,7 +89,6 @@ define([
                     var profile = Props.make({
                         data: profiles[0]
                     });
-                    console.log('hmm', profiles);
 
                     var agreed = profile.getItem('profile.plugins.jgi-search.settings.jgiDataTerms.agreed', false);
                     return [{
