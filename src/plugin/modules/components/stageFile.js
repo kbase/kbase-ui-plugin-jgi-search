@@ -20,7 +20,6 @@ define([
 
 
     function viewModel(params) {
-
         var item = ko.observable();
 
         var destinationFileBaseName = ko.observable();
@@ -102,6 +101,10 @@ define([
             return styles.classes.textout;
         });
 
+        function doOpenJobsMonitor() {
+            params.showStageJobViewer();
+        }
+
         return {
             item: item,
             destinationFileBaseName: destinationFileBaseName,
@@ -112,6 +115,8 @@ define([
             showDetailClass: showDetailClass,
 
             onClose: params.onClose,
+            doOpenJobsMonitor: doOpenJobsMonitor,
+
             //  pass through...
             id: params.id,
             fileName: fileName,
@@ -645,18 +650,28 @@ define([
                 // dataBind: {
                 //     foreach: 'buttons'
                 // },
+                class: 'btn-toolbar pull-right',
                 style: {
                     padding: '8px',
                     textAlign: 'right',
                     backgroundColor: 'transparent'
                 }
-            }, button({
-                type: 'button',
-                class: 'btn btn-default',
-                dataBind: {
-                    click: 'onClose'
-                }
-            }, 'Close')),
+            }, [
+                button({
+                    type: 'button',
+                    class: 'btn btn-default',
+                    dataBind: {
+                        click: 'doOpenJobsMonitor'
+                    }
+                }, 'Close & Monitor Jobs'),
+                button({
+                    type: 'button',
+                    class: 'btn btn-default',
+                    dataBind: {
+                        click: 'onClose'
+                    }
+                }, 'Close')
+            ]),
 
         ]);
     }

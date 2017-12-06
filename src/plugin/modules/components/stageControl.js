@@ -31,7 +31,8 @@ define([
                     doStage: params.env.search.doStage,
                     transferJob: params.row.transferJob,
                     getDetail: params.env.search.getDetail,
-                    checkFilename: params.env.search.checkFilename
+                    checkFilename: params.env.search.checkFilename,
+                    showStageJobViewer: params.env.search.showStageJobViewer
                 }
             });
         }

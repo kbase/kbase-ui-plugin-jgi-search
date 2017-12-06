@@ -1,9 +1,11 @@
 define([
     'knockout-plus',
-    'kb_common/html'
+    'kb_common/html',
+    '../../lib/profile'
 ], function (
     ko,
-    html
+    html,
+    UserProfile
 ) {
     'use strict';
 
@@ -18,6 +20,7 @@ define([
         // Params
         var logo = params.logo;
 
+        
 
         // Own VM
 
@@ -31,9 +34,7 @@ define([
        
         var showHistory = ko.observable(false);
 
-        var searchHistory = ko.observableArray();
-
-
+        var searchHistory = params.search.searchHistory;
 
         function addToSearchHistory(value) {
             if (searchHistory.indexOf(value) !== -1) {
@@ -46,6 +47,8 @@ define([
                 searchHistory.shift();
             }
         }
+
+        
 
         // When it is updated by either of those methods, we save
         // it in the search history, and also forward the value to

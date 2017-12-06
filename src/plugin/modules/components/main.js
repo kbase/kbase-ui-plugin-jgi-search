@@ -16,6 +16,7 @@ define([
     '../lib/rpc',
     '../errorWidget',
     '../lib/utils',
+    '../lib/profile',
     // local data
     'yaml!../lib/import.yml'
 ], function (
@@ -30,17 +31,15 @@ define([
     Rpc,
     ErrorWidget,
     utils,
+    Profile,
     Import
 ) {
     'use strict';
 
     var t = html.tag,
-        p = t('p'),
-        a = t('a'),
         div = t('div');
 
     function getImportInfo(dataType, indexId, fileName, hit) {
-        // console.log('getting import info:', dataType, indexId);
         if (!dataType) {
             return null;
         }
@@ -51,7 +50,6 @@ define([
             throw new Error('unsupported data type: ' + dataType);
         }
         var importMetadata = utils.grokImportMetadata(dataTypeDef, hit);
-        // console.log('grokked?', importMetadata);
         return {
             importSpec: dataTypeDef,
             kbaseType: importMetadata.kbaseType,
@@ -115,8 +113,6 @@ define([
                 some: pending + stagingJobStates.completed() + stagingJobStates.error()
             };
         });
-
-        // console.log('staging job state', stagingJobsState());
 
         function updateStagingJobStates() {
             var states = {
@@ -233,7 +229,6 @@ define([
         }
 
         function doStage(id, fileName) {
-            console.log('staging...', id, fileName);
             return rpc.call('jgi_gateway_eap', 'stage', {
                 files: [{
                     id: id,
@@ -242,8 +237,6 @@ define([
             })
                 .spread(function (result, error) {
                     if (result) {
-                        // stagingSpec.stagingStatus('Staging submitted with job id ' + result.job_id);
-                        // console.log('got result', result);
                         var job = {
                             dbId: id,
                             filename: fileName,
@@ -253,7 +246,6 @@ define([
                             status: ko.observable('sent')
                         };
                         job.elapsed = ko.pureComputed(function () {
-                            // var now = new Date().getTime();
                             return this.updated().getTime() - this.started.getTime();
                         }.bind(job));
                         stagingJobs.push(job);
@@ -261,7 +253,6 @@ define([
                         // Set it it the results item as well.
                         var res = searchResults();
                         for (var i = 0; i < res.length; i += 1) {
-                            // console.log('item', item, item.id, job.dbId);
                             var item = res[i];
                             if (item.id === job.dbId) {
                                 item.transferJob(job);
@@ -270,25 +261,15 @@ define([
                         }
 
                         return job;
-                        // return {
-                        //     jobId: result.job_id
-                        // };
-
-                        // monitorProgress(result.job_id, stagingSpec.stagingProgress, stagingSpec.stagingProgressColor);
                     } else {
-                        // stagingSpec.stagingStatus('unknown - see console');
                         throw new Error('Empty result when staging');
                     }
-                    // return result;
                 })
                 .catch(function (err) {
-                    // console.error('ERROR', err, stagingSpec);
-                    // stagingSpec.stagingStatus('error - ' + err.message);
                     return {
                         message: err.message,
                         error: err
                     };
-                    // throw err;
                 });
         }
 
@@ -320,11 +301,7 @@ define([
                 page: page,
                 include_private: 0
             };
-            return rpc.call('jgi_gateway_eap', 'search', param)
-                // .catch(function (err) {
-                //     console.error('ERROR', err, query, typeof page, typeof pageSize);
-                //     throw err;
-                // });
+            return rpc.call('jgi_gateway_eap', 'search', param);
         }
 
         function doRemoveError(data) {
@@ -1183,12 +1160,12 @@ define([
                     showError(error);
                 })
                 .finally(function () {
-                    // currentSearch = {
-                    //     search: null,
-                    //     cancelled: false
-                    // };
+                    currentSearch = {
+                        search: null,
+                        cancelled: false
+                    };
                     // if (!thisSearch.cancelled) {
-                        searching(false);
+                    searching(false);
                     // }
                 });
         }
@@ -1240,85 +1217,90 @@ define([
         var jgiTermsAgreed = ko.observable(false);
 
         function saveJgiAgreement(agreed) {
-            var username = runtime.service('session').getUsername();
-            var profileService = new GenericClient({
-                // Note now using the module name for the service id in the services config.
-                url: runtime.config('services.UserProfile.url'),
-                token: runtime.service('session').getAuthToken(),
-                module: 'UserProfile'
+            var profile = Profile.make({
+                runtime: runtime
             });
-            profileService.callFunc('get_user_profile', [[username]])
-                .spread(function (profiles) {
-                    var profile = Props.make({
-                        data: profiles[0]
-                    });
-
-                    var prefs = Props.make({data: profile.getItem('profile.preferences', {})});
-
-                    prefs.setItem('agreements.jgiData',  {
-                        agreed: agreed,
-                        time: new Date().getTime()
-                    });
-
-                    var profileUpdate = {
-                        profile: {
-                            profile: {
-                                preferences: prefs.debug()
-                            },
-                            user: profile.getItem('user')
+            profile.saveJgiAgreement(agreed)
+                .spread(function (result, error) {
+                    if (result) {
+                        if (agreed) {
+                            status('agreed');
+                        } else {
+                            status('needagreement');
                         }
-                    };
-
-                    // Don't want to really replace, but update_user_profile only 
-                    return profileService.callFunc('update_user_profile', [profileUpdate])
-                        .then(function () {
-                            // successfully saved profile
-                            // console.log('saved profile...');
-                            if (agreed) {
-                                status('agreed');
-                            } else {
-                                status('needagreement');
-                            }
-                        })
-                        .catch(function (err) {
-                            // TODO: need error message!
-                            console.error('failed to save profile...', err);
-                        });
-                })
-                .catch(function (err) {
-                    console.error('error getting profile', err);
-                });
-        }
-        function getJgiAgreement() {
-            var username = runtime.service('session').getUsername();
-            var profileService = new GenericClient({
-                // Note now using the module name for the service id in the services config.
-                url: runtime.config('services.UserProfile.url'),
-                token: runtime.service('session').getAuthToken(),
-                module: 'UserProfile'
-            });
-            profileService.callFunc('get_user_profile', [[username]])
-                .spread(function (profiles) {
-                    var profile = Props.make({
-                        data: profiles[0]
-                    });
-
-                    var agreed = profile.getItem('profile.preferences.agreements.jgiData.agreed', false);
-                    if (agreed) {
-                        status('agreed');
                     } else {
-                        status('needagreement');
+                        showError(error);
                     }
-                })
-                .catch(function (err) {
-                    console.error('error getting profile', err);
-                    return false;
                 });
         }
 
+        function getJgiAgreement() {
+            var profile = Profile.make({
+                runtime: runtime
+            });
+            profile.getJgiAgreement()
+                .spread(function (result, error) {
+                    if (result) {
+                        if (result.agreed) {
+                            status('agreed');
+                        } else {
+                            status('needagreement');
+                        }
+                    } else {
+                        // show error...
+                        showError(error);
+                    }
+                });
+        }
+
+        // SEARCH HISTORY
+
+        var searchHistory = ko.observableArray();
+
+        function getSearchHistory() {
+            var profile = Profile.make({
+                runtime: runtime
+            });
+            return profile.getSearchHistory()
+                .spread(function (result, error) {
+                    if (result) {
+                        return result;
+                    } else {
+                        showError(error);
+                    }
+                });
+        }
+
+        function saveSearchHistory(history) {
+            var profile = Profile.make({
+                runtime: runtime
+            });
+            return profile.saveSearchHistory(history)
+                .spread(function (result, error) {
+                    if (result) {
+                        return result;
+                    } else {
+                        showError(error);
+                    }
+                });
+        }
+
+        searchHistory.subscribe(function (newValue) {
+            saveSearchHistory(newValue);
+        });
+
+        getSearchHistory()
+            .then(function (history) {
+                searchHistory(history);
+            })
+            .catch(function (err) {
+                console.error('ERROR retrieving search history', err);
+            });
+
+        // TERMS AND AGREEMENT
+ 
         jgiTermsAgreed.subscribe(function (newValue) {
             // save the agreed-to-state in the user's profile.
-            console.log('saving to profile...');
             saveJgiAgreement(newValue);
         });
 
@@ -1332,6 +1314,15 @@ define([
         showOverlay.subscribe(function (newValue) {
             overlayComponent(newValue);
         });
+
+        function showStageJobViewer() {
+            showOverlay({
+                name: 'jgi-search/staging-status-viewer',
+                viewModel: {
+                    stagingJobs: stagingJobs
+                }
+            });
+        }
 
         var vm = {
             search: {
@@ -1369,6 +1360,8 @@ define([
                 // noSearch: noSearch,
                 doAddToSearch: doAddToSearch,
 
+                searchHistory: searchHistory,
+
                 // for fetching details of a serach result item.
                 getDetail: getDetail,
 
@@ -1392,7 +1385,8 @@ define([
                 doStage: doStage,
 
                 doSearch: doSearch,
-                status: status
+                status: status,
+                showStageJobViewer: showStageJobViewer
             },
             overlayComponent: overlayComponent
         };

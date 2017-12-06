@@ -1,0 +1,5 @@
+# Error Catalog
+---
+errors:
+  error-getting-profile:
+    description: An error occurred attempting to fetch the user profile from the user profile service.

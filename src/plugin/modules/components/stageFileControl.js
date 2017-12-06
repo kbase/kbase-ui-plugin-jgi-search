@@ -130,7 +130,11 @@ define([
                         padding: '10px'
                     }
                 }, [
-                    p([
+                    p({
+                        style: {
+                            textAlign: 'center'
+                        }
+                    }, [
                         span({
                             dataBind: {
                                 component: {
@@ -141,7 +145,7 @@ define([
                                 }
                             }
                         }),
-                        'Transfer is in progress. You may close this window and monitor it from the main results window.'
+                        'Transfer is in progress.'
                     ])
                 ]),
                 '<!-- /ko -->',
