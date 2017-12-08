@@ -189,28 +189,42 @@ define([
         }
     }
 
+    function properCase(s) {
+        if (!s || s.length === 0) {
+            return;
+        }
+        return s[0].toUpperCase() + s.slice(1).toLowerCase();
+    }
+
     function grokScientificName(hit) {
         var org = {};
         if (hasProp(hit.source.metadata, 'genus')) {
-            org.info = 'Scientific name',
+            org.info = 'Scientific name';
             ['genus', 'species', 'strain'].forEach(function (key) {
                 org[key] = getProp(hit.source.metadata, key, '');
             });
         } else if (hasProp(hit.source.metadata, 'sow_segment.genus')) {
-            org.info = 'from SOW Segment',
+            org.info = 'from SOW Segment';
             ['genus', 'species', 'strain'].forEach(function (key) {
-                org[key] = getProp(hit.source.metadata, 'sow_segement.' + key, '');
+                org[key] = getProp(hit.source.metadata, 'sow_segment.' + key, '');
             });
         } else if (hasProp(hit.source.metadata, 'pmo_project.genus')) {
-            org.info = 'from PMO Project',
+            org.info = 'from PMO Project';
             ['genus', 'species', 'strain'].forEach(function (key) {
                 org[key] = getProp(hit.source.metadata, 'pmo_project.' + key, '');
             });
         } else if (hasProp(hit.source.metadata, 'gold_data.genus')) {
-            org.info = 'from GOLD',
+            org.info = 'from GOLD';
             ['genus', 'species', 'strain'].forEach(function (key) {
                 org[key] = getProp(hit.source.metadata, 'gold_data.' + key, '');
             });
+        } else if (hasProp(hit.source.metadata, 'analysis_project.ncbiSpecies')) {
+            ['genus', 'species', 'strain'].forEach(function (key) {
+                org[key] = getProp(hit.source.metadata, 'analysis_project.ncbi' + properCase(key), '');
+            });
+            org.value = org['species']; // ??
+            org.info = org.value + '\n(from NCBI Species)';
+            return org;
         }
 
         if (!(org.genus || org.species || org.strain)) {
@@ -252,12 +266,25 @@ define([
             };
         }
         var piName = getProp(hit.source.metadata, 'pmo_project.pi_name');
+        var names;
         if (piName) {
-            var names = piName.split(/\s+/);
+            names = piName.split(/\s+/);
             if (names) {
                 return {
                     value: names[1] + ', ' + names[0],
                     info: 'The PI name as provided in the proposal',            
+                    first: names[0],
+                    last: names[1]
+                };
+            }
+        }
+        piName = getProp(hit.source.metadata, 'analysis_project.piName');
+        if (piName) {
+            names = piName.split(/\s+/);
+            if (names) {
+                return {
+                    value: names[1] + ', ' + names[0],
+                    info: 'The PI name as provided in the analysis project',            
                     first: names[0],
                     last: names[1]
                 };

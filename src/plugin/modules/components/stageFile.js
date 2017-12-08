@@ -100,7 +100,7 @@ define([
             }
             return styles.classes.textout;
         });
-
+        
         function doOpenJobsMonitor() {
             params.showStageJobViewer();
         }

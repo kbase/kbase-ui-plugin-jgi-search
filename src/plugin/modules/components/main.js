@@ -266,10 +266,12 @@ define([
                 'file_size', 'file_type', 'file_name', // file type, data type
                 'metadata.pmo_project.name', 'metadata.sequencing_project.sequencing_project_name', // title
                 'metadata.proposal.pi.last_name', 'metadata.proposal.pi.first_name', 'metadata.pmo_project.pi_name', // pi
+                'metadata.analysis_project.piName', // more pi
                 // scientific name
                 'metadata.genus', 'metadata.sow_segment.genus', 'metadata.pmo_project.genus', 'metadata.gold_data.genus',
                 'metadata.species', 'metadata.sow_segment.species', 'metadata.pmo_project.species', 'metadata.gold_data.species',
                 'metadata.strain', 'metadata.sow_segment.strain', 'metadata.pmo_project.strain', 'metadata.gold_data.strain',
+                'metadata.analysis_project.ncbiGenus','metadata.analysis_project.ncbiSpecies','metadata.analysis_project.ncbiStrain',
                 'file_date', // date
                 'modified', // modified
                 '_es_public_data', // is the data public?
