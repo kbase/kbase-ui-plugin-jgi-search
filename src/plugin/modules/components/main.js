@@ -202,7 +202,11 @@ define([
                     })
                     .catch(function (err) {
                         // progress(err.message);
-                        console.error('ERROR checking job state', err);
+                        // TODO: handle more gracefully
+                        // Issue a an error alert, allow 2 more attempts,
+                        // and then shutdown, issuing another error alert.
+                        console.error('ERROR checking job state - halting monitoring', err);
+                        monitoringJobs(false);
                     })
                     .finally(function () {
                         updateStagingJobStates();
@@ -508,6 +512,18 @@ define([
         }
 
         function validateFilename(filename) {
+            if (!filename || filename.length === 0) {
+                return 'A filename may not be blank';
+            } 
+            if (!filename.trim(' ').length === 0) {
+                return 'A filename not consist entirely of spaces';
+            }
+            if (/^\..*$/.test(filename)) {
+                return 'Dot files not allowed';
+            }
+            if (/^[\s]+\..*$/.test(filename)) {
+                return 'A filename with only spaces before the first dot not allowed';
+            }
             if (/\//.test(filename)) {
                 return 'Invalid character in filename: /';
             }
@@ -520,49 +536,73 @@ define([
             return null;
         }
 
+        function getFileMetadata(filename) {
+            // make a rest call to the staging service...
+            // var url = [runtime.config('services.staging.url'), 'existance', encodeURIComponent(filename)].join('/');
+            var url = [runtime.config('services.staging.url'), 'metadata', encodeURIComponent(filename)].join('/');
+            // var url = [runtime.config('services.ftp_service.url'), 'list', runtime.service('session').getUsername()].join('/');
+            var http = new Http.HttpClient();
+            return http.request({
+                url: url,
+                method: 'GET',
+                header: new Http.HttpHeader({
+                    'Authorization': runtime.service('session').getAuthToken()
+                })
+            })
+                .then(function (result) {
+                    switch (result.status) {
+                    case 200:
+                        var fileMetadata = JSON.parse(result.response);
+                        
+                        // TODO: do something with the file metadata
+                        return [fileMetadata, null];
+                    case 404:
+                        // good, it doesn't exist.
+                        return [null, null];
+                    default:
+                        return [null, result.response];
+                    }
+                })
+                .catch(function (err) {
+                    return [null, err.message];
+                });
+        }
+
         function checkFilename(filename) {
             return Promise.try(function () {
                 try {
                     var error = validateFilename(filename);
 
                     if (error) {
-                        return error;
+                        return {
+                            validationError: error
+                        };
                     }
                 } catch (ex) {
-                    return ex.message;
+                    return {
+                        exception: ex.message
+                    };
                 }
-
-                // make a rest call to the staging service...
-                // var url = [runtime.config('services.staging.url'), 'existance', encodeURIComponent(filename)].join('/');
-                var url = [runtime.config('services.staging.url'), 'search', encodeURIComponent(filename)].join('/');
-                // var url = [runtime.config('services.ftp_service.url'), 'list', runtime.service('session').getUsername()].join('/');
-                var http = new Http.HttpClient();
-                return http.request({
-                    url: url,
-                    method: 'GET',
-                    header: new Http.HttpHeader({
-                        'Authorization': runtime.service('session').getAuthToken()
-                    })
-                })
-                    .then(function (result) {
-                        switch (result.status) {
-                        case 200:
-                            var files = JSON.parse(result.response);
-                            if (files.length === 0) {
-                                return null;
+                return getFileMetadata(filename)
+                    .spread(function (result, error) {
+                        if (error) {
+                            console.error('ERROR checking filename.', error);
+                        } else {
+                            if (result) {
+                                return {
+                                    exists: result
+                                };
                             }
-                            return 'Sorry, this file already exists.';
-                        default:
-                            return result.response;
+                            return false;
                         }
                     })
                     .catch(function (err) {
-                        return err.message;
-                        // console.log('error', err);
-                        // return 'some error! ' + err.message
+                        return {
+                            exception: err.message
+                        };
+                        // console.error('ERROR checking filename', err);
                     });
             });
-
         }
 
         // FILTERS

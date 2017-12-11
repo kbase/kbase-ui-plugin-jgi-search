@@ -28,6 +28,12 @@ define([
         var error = ko.observable();
         var fileName = ko.observable();
 
+        var destinationFileName = ko.pureComputed(function () {
+            return destinationFileBaseName() + '.' + destinationFileExtension();
+        });
+        // var destinationFileName = ko.observable();
+        
+
         var filenameStatus = {
             error: ko.observable(),
             loading: ko.observable()
@@ -41,25 +47,43 @@ define([
         });
 
         destinationFileBaseName.subscribe(function (newValue) {
-            if (!newValue || newValue.length === 0) {
-                filenameStatus.error('Cannot have empty filename');
-                return;
-            }
+
+            // Check the basename. These are special conditions for just the base
+            // name to give somewhat better error messages for these conditions.
+            // The filename check would catch these too, so maybe we can ditch them.
+            // if (!newValue || newValue.length === 0) {
+            //     filenameStatus.error({
+            //         validationError: 'Cannot have empty filename'
+            //     });
+            //     return;
+            // }
+            // if (newValue.trim(' ').length === 0) {
+            //     filenameStatus.error({
+            //         validationError: 'Filename may not consist of just spaces'
+            //     });
+            //     return;
+            // }
 
             var actualFilename = [newValue, '.',  destinationFileExtension()].join('');
 
             // detect duplicate filename here, and set status accordingly.
             filenameStatus.loading(true);
             params.checkFilename(actualFilename)
-                .then(function (error) {
-                    if (error) {
-                        filenameStatus.error(error);
+                .then(function (problem) {
+                    if (problem) {
+                        filenameStatus.error(problem);
                     } else {
+                        // destinationFileName(actualFilename);
                         filenameStatus.error(null);
                     }                    
                 })
                 .catch(function (err) {
-                    filenameStatus.error(err.message);
+                    // todo trigger error panel
+                    console.error('ERROR', err);
+                    filenameStatus.error({
+                        exception: err.message
+                    });
+                    // filenameStatus.error(err.message);
                 })
                 .finally(function () {
                     filenameStatus.loading(false);
@@ -80,8 +104,8 @@ define([
             .then(function (result) {
                 item(result);
 
-                destinationFileBaseName(result.file.parts.base);
                 destinationFileExtension(result.file.parts.extension);
+                destinationFileBaseName(result.file.parts.base);
                 fileName(result.file.parts.name);
 
                 if (result.file.typing.error) {
@@ -109,6 +133,7 @@ define([
             item: item,
             destinationFileBaseName: destinationFileBaseName,
             destinationFileExtension: destinationFileExtension,
+            destinationFileName: destinationFileName,
             isImportable: isImportable,
             error: error,
             showDetail: showDetail,
@@ -237,6 +262,10 @@ define([
                     td({
                         dataBind: {
                             text: 'name'
+                        },
+                        style: {
+                            fontFamily: 'monospace',
+                            whiteSpace: 'pre'
                         }
                     })
                 ]),
@@ -290,12 +319,33 @@ define([
         ]);
     }
 
+    // function buildProposedFilename() {
+    //     return [
+    //         '<!-- ko if: destinationFileName() !== fileName() -->',
+    //         div({
+    //             style: {
+    //                 marginTop: '4px'
+    //             }
+    //         }, 'New proposed filename: '),
+    //         div({
+    //             dataBind: {
+    //                 text: 'destinationFileName'
+    //             },
+    //             style: {
+    //                 fontFamily: 'monospace',
+    //                 fontWeith: 'bold'
+    //             }
+    //         }),
+    //         '<!-- /ko -->'
+    //     ];
+    // }
+
     function buildFilenameStatusIndicator() {
         return [
             '<!-- ko ifnot: filenameStatus.loading -->',
 
             '<!-- ko ifnot: filenameStatus.error -->',
-            span([
+            div([
                 span({
                     class: 'fa fa-check',
                     style: {
@@ -304,18 +354,65 @@ define([
                 }),
                 ' This filename is ok :)'
             ]),
+            
             '<!-- /ko -->',
 
             '<!-- ko if: filenameStatus.error -->',
-            span({
+            div({
                 class: 'alert alert-danger',
                 style: {
-                    width: '100%'
+                    width: '100%',
+                    whiteSpace: 'normal'
                 },
                 dataBind: {
-                    text: 'filenameStatus.error'
+                    with: 'filenameStatus.error'
                 }
-            }),
+            }, [
+                '<!-- ko if: $data.validationError -->',
+                p({
+                    dataBind: {
+                        text: '$data.validationError'
+                    }
+                }),
+                '<!-- /ko -->',
+
+                '<!-- ko if: $data.exception -->',
+                p({
+                    dataBind: {
+                        text: '$data.exception'
+                    }
+                }),
+                '<!-- /ko -->',
+
+                '<!-- ko if: $data.exists -->',
+                p('A filename with this name already exists.'),
+                p([
+                    'Uploaded: ', 
+                    span({
+                        dataBind: {
+                            typedText: {
+                                value: 'mtime',
+                                type: '"date"',
+                                format: '"elapsed"'
+                                // format: '"YYYY/MM/DD"'
+                            }
+                        }
+                    })
+                ]),
+                p([
+                    'Size: ', 
+                    span({
+                        dataBind: {
+                            typedText: {
+                                value: 'size',
+                                type: '"number"',
+                                format: '"0.0b"'
+                            }
+                        }
+                    })
+                ]),
+                '<!-- /ko -->'
+            ]),
             '<!-- /ko -->',
 
             '<!-- /ko -->',
@@ -361,7 +458,22 @@ define([
                 tr([
                     th({
                         scope: 'row'
-                    }, 'Filename'),
+                    }, 'Original filename'),
+                    td({
+                        dataBind: {
+                            text: 'fileName'
+                        },
+                        style: {
+                            fontFamily: 'monospace',
+                            whiteSpace: 'pre'
+                        }
+                    })
+                ]),
+               
+                tr([
+                    th({
+                        scope: 'row'
+                    }, 'Edit filename'),
                     td({
                         style: {
                             width: '60%',
@@ -392,7 +504,9 @@ define([
                                     textInput: 'destinationFileBaseName'
                                 },
                                 style: {
-                                    flex: '1 1 0px'
+                                    flex: '1 1 0px',
+                                    fontFamily: 'monospace',
+                                    whiteSpace: 'pre'
                                 }
                             }),
                             '<!-- ko if: destinationFileExtension -->',
@@ -402,7 +516,9 @@ define([
                                     text: 'destinationFileExtension'
                                 },
                                 style: {
-                                    flex: '0 0 auto'
+                                    flex: '0 0 auto',
+                                    fontFamily: 'monospace',
+                                    whiteSpace: 'pre'
                                 }
                             }),
                             '<!-- /ko -->',
@@ -415,18 +531,31 @@ define([
                             }, 'n/a'),
                             '<!-- /ko -->'
                         ]),
+                       
+                        
+                    ])
+                ]),
+                tr([
+                    th({
+                        scope: 'row'
+                    }, 'Destination'),
+                    td([
                         div({
+                            dataBind: {
+                                text: 'destinationFileName'
+                            },
                             style: {
-                                display: 'flex',
-                                flexDirection: 'row',
-                                width: '100%',
-                                alignItems: 'baseline'
+                                fontFamily: 'monospace',
+                                whiteSpace: 'pre'
                             }
+                        }),
+                        div({
                         }, [
                             buildFilenameStatusIndicator()
+                            // buildProposedilename()                            
                         ])
                     ])
-                ])
+                ]),
                 // tr([
                 //     th('Metadata file'),
                 //     td([
