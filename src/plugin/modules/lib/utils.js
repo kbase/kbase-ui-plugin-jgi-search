@@ -733,16 +733,21 @@ define([
         }
 
         if (encoding !== fileParts.encoding) {
-            console.error('file encoding and part mismatch', fileTypes, encoding, fileParts);
-            error = {
-                code: 'file-encoding-part-mismatch',
-                message: 'File encoding does not match file part for type',
-                info: {
-                    fileTypes: fileTypes,
-                    fileParts: fileParts
-                }
-            };
-            // throw new Error('File encoding does not match file part for type');
+            // now lets just try to fix this up.
+            if (!encoding && fileParts.encoding) {
+                encoding = fileParts.encoding;
+                console.warn('no file encoding in file types - using extension', fileTypes, encoding, fileParts);
+            } else {
+                console.error('file encoding and part mismatch', fileTypes, encoding, fileParts);
+                error = {
+                    code: 'file-encoding-part-mismatch',
+                    message: 'File encoding does not match file part for type',
+                    info: {
+                        fileTypes: fileTypes,
+                        fileParts: fileParts
+                    }
+                };
+            }
         }
 
         // ensure that the file type matches the extensions

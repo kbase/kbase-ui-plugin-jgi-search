@@ -246,20 +246,14 @@ define([
         function doShowStagingStatus() {
             params.search.showOverlay({
                 name: 'jgi-search/staging-status-viewer',
-                // TODO: short this out ... I don't think we need all this
-                params: {
-                    // id: 'id',
-                    // doStage: 'doStage',
-                    // transferJob: 'transferJob',
-                    // getDetail: 'getDetail'
-                    stagingJobs: 'staginJobs'
-                },
+                // TODO: short this out ... I don't think we need all this                
                 viewModel: {
                     // id: params.row.id,
                     // doStage: params.env.search.doStage,
                     // transferJob: params.row.transferJob,
                     // getDetail: params.env.search.getDetail
-                    stagingJobs: params.search.stagingJobs
+                    stagingJobs: params.search.stagingJobs,
+                    runtime: params.runtime
                 }
             });
         }
@@ -779,7 +773,7 @@ define([
                 class: styles.classes.items,
                 dataBind: {
                     component: {
-                        name: '"jgisearch/search-result2"',
+                        name: '"jgi-search/search-result2"',
                         params: {
                             search: 'search'
                         }

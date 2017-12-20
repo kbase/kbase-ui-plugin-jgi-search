@@ -80,6 +80,7 @@ define([
             // The top level search is included so that it can be
             // propagated.
             search: params.search,
+            runtime: params.search.runtime,
             // And we break out fields here for more natural usage (or not??)
             searchInput: searchInput,
             searchResults: searchResults,
@@ -411,9 +412,10 @@ define([
 
     function buildResultsArea() {
         return utils.komponent({
-            name: 'jgisearch/browser',
+            name: 'jgi-search/browser',
             params: {
-                search: 'search'
+                search: 'search',
+                runtime: 'runtime'
             }
         });
     }

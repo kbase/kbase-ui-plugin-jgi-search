@@ -61,6 +61,16 @@ define([
             }, buildSpinner()),
             '<!-- /ko -->',
 
+            '<!-- ko case: "submitted" -->',
+            span({
+                style: {
+                    fontSize: '80%',
+                    color: 'black'
+                },
+                title: 'File transfer request has been recevied'
+            }, buildSpinner()),
+            '<!-- /ko -->',
+
 
             '<!-- ko case: "queued" -->',
             span({

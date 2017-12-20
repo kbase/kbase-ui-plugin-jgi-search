@@ -102,18 +102,11 @@ define([
             display: 'flex',
             alignItems: 'center'
         },
-        innerSortCell: {
-            flex: '1 1 0px',
-            overflow: 'hidden'
-        },
         innerCell: {
             flex: '1 1 0px',
             overflow: 'hidden',
             whiteSpace: 'nowrap',
             textOverflow: 'ellipsis'
-        },
-        sortIndicator: {
-
         },
         sectionHeader: {
             padding: '4px',
@@ -182,11 +175,7 @@ define([
              descending, or falsy.
         */
         function doSort(column) {
-            if (table.sortBy) {
-                table.sortBy(column);
-            } else {
-                console.error('sortBy is not implemented for this table');
-            }
+            table.sortBy(column);
         }
 
         // AUTO SIZING
@@ -219,9 +208,10 @@ define([
             if (!newValue) {
                 table.pageSize(null);
             }            
-
             
             var rowCount = Math.floor(newValue / rowHeight);
+
+            console.log('height?', newValue, rowCount);
 
             table.pageSize(rowCount);
         });        
@@ -239,7 +229,6 @@ define([
  
         var doRowAction;
         if (table.rowAction) {
-            console.log('ROW ACTION', table.rowAction);
             doRowAction = function (data) {
                 if (table.rowAction) {
                     table.rowAction(data);
@@ -285,6 +274,15 @@ define([
                 cancelTimeLoading();
             }
         });
+
+        // console.log('in table...', table.rows());
+        // table.rows.subscribe(function (newValue) {
+        //     console.log('rows update!', newValue);
+        // });
+
+        // table.state.subscribe(function (newValue) {
+        //     console.log('new state: ', newValue);
+        // });
         
         return {
             rows: table.rows,
@@ -322,7 +320,23 @@ define([
             }, [
                 '<!-- ko if: column.sort -->',
                 
-                
+                '<!-- ko if: !column.sort.active() -->',
+                span({
+                    class: 'fa fa-sort'
+                }),
+                '<!-- /ko -->',
+                '<!-- ko if: column.sort.active() -->',
+                '<!-- ko if: column.sort.direction() === "descending" -->',
+                span({
+                    class: 'fa fa-sort-desc'
+                }),
+                '<!-- /ko -->',
+                '<!-- ko if: column.sort.direction() === "ascending" -->',
+                span({
+                    class: 'fa fa-sort-asc'
+                }),
+                '<!-- /ko -->',
+                '<!-- /ko -->',
 
                 span({
                     dataBind: {
@@ -334,30 +348,6 @@ define([
                         marginLeft: '2px'
                     },
                 }),
-
-                // Sort
-                div({
-                    class: [styles.classes.sortIndicator]
-                }, [
-                    '<!-- ko if: !column.sort.active() -->',
-                    span({
-                        class: 'fa fa-sort'
-                    }),
-                    '<!-- /ko -->',
-                    '<!-- ko if: column.sort.active() -->',
-                    '<!-- ko if: column.sort.direction() === "descending" -->',
-                    span({
-                        class: 'fa fa-sort-desc'
-                    }),
-                    '<!-- /ko -->',
-                    '<!-- ko if: column.sort.direction() === "ascending" -->',
-                    span({
-                        class: 'fa fa-sort-asc'
-                    }),
-                    '<!-- /ko -->',
-                    '<!-- /ko -->'
-                ]),
-
                 '<!-- /ko -->',
                 '<!-- ko if: !column.sort -->',
                 span({

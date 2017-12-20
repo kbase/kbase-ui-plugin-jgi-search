@@ -31,19 +31,19 @@ install:
       module: components/main
       type: factory
     -
-      name: 'jgisearch/search'
+      name: 'jgi-search/search'
       module: components/search
       type: factory
     -
-      name: 'jgisearch/browser'
+      name: 'jgi-search/browser'
       module: components/browser
       type: factory
     -
-      name: 'jgisearch/search-result'
+      name: 'jgi-search/search-result'
       module: components/search-result
       type: factory
     -
-      name: 'jgisearch/search-result2'
+      name: 'jgi-search/search-result2'
       module: components/search-result2
       type: factory
     # -
@@ -109,8 +109,43 @@ install:
     -
       name: jgi-search/search-error
       module: components/searchError
+      type: factory  
+
+    # Staging Browser
+    -
+      name: jgi-search/staging-jobs-browser/main
+      module: stagingJobsBrowser/components/main
+      type: factory
+    -
+      name: jgi-search/staging-jobs-browser/filter-bar
+      module: stagingJobsBrowser/components/filterBar
       type: factory      
-      
+    -
+      name: jgi-search/staging-jobs-browser/job-status-filter
+      module: stagingJobsBrowser/components/jobStatusFilter
+      type: factory      
+    -
+      name: jgi-search/staging-jobs-browser/generic/paging-bar
+      module: stagingJobsBrowser/components/generic/pagingBar
+      type: factory      
+    -
+      name: jgi-search/staging-jobs-browser/search-bar
+      module: stagingJobsBrowser/components/searchBar
+      type: factory      
+    -
+      name: jgi-search/staging-jobs-browser/generic/browser
+      module: stagingJobsBrowser/components/generic/browser
+      type: factory 
+    -
+      name: jgi-search/staging-jobs-browser/generic/result
+      module: stagingJobsBrowser/components/generic/result
+      type: factory     
+    -
+      name: jgi-search/staging-jobs-browser/generic/table
+      module: stagingJobsBrowser/components/generic/table
+      type: factory        
+        
+     
     # GENERIC
     -
       name: generic/search-bar

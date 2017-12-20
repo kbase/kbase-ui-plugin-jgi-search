@@ -216,11 +216,7 @@ define([
                 name: 'title',
                 label: 'Title',
                 type: 'string',
-                sort: {
-                    keyName: 'title',
-                    direction: ko.observable('ascending'),
-                    active: ko.observable(false)
-                },
+                sort: null,
                 // width is more like a weight... for all current columns the
                 // widths are summed, and each column's actual width attribute
                 // is set as the percent of total.
@@ -230,11 +226,7 @@ define([
                 name: 'pi',
                 label: 'PI',
                 type: 'string',
-                sort: {
-                    keyName: 'pi',
-                    direction: ko.observable('ascending'),
-                    active: ko.observable(false)
-                },
+                sort: null,
                 width:15,
                 action: {
                     fn: doAddPi
@@ -253,7 +245,7 @@ define([
                     fn: doAddProposal
                 },
                 sort: {
-                    keyName: 'proposalId',
+                    keyName: 'metadata.proposal_id',
                     direction: ko.observable('ascending'),
                     active: ko.observable(false)
                 }
@@ -271,7 +263,7 @@ define([
                     fn: doAddProject
                 },
                 sort: {
-                    keyName: 'sequencingProjectId',
+                    keyName: 'metadata.sequencing_project_id',
                     direction: ko.observable('ascending'),
                     active: ko.observable(false)
                 }
@@ -282,10 +274,9 @@ define([
                 type: 'date',
                 format: 'MM/DD/YYYY',
                 sort: {
-                    keyName: 'date',
-                    // isTimestamp: true,
+                    keyName: 'modified',
                     direction: ko.observable('ascending'),
-                    active: ko.observable(false)
+                    active: ko.observable(true)
                 },
                 width: 10
             },
@@ -294,17 +285,18 @@ define([
                 label: 'Scientific Name',
                 type: 'string',
                 width: 21,
-                sort: {
-                    keyName: 'scientificName',
-                    direction: ko.observable('ascending'),
-                    active: ko.observable(false)
-                }
+                sort: null
             },
             {
                 name: 'dataType',
                 label: 'Type',
                 type: 'string',
-                width: 5
+                width: 5,
+                sort: {
+                    keyName: 'file_type',
+                    direction: ko.observable('ascending'),
+                    active: ko.observable(false)
+                }
             },
             {
                 name: 's1',
@@ -325,7 +317,7 @@ define([
                 format: '0.0 b',
                 width: 8,
                 sort: {
-                    keyName: 'fileSize',
+                    keyName: 'file_size',
                     direction: ko.observable('ascending'),
                     active: ko.observable(false)
                 },
@@ -361,6 +353,12 @@ define([
             }
         ];
 
+        columns.forEach(function (column) {
+            if (column.sort && column.sort.active()) {
+                search.sortBy(column);
+            }
+        });
+
         return {
             search: params.search,
             searchResults: searchResults,
@@ -375,10 +373,8 @@ define([
                 // runtime...
                 env: {
                     search: params.search
-                }
-                // actions: {
-                //     doCopy: doCopy
-                // }
+                },
+                sortBy: search.sortBy
             },
             searching: searching,
             infoTopics: infoTopics,
@@ -390,77 +386,6 @@ define([
             doAddProposal: doAddProposal
         };
     }
-
-    
-
-    // function buildCartButton() {
-    //     return span({
-    //         class: styles.classes.miniButton,
-    //         // dataToggle: 'tooltip',
-    //         // dataPlacement: 'left',
-    //         title: 'Transfer this file to your staging area, from where you may import it into a Narrative',
-    //         dataBind: {
-    //             click: '$component.doStage',
-    //             clickBubble: false
-    //         }
-    //     }, [
-    //         '<!-- ko if: transferJob() -->',
-
-    //         '<!-- ko if: transferJob().status() !== "completed" -->',
-    //         span({
-    //             class: 'fa fa-spinner fa-pulse fa-fw',
-    //             style: {
-    //                 // margin: '0 4px',
-    //                 color: 'orange'
-    //             }
-    //         }),
-    //         '<!-- /ko -->',
-
-    //         '<!-- ko if: transferJob().status() == "completed" -->',
-    //         span({
-    //             class: 'fa fa-check',
-    //             style: {
-    //                 color: 'green'
-    //             }
-    //         }),
-    //         '<!-- /ko -->',
-
-    //         '<!-- /ko -->',
-
-    //         '<!-- ko ifnot: transferJob() -->',
-    //         span({
-    //             class: 'fa fa-download fa-rotate-270',
-    //             // style: {
-    //             //     margin: '0 4px'
-    //             // }
-    //         }),
-    //         '<!-- /ko -->'
-    //     ]);
-    // }
-
-  
-    // function buildSortControl() {
-    //     return span({
-    //         class: 'fa fa-sort',
-    //         style: {
-    //             marginRight: '2px'
-    //         }
-    //     });
-    // }
-
-    // function buildNoActiveSearch() {
-    //     return div({
-    //         style: {
-    //             textAlign: 'left',
-    //             maxWidth: '50em',
-    //             margin: '0 auto'
-    //         }
-    //     }, [
-    //         p('PLACEHOLDER - for search instructions'),
-    //         p('PLACEHOLDER - for disclaimer about missing data')
-
-    //     ]);
-    // }
 
     function template() {
         return div({
@@ -481,61 +406,7 @@ define([
                     flexDirection: 'column',
                     flex: '1 1 0px'
                 }
-            })
-            // utils.komponent({
-            //     name: 'jgi-search/table',
-            //     params: {
-            //         table: 'table'
-            //         // table: 'table',
-            //         // isLoading: 'isLoading',
-            //         // pageSize: 'pageSize'
-            //     }
-            // })
-
-            // div({
-            //     class: styles.classes.body
-            // }, [
-            //     '<!-- ko if: searchResults().length > 0 -->',
-            //     '<!-- ko foreach: searchResults -->',
-            //     buildResult(),
-            //     '<!-- /ko -->',
-            //     '<!-- /ko -->',
-            //     '<!-- ko if: searchResults().length === 0 -->',
-            //     '<!-- ko if: search.searchState() === "inprogress" -->',
-            //     div({
-            //         style: {
-            //             margin: '10px',
-            //             border: '1px silver solid',
-            //             padding: '8px',
-            //             backgroundColor: 'silver',
-            //             textAlign: 'center'
-            //         }
-            //     }, html.loading('Searching...')),
-            //     '<!-- /ko -->',
-            //     '<!-- ko if: search.searchState() === "notfound" -->',
-            //     div({
-            //         style: {
-            //             margin: '10px',
-            //             border: '1px silver solid',
-            //             padding: '8px',
-            //             backgroundColor: 'silver',
-            //             textAlign: 'center'
-            //         }
-            //     }, 'no results, keep trying!'),
-            //     '<!-- /ko -->',
-            //     '<!-- ko if: search.searchState() === "none" -->',
-            //     div({
-            //         style: {
-            //             margin: '10px',
-            //             border: '1px silver solid',
-            //             padding: '8px',
-            //             backgroundColor: 'silver',
-            //             textAlign: 'center'
-            //         }
-            //     }, buildNoActiveSearch()),
-            //     '<!-- /ko -->',
-            //     '<!-- /ko -->'
-            // ])
+            })           
         ]);
     }
 

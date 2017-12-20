@@ -76,24 +76,30 @@ define([
 
         var maxSearchResults = 10000;
 
+        // TODO: replace all of this staging job business with more specific
+        // calls to get:
+        // - counts of pending jobs in each state
+        // - whether there are any pending jobs for a given search id
+        //   in order to show the status in the table... but ...
         var stagingJobs = ko.observableArray();
-        // var stagingJobsMap = {};
-        stagingJobs.subscribe(function (changes) {
-            changes.forEach(function (change) {
-                if (change.status === 'deleted') {
-                    // delete stagingJobsMap[change.value.id];
-                } else {
-                    // stagingJobsMap[change.value.id] = change.value;
-                    monitorJobs();
-                }
-            });
-        }, null, 'arrayChange');
+        // // var stagingJobsMap = {};
+        // stagingJobs.subscribe(function (changes) {
+        //     changes.forEach(function (change) {
+        //         if (change.status === 'deleted') {
+        //             // delete stagingJobsMap[change.value.id];
+        //         } else {
+        //             // stagingJobsMap[change.value.id] = change.value;
+        //             monitorJobs();
+        //         }
+        //     });
+        // }, null, 'arrayChange');
 
         // contains a couunt of the number of staging jobs in particular
         // stages during this search session, which begins when the component
         // is loaded and ends when it is unloaded.
         var stagingJobStates = {
             sent: ko.observable(0),
+            submitted: ko.observable(0),
             queued: ko.observable(0),
             restoring: ko.observable(0),
             copying: ko.observable(0),
@@ -103,6 +109,7 @@ define([
 
         var stagingJobsState = ko.pureComputed(function () {
             var pending = stagingJobStates.sent() +
+                stagingJobStates.submitted() +
                 stagingJobStates.queued() +
                 stagingJobStates.restoring() +
                 stagingJobStates.copying();
@@ -117,6 +124,7 @@ define([
         function updateStagingJobStates() {
             var states = {
                 sent: 0,
+                submitted: 0,
                 queued: 0,
                 restoring: 0,
                 copying: 0,
@@ -142,6 +150,48 @@ define([
             updateStagingJobStates();
         });
 
+        function getStagingJobs() {
+            // var first = (page - 1) * pageSize;
+            // var count = pageSize;
+            var param = {
+                username: runtime.service('session').getUsername(),
+                filter: {                    
+                },
+                range: {
+                    start: 0,
+                    limit: 1000
+                }
+            };
+            return rpc.call('jgi_gateway_eap', 'staging_jobs', param)
+                .spread(function (result, error) {
+                    console.log('staging?', result, error);
+                    if (result) {
+                        console.log('got staging jobs...', result);
+                        result.jobs.forEach(function (job) {
+                            var j = {
+                                dbId: job.jamo_id,
+                                filename: job.filename,
+                                jobId: job.job_id,
+                                started: new Date(job.created * 1000),
+                                updated: ko.observable(job.updated ? new Date(job.updated * 1000) : null),
+                                status: ko.observable(job.status_code)
+                            };
+                            stagingJobs.push(j);
+                        });
+                    } else if (error) {
+                        console.error('ERROR', error);
+                    } else {
+                        // what here?
+                    }
+                })
+                .catch(function (err) {
+                    console.error('ERROR getting staging jobs:', err);
+                });
+        }
+
+        // get initial staging jobs.
+        getStagingJobs();
+
         // stagingJobs.subscribe(function (changes) {
         //     console.log('subbed', changes);
         //
@@ -166,6 +216,7 @@ define([
                 return;
             }
             function checkProgress() {
+                console.log('creating status check jobs...');
                 var jobChecks = stagingJobs().map(function (job) {
                     if (job.status() === 'completed') {
                         return;
@@ -174,6 +225,7 @@ define([
                         job_id: job.jobId
                     })
                         .spread(function (result, error) {
+                            console.log('stage status result...', result, error);
                             if (error) {
                                 throw new Error('Error checking job state: ' + error.message);
                             }
@@ -188,12 +240,14 @@ define([
                 }).filter(function (jobCheck) {
                     return (jobCheck !== undefined);
                 });
+                console.log('need ', jobChecks.length);
                 return Promise.all(jobChecks)
                     .then(function (result) {
                         // should be list of statuses...
                         var runAgain = result.some(function (status) {
                             return (status !== 'completed' && status !== 'error' && status !== 'unknown1');
                         });
+                        console.log('finished, need more?', runAgain);;
                         if (runAgain) {
                             window.setTimeout(checkProgress, 5000);
                         } else {
@@ -218,10 +272,11 @@ define([
 
         function doStage(id, fileName) {
             return rpc.call('jgi_gateway_eap', 'stage', {
-                files: [{
+                file: {
                     id: id,
-                    filename: fileName
-                }]
+                    filename: fileName,
+                    username: runtime.service('session').getUsername()
+                }
             })
                 .spread(function (result, error) {
                     if (result) {
@@ -233,23 +288,25 @@ define([
                             updated: ko.observable(new Date()),
                             status: ko.observable('sent')
                         };
-                        job.elapsed = ko.pureComputed(function () {
-                            return this.updated().getTime() - this.started.getTime();
-                        }.bind(job));
-                        stagingJobs.push(job);
+                        // job.elapsed = ko.pureComputed(function () {
+                        //     return this.updated().getTime() - this.started.getTime();
+                        // }.bind(job));
+                        // stagingJobs.push(job);
 
                         // Set it it the results item as well.
-                        var res = searchResults();
-                        for (var i = 0; i < res.length; i += 1) {
-                            var item = res[i];
-                            if (item.id === job.dbId) {
-                                item.transferJob(job);
-                                break;
-                            }
-                        }
+                        // TODO: restore this behavior!
+                        // var res = searchResults();
+                        // for (var i = 0; i < res.length; i += 1) {
+                        //     var item = res[i];
+                        //     if (item.id === job.dbId) {
+                        //         item.transferJob(job);
+                        //         break;
+                        //     }
+                        // }
 
                         return job;
                     } else {
+                        console.error('ERROR staging', error);
                         throw new Error('Empty result when staging');
                     }
                 })
@@ -263,7 +320,7 @@ define([
 
 
         // Fetch send a query and fetch the results.
-        function fetchQuery(query, filter, page, pageSize) {
+        function fetchQuery(query, filter, sortSpec, page, pageSize) {
             var fields = [
                 'metadata.proposal_id', 'metadata.proposal.title',
                 'metadata.sequencing_project_id', 'metadata.analysis_project_id', 'metadata.pmo_project_id',
@@ -284,8 +341,9 @@ define([
                 'metadata.gold_data.gold_url', 'metadata.gold_data.gold_stamp_id'
             ];
             var param = {
-                query: query,
+                query: query,                
                 filter: filter,
+                sort: sortSpec,
                 fields: fields,
                 limit: pageSize,
                 page: page,
@@ -382,6 +440,7 @@ define([
                 query: query,
                 filter: null,
                 fields: null,
+                sort: [],
                 limit: 1,
                 page: 1,
                 include_private: 0
@@ -850,6 +909,8 @@ define([
                 return;
             }
 
+            console.log('sort is', sortSpec());
+
             // TODO: compare previous to current query ... if same, do not do another search, just 
             //   return. The problem is stuttering -- duplicate updates to the search query 
             //   via observables.
@@ -874,7 +935,7 @@ define([
 
             searching(true);
 
-            return currentSearch.search = fetchQuery(query.query, query.filter, page(), pageSize())
+            return currentSearch.search = fetchQuery(query.query, query.filter, sortSpec(),  page(), pageSize())
                 .spread(function (result, error, stats) {
                     if (thisSearch.cancelled) {
                         console.warn('search cancelled, ignoring results...');
@@ -955,6 +1016,7 @@ define([
                         };
 
                         var fileParts = utils.grokFileParts(hit.source.file_name);
+                        
                         var fileType = utils.grokFileType(hit.source.file_type, fileParts);
 
                         var title = utils.grokTitle(hit, fileType);
@@ -1290,9 +1352,54 @@ define([
             showOverlay({
                 name: 'jgi-search/staging-status-viewer',
                 viewModel: {
-                    stagingJobs: stagingJobs
+                    stagingJobs: stagingJobs,
+                    runtime: runtime
                 }
             });
+        }
+
+        // sortColumns is the ordered list of all columns currently
+        // sorted. Each sort object is a reference to the actual column
+        // sort spec.
+        var sortColumns = ko.observableArray();
+
+        // The sortSpec translates the sortColumns into a form which can be
+        // used by the search.
+        var sortSpec = ko.pureComputed(function () {
+            return sortColumns().map(function (column) {
+                return {
+                    field: column.sort.keyName,
+                    descending: column.sort.direction() === 'descending'
+                };
+            });            
+        });
+
+        sortSpec.subscribe(function () {
+            doSearch();
+        });
+
+        function sortBy(column) {
+            if (!column.sort) {
+                console.warn('Sort not implemented for this column, but sort by called anyway', column);
+                return;
+            }
+
+            // for now just single column sort.            
+            if (sortColumns().length === 1) {
+                var currentSortColumn = sortColumns()[0];
+                if (currentSortColumn !== column) {
+                    currentSortColumn.sort.active(false);
+                }
+                sortColumns.removeAll();                
+            }
+
+            if (column.sort.active()) {
+                column.sort.direction(column.sort.direction() === 'descending' ? 'ascending' : 'descending');
+            } else {
+                column.sort.active(true);
+            }
+
+            sortColumns.push(column);
         }
 
         var vm = {
@@ -1344,6 +1451,7 @@ define([
                 stagingJobsState: stagingJobsState,
                 monitoringJobs: monitoringJobs,
                 stagingJobs: stagingJobs,
+                runtime: runtime,
 
                 pageSize: pageSize,
                 // Note, starts with 1.
@@ -1357,7 +1465,9 @@ define([
 
                 doSearch: doSearch,
                 status: status,
-                showStageJobViewer: showStageJobViewer
+                showStageJobViewer: showStageJobViewer,
+
+                sortBy: sortBy
             },
             overlayComponent: overlayComponent
         };
@@ -1396,7 +1506,7 @@ define([
             '<!-- ko case: "agreed" -->', 
             // '<!-- ko if: $component.search.jgiTermsAgreed() -->',
             utils.komponent({
-                name: 'jgisearch/search',
+                name: 'jgi-search/search',
                 params: {
                     search: 'search'
                 }

@@ -94,15 +94,19 @@ define([
     }
 
     function viewModel(params) {
-        var startTime = params.startTime.getTime();
+        var startTime = ko.utils.unwrapObservable(params.startTime);
+        // var startTime = .getTime();
 
         // var currentTime = ko.observable(new Date().getTime());
         var currentTime = params.clock;
 
         var elapsed = ko.pureComputed(function () {
             // console.log('got clock time', currentTime());
-            var e =  currentTime() - startTime;
-            return niceDuration(e);
+            if (startTime) {
+                var e =  currentTime() - startTime.getTime();
+                return niceDuration(e);
+            } 
+            return 'n/a';
         });
         
         // var timer = window.setInterval(function () {

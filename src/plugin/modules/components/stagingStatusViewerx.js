@@ -1,11 +1,9 @@
 define([
     'knockout-plus',
-    'kb_common/html',
-    '../lib/utils'
+    'kb_common/html'
 ], function (
     ko,
-    html,
-    utils
+    html
 ) {
     'use strict';
 
@@ -23,9 +21,11 @@ define([
         td = t('td');
 
     function viewModel(params) {
-        var stagingJobs = params.stagingJobs;
-
-        console.log('runtime?', params.runtime);
+        var stagingJobs = ko.observableArray();
+        params.getStagingJobs()
+            .then(function (jobs) {
+                stagingJobs(jobs);
+            });
 
         var clock = ko.observable();
 
@@ -34,6 +34,7 @@ define([
             var time = new Date().getTime();
             clock(time);
         }, 1000);
+
         
         function dispose() {
             if (clockInterval) {
@@ -42,7 +43,6 @@ define([
         }
 
         return {
-            runtime: params.runtime,
             stagingJobs: stagingJobs,
             onClose: params.onClose,
             clock: clock,
@@ -57,7 +57,7 @@ define([
             colgroup([
                 col({
                     style: {
-                        width: '15%'
+                        width: '10%'
                     }
                 }),
                 col({
@@ -72,7 +72,7 @@ define([
                 }),
                 col({
                     style: {
-                        width: '45%'
+                        width: '50%'
                     }
                 }),
                 col({
@@ -97,7 +97,7 @@ define([
                         dataBind: {
                             typedText: {
                                 'type': '"date"',
-                                'format': '"elapsed"',
+                                'format': '"YYYY/MM/DD"',
                                 'value': 'started'
                             }
                         }
@@ -122,7 +122,7 @@ define([
                                     name: '"generic/elapsed-clock"',
                                     params: {
                                         type: '"elapsed"',
-                                        startTime: 'updated',
+                                        startTime: 'started',
                                         clock: '$component.clock'
                                     }
                                 }
@@ -142,18 +142,10 @@ define([
                         // show the elapsed time between started and updated (which is frozen when completed or errored)
                         span({
                             dataBind: {
-                                // typedText: {
-                                //     'type': '"date"',
-                                //     'format': '"duration"',
-                                //     'value': 'elapsed'
-                                // }
-                                component: {
-                                    name: '"generic/elapsed-clock"',
-                                    params: {
-                                        type: '"elapsed"',
-                                        startTime: 'updated',
-                                        clock: '$component.clock'
-                                    }
+                                typedText: {
+                                    'type': '"date"',
+                                    'format': '"duration"',
+                                    'value': 'elapsed'
                                 }
                             }
                         }),
@@ -177,11 +169,6 @@ define([
 
     function buildDialog(title, body) {
         return div({
-            style: {
-                flex: '1 1 0px',
-                display: 'flex',
-                flexDirection: 'column'
-            }
         }, [
             // title
             div({
@@ -198,12 +185,7 @@ define([
                 style: {
                     padding: '8px',
                     minHeight: '10em',
-                    // maxHeight: 'calc(100vh - 100px)',
                     backgroundColor: 'rgba(255,255,255,0.8)',
-                    overflowY: 'auto',
-                    flex: '1 1 0px',
-                    display: 'flex',
-                    flexDirection: 'column'
                 }
             }, body),
             // buttons
@@ -219,29 +201,15 @@ define([
                 dataBind: {
                     click: 'onClose'
                 }
-            }, 'Close'))
+            }, 'Close')),
+
         ]);
     }
 
-    function buildJobsBrowser() {
-        return utils.komponent({
-            name: 'jgi-search/staging-jobs-browser/main',
-            params: {
-                runtime: 'runtime'
-            }
-        });
-    }
-
     function template() {
-        return div({
-            style: {
-                flex: '1 1 0px',
-                display: 'flex',
-                flexDirection: 'column'
-            }
-        }, [
+        return div([
             '<!-- ko if: stagingJobs().length > 0 -->',
-            buildDialog('Staging Jobs', buildJobsBrowser()),
+            buildDialog('Staging Jobs', buildJobsTable()),
             '<!-- /ko -->',
             '<!-- ko ifnot: stagingJobs().length > 0 -->',
             buildDialog('Staging Jobs', 'Sorry, no current jobs to view'),
