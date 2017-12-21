@@ -11,22 +11,9 @@ define([
 
     var t = html.tag,
         button = t('button'),    
-        div = t('div'),
-        span = t('span'),
-        table = t('table'),
-        colgroup = t('colgroup'),
-        col = t('col'),
-        thead = t('thead'),
-        tbody = t('tbody'),
-        tr = t('tr'),
-        th = t('th'),
-        td = t('td');
+        div = t('div');
 
     function viewModel(params) {
-        var stagingJobs = params.stagingJobs;
-
-        console.log('runtime?', params.runtime);
-
         var clock = ko.observable();
 
         // generate a clock ...
@@ -43,136 +30,10 @@ define([
 
         return {
             runtime: params.runtime,
-            stagingJobs: stagingJobs,
             onClose: params.onClose,
             clock: clock,
             dispose: dispose
         };
-    }
-
-    function buildJobsTable() {
-        return table({
-            class: ['table table-striped']
-        }, [
-            colgroup([
-                col({
-                    style: {
-                        width: '15%'
-                    }
-                }),
-                col({
-                    style: {
-                        width: '15%'
-                    }
-                }),
-                col({
-                    style: {
-                        width: '15%'
-                    }
-                }),
-                col({
-                    style: {
-                        width: '45%'
-                    }
-                }),
-                col({
-                    style: {
-                        width: '10%'
-                    }
-                })
-            ]),
-            thead(
-                tr([
-                    th('Started'),
-                    th('Status'),
-                    th(''),
-                    th('Filename'),
-                    th('JobId')
-                ])
-            ),
-            tbody([
-                '<!-- ko foreach: stagingJobs -->',
-                tr([
-                    td({
-                        dataBind: {
-                            typedText: {
-                                'type': '"date"',
-                                'format': '"elapsed"',
-                                'value': 'started'
-                            }
-                        }
-                    }),
-                    td({
-                        dataBind:{
-                            component: {
-                                name: '"jgi-search/staging-status-indicator"',
-                                params: {
-                                    status: 'status',
-                                    verbose: 'true'
-                                }
-                            }
-                        }
-                    }),
-                    td([
-                        '<!-- ko if: status() !== "completed" && status() !== "error" -->',
-                        // show elapsed time since started if still running
-                        span({
-                            dataBind: {
-                                component: {
-                                    name: '"generic/elapsed-clock"',
-                                    params: {
-                                        type: '"elapsed"',
-                                        startTime: 'updated',
-                                        clock: '$component.clock'
-                                    }
-                                }
-                            }
-                        }),
-                        // span({
-                        //     dataBind: {
-                        //         typedText: {
-                        //             'type': '"date"',
-                        //             'format': '"nice-elapsed"',
-                        //             'value': 'started'
-                        //         }
-                        //     }
-                        // }),
-                        '<!-- /ko -->',
-                        '<!-- ko if: status() === "completed" || status() === "error" -->',
-                        // show the elapsed time between started and updated (which is frozen when completed or errored)
-                        span({
-                            dataBind: {
-                                // typedText: {
-                                //     'type': '"date"',
-                                //     'format': '"duration"',
-                                //     'value': 'elapsed'
-                                // }
-                                component: {
-                                    name: '"generic/elapsed-clock"',
-                                    params: {
-                                        type: '"elapsed"',
-                                        startTime: 'updated',
-                                        clock: '$component.clock'
-                                    }
-                                }
-                            }
-                        }),
-                        '<!-- /ko -->'
-                    ]),
-                    td({
-                        dataBind: {
-                            text: 'filename'
-                        }
-                    }),
-                    td({
-                        dataBind: {
-                            text: 'jobId'
-                        }
-                    })
-                ]),
-                '<!-- /ko -->'                
-            ])
-        ]);
     }
 
     function buildDialog(title, body) {
@@ -240,12 +101,7 @@ define([
                 flexDirection: 'column'
             }
         }, [
-            '<!-- ko if: stagingJobs().length > 0 -->',
-            buildDialog('Staging Jobs', buildJobsBrowser()),
-            '<!-- /ko -->',
-            '<!-- ko ifnot: stagingJobs().length > 0 -->',
-            buildDialog('Staging Jobs', 'Sorry, no current jobs to view'),
-            '<!-- /ko -->'
+            buildDialog('Staging Jobs', buildJobsBrowser())
         ]);
     }
 

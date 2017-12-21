@@ -130,14 +130,35 @@ define([
 
         document.addEventListener('click', clickListener, true);
 
+        function doRefreshSearch() {
+            params.search.refreshSearch();
+        }
+
+        var refreshTimer;
+
+        function refreshLoop() {
+            refreshTimer = window.setTimeout(function () {
+                if (refreshTimer === null) {
+                    return;
+                }
+                doRefreshSearch();
+                refreshLoop();
+            }, 10000);
+        }
+
+        refreshLoop();
+
+
+        // LIFECYCLE
+
         function dispose() {
             if (clickListener) {
                 document.removeEventListener('click', clickListener, true);
             }
-        }
-
-        function doRefreshSearch() {
-            params.search.refreshSearch();
+            if (refreshTimer) {
+                window.clearTimeout(refreshTimer);
+                refreshTimer = null;
+            }
         }
 
         return {

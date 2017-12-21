@@ -88,7 +88,6 @@ define([
         });
 
         var searchState = ko.pureComputed(function () {
-            // console.log('search state calc...', searching());
             if (searching()) {
                 return 'inprogress';
             }
@@ -112,10 +111,16 @@ define([
 
 
         function fetchData(page, pageSize, filterSpec, sortSpec) {
+            var now = new Date().getTime();
             return data.fetchStagingJobs(page, pageSize, filterSpec, sortSpec)
                 .then(function (result) {
-                    console.log('here3?', result);
                     var rows = result.jobs.map(function (row) {
+                        var elapsed;
+                        if (row.status === 'completed' || row.status === 'error') {
+                            elapsed = row.updated - row.started;
+                        } else {
+                            elapsed = now - row.started;
+                        }
                         return {
                             dbId: {
                                 value: row.dbId
@@ -131,6 +136,9 @@ define([
                             },
                             updated: {
                                 value: ko.observable(row.updated)
+                            },
+                            elapsed: {
+                                value: ko.observable(elapsed)
                             },
                             status: {
                                 value: ko.observable(row.status)
@@ -157,17 +165,18 @@ define([
             if (searching()) {
                 return;
             }
-            console.log('searching...', pageSize(), page());
             searching(true);
             // only do this if the results are different, otherwise
             // just update the array.
-            searchResults.removeAll();
             return fetchData(page(), pageSize(), filterSpec(), sortSpec())
                 .then(function (result) {
-                    console.log('here 2?', result);
                     searchTotal(result.totalAvailable);
                     actualSearchTotal(result.totalMatched);
+                    searchResults.removeAll();
                     result.rows.forEach(function (row) {
+                        if (row.status.value() !== 'completed') {
+                            console.log('JOB', row.jobId.value, row.status.value(), row.updated.value());
+                        }
                         searchResults.push(row);
                     });
                 })
@@ -230,8 +239,6 @@ define([
         });
 
         sortSpec.subscribe(function (newValue) {
-            // console.log('sorting?', newValue);
-            // doSearch();
             doSearch();
         });
 

@@ -28,10 +28,8 @@ define([
                     limit: limit
                 }
             };
-            console.log('sending param', param);
             return rpc.call('jgi_gateway_eap', 'staging_jobs', param)
                 .spread(function (result, error) {
-                    console.log('got', result, error);
                     if (result) {
                         var stagingJobs = result.jobs.map(function (job) {
                             return {

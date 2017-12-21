@@ -150,6 +150,25 @@ define([
             updateStagingJobStates();
         });
 
+        function getStagingJobStatus() {
+            var param = {
+                username: runntime.service('session').getUsername()
+            };
+            return rpc.call('jgi_gateway_eap', 'staging_jobs_status', param)
+                .spread(function (result, error) {
+                    if (error) {
+                        console.error('ERROR', error);
+                        return;
+                    }
+                    ['sent', 'submitted', 'queued', 'restoring', 'copying', 'completed', 'error'].forEach(function (state) {
+                        stagingJobStates[state](result.state[state]);
+                    });
+                })
+                .catch(function (err) {
+                    console.error('ERROR', err);
+                });
+        }
+
         function getStagingJobs() {
             // var first = (page - 1) * pageSize;
             // var count = pageSize;
@@ -164,9 +183,7 @@ define([
             };
             return rpc.call('jgi_gateway_eap', 'staging_jobs', param)
                 .spread(function (result, error) {
-                    console.log('staging?', result, error);
                     if (result) {
-                        console.log('got staging jobs...', result);
                         result.jobs.forEach(function (job) {
                             var j = {
                                 dbId: job.jamo_id,
@@ -191,84 +208,6 @@ define([
 
         // get initial staging jobs.
         getStagingJobs();
-
-        // stagingJobs.subscribe(function (changes) {
-        //     console.log('subbed', changes);
-        //
-        //     changes.forEach(function (change) {
-        //         var increment = 1;
-        //         if (change.status === 'deleted') {
-        //             increment = -1;
-        //         }
-        //         var newState = change.value.status;
-        //         if (newState in stagingJobStates) {
-        //             var state = stagingJobStates[newState];
-        //             state(state() + increment);
-        //         } else {
-        //             console.warn('Staging job state unrecognized: ' + newState)
-        //         }
-        //     })
-        // }, null, 'arrayChange');
-
-        var monitoringJobs = ko.observable(false);
-        function monitorJobs(jobId, progress, color) {
-            if (monitoringJobs()) {
-                return;
-            }
-            function checkProgress() {
-                console.log('creating status check jobs...');
-                var jobChecks = stagingJobs().map(function (job) {
-                    if (job.status() === 'completed') {
-                        return;
-                    }
-                    return rpc.call('jgi_gateway_eap', 'stage_status', {
-                        job_id: job.jobId
-                    })
-                        .spread(function (result, error) {
-                            console.log('stage status result...', result, error);
-                            if (error) {
-                                throw new Error('Error checking job state: ' + error.message);
-                            }
-                            return result;
-                        })
-                        .then(function (result) {
-                            var status = utils.grokStageStats(result);
-                            job.updated(new Date());
-                            job.status(status.status);
-                            return status.status;
-                        });
-                }).filter(function (jobCheck) {
-                    return (jobCheck !== undefined);
-                });
-                console.log('need ', jobChecks.length);
-                return Promise.all(jobChecks)
-                    .then(function (result) {
-                        // should be list of statuses...
-                        var runAgain = result.some(function (status) {
-                            return (status !== 'completed' && status !== 'error' && status !== 'unknown1');
-                        });
-                        console.log('finished, need more?', runAgain);;
-                        if (runAgain) {
-                            window.setTimeout(checkProgress, 5000);
-                        } else {
-                            monitoringJobs(false);
-                        }
-                    })
-                    .catch(function (err) {
-                        // progress(err.message);
-                        // TODO: handle more gracefully
-                        // Issue a an error alert, allow 2 more attempts,
-                        // and then shutdown, issuing another error alert.
-                        console.error('ERROR checking job state - halting monitoring', err);
-                        monitoringJobs(false);
-                    })
-                    .finally(function () {
-                        updateStagingJobStates();
-                    });
-            }
-            monitoringJobs(true);
-            checkProgress();
-        }
 
         function doStage(id, fileName) {
             return rpc.call('jgi_gateway_eap', 'stage', {
@@ -1352,7 +1291,6 @@ define([
             showOverlay({
                 name: 'jgi-search/staging-status-viewer',
                 viewModel: {
-                    stagingJobs: stagingJobs,
                     runtime: runtime
                 }
             });
@@ -1449,8 +1387,6 @@ define([
                 // Staging
                 stagingJobStates: stagingJobStates,
                 stagingJobsState: stagingJobsState,
-                monitoringJobs: monitoringJobs,
-                stagingJobs: stagingJobs,
                 runtime: runtime,
 
                 pageSize: pageSize,

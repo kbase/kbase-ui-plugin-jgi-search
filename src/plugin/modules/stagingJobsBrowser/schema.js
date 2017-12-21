@@ -36,7 +36,7 @@ define([
         // },
         {
             name: 'updated',
-            label: 'Updated',
+            label: 'Changed',
             type: 'date',
             format: 'elapsed',
             width: 20,
@@ -45,6 +45,18 @@ define([
                 direction: ko.observable('descending'),
                 // active: ko.observable(false) 
             }
+        },
+        {
+            name: 'elapsed',
+            label: 'Elapsed',
+            type: 'date',
+            format: 'duration',
+            width: 20,
+            // sort: {
+            //     keyName: 'updated',
+            //     direction: ko.observable('descending'),
+            //     // active: ko.observable(false) 
+            // }
         },
         {
             name: 'filename',
