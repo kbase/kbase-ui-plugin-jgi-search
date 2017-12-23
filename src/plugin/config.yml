@@ -90,10 +90,7 @@ install:
       name: jgi-search/staging-status
       module: components/stagingStatus
       type: factory
-    -
-      name: generic/elapsed-clock
-      module: components/generic/elapsedClock
-      type: factory
+
     -
       name: jgi-search/inspect-control
       module: components/inspectControl
@@ -143,7 +140,11 @@ install:
     -
       name: jgi-search/staging-jobs-browser/generic/table
       module: stagingJobsBrowser/components/generic/table
-      type: factory        
+      type: factory   
+    -
+      name: jgi-search/staging-jobs-browser/job-clock
+      module: stagingJobsBrowser/components/jobClock
+      type: factory            
         
      
     # GENERIC
@@ -155,7 +156,15 @@ install:
       name: 'generic/json-viewer'
       module: 'components/generic/jsonViewer'
       css: true
-      type: factory      
+      type: factory
+    -
+      name: generic/elapsed-clock
+      module: components/generic/elapsedClock
+      type: factory
+    -
+      name: generic/relative-clock
+      module: components/generic/relativeClock
+      type: factory            
 
   routes:
     -

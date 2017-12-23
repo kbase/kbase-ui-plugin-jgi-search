@@ -152,9 +152,9 @@ define([
 
         function getStagingJobStatus() {
             var param = {
-                username: runntime.service('session').getUsername()
+                username: runtime.service('session').getUsername()
             };
-            return rpc.call('jgi_gateway_eap', 'staging_jobs_status', param)
+            return rpc.call('jgi_gateway_eap', 'staging_jobs_summary', param)
                 .spread(function (result, error) {
                     if (error) {
                         console.error('ERROR', error);
@@ -169,45 +169,60 @@ define([
                 });
         }
 
-        function getStagingJobs() {
-            // var first = (page - 1) * pageSize;
-            // var count = pageSize;
-            var param = {
-                username: runtime.service('session').getUsername(),
-                filter: {                    
-                },
-                range: {
-                    start: 0,
-                    limit: 1000
-                }
-            };
-            return rpc.call('jgi_gateway_eap', 'staging_jobs', param)
-                .spread(function (result, error) {
-                    if (result) {
-                        result.jobs.forEach(function (job) {
-                            var j = {
-                                dbId: job.jamo_id,
-                                filename: job.filename,
-                                jobId: job.job_id,
-                                started: new Date(job.created * 1000),
-                                updated: ko.observable(job.updated ? new Date(job.updated * 1000) : null),
-                                status: ko.observable(job.status_code)
-                            };
-                            stagingJobs.push(j);
-                        });
-                    } else if (error) {
-                        console.error('ERROR', error);
-                    } else {
-                        // what here?
-                    }
-                })
-                .catch(function (err) {
-                    console.error('ERROR getting staging jobs:', err);
+        var timer;
+
+        function jobStatusLoop() {
+            getStagingJobStatus()
+                .finally(function () {
+                    timer = window.setTimeout(function () {
+                        jobStatusLoop();
+                    }, 10000);
                 });
         }
 
-        // get initial staging jobs.
-        getStagingJobs();
+        jobStatusLoop();
+
+
+
+        // function getStagingJobs() {
+        //     // var first = (page - 1) * pageSize;
+        //     // var count = pageSize;
+        //     var param = {
+        //         username: runtime.service('session').getUsername(),
+        //         filter: {                    
+        //         },
+        //         range: {
+        //             start: 0,
+        //             limit: 1000
+        //         }
+        //     };
+        //     return rpc.call('jgi_gateway_eap', 'staging_jobs', param)
+        //         .spread(function (result, error) {
+        //             if (result) {
+        //                 result.jobs.forEach(function (job) {
+        //                     var j = {
+        //                         dbId: job.jamo_id,
+        //                         filename: job.filename,
+        //                         jobId: job.job_id,
+        //                         started: new Date(job.created * 1000),
+        //                         updated: ko.observable(job.updated ? new Date(job.updated * 1000) : null),
+        //                         status: ko.observable(job.status_code)
+        //                     };
+        //                     stagingJobs.push(j);
+        //                 });
+        //             } else if (error) {
+        //                 console.error('ERROR', error);
+        //             } else {
+        //                 // what here?
+        //             }
+        //         })
+        //         .catch(function (err) {
+        //             console.error('ERROR getting staging jobs:', err);
+        //         });
+        // }
+
+        // // get initial staging jobs.
+        // getStagingJobs();
 
         function doStage(id, fileName) {
             return rpc.call('jgi_gateway_eap', 'stage', {
@@ -847,8 +862,6 @@ define([
             if (!query) {
                 return;
             }
-
-            console.log('sort is', sortSpec());
 
             // TODO: compare previous to current query ... if same, do not do another search, just 
             //   return. The problem is stuttering -- duplicate updates to the search query 

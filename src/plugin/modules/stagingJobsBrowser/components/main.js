@@ -1,5 +1,6 @@
 define([
     'knockout-plus',
+    'moment',
     'kb_common/html',
     '../../lib/utils',
     '../../lib/profile',
@@ -7,6 +8,7 @@ define([
     '../schema'
 ], function(
     ko,
+    moment,
     html,
     utils,
     Profile,
@@ -132,7 +134,8 @@ define([
                                 value: row.jobId
                             },
                             started: {
-                                value: row.started
+                                value: row.started,
+                                info: moment(row.started).format('MM/DD/YYY @ h:mm:ss a')
                             },
                             updated: {
                                 value: ko.observable(row.updated)
@@ -172,11 +175,9 @@ define([
                 .then(function (result) {
                     searchTotal(result.totalAvailable);
                     actualSearchTotal(result.totalMatched);
+                    // TODO: smart updating of the result rows!
                     searchResults.removeAll();
-                    result.rows.forEach(function (row) {
-                        if (row.status.value() !== 'completed') {
-                            console.log('JOB', row.jobId.value, row.status.value(), row.updated.value());
-                        }
+                    result.rows.forEach(function (row) {                       
                         searchResults.push(row);
                     });
                 })
@@ -294,7 +295,7 @@ define([
             return acc;
         }, {});
 
-        sortBy(columnsMap.updated);
+        sortBy(columnsMap.started);
 
         // SEARCH HISTORY
 
@@ -340,7 +341,19 @@ define([
                 console.error('ERROR retrieving search history', err);
             });
  
+        // CLOCK
+        // I know...
+        var clock = ko.observable();
+        var clockInterval = window.setInterval(function () {
+            var time = new Date().getTime();
+            clock(time);
+        }, 1000);
 
+        function dispose() {
+            if (clockInterval) {
+                window.clearInterval(clockInterval);
+            }
+        }
 
         // INIT
 
@@ -355,6 +368,7 @@ define([
 
         return {
             overlayComponent: overlayComponent,
+            
             search: {
                 // INPUTS
                 searchInput: searchInput,
@@ -391,7 +405,8 @@ define([
                 // error: error,
 
                 columns: columns
-            }
+            },
+            dispose: dispose
         };
     }
 

@@ -1,9 +1,11 @@
 define([
     'knockout-plus',
-    'kb_common/html'
+    'kb_common/html',
+    '../../lib/clock'
 ], function(
     ko,
-    html
+    html,
+    Clock
 ) {
     'use strict';
 
@@ -95,34 +97,36 @@ define([
 
     function viewModel(params) {
         var startTime = ko.utils.unwrapObservable(params.startTime);
+        if (startTime instanceof Date) {
+            startTime = startTime.getTime();
+        }
         // var startTime = .getTime();
 
         // var currentTime = ko.observable(new Date().getTime());
-        var currentTime = params.clock;
+        var currentTime = ko.observable();
+
+        var listener = Clock.globalClock.listen(function () {
+            currentTime((new Date()).getTime());
+        }, params.updateInterval || 1);
 
         var elapsed = ko.pureComputed(function () {
-            // console.log('got clock time', currentTime());
             if (startTime) {
-                var e =  currentTime() - startTime.getTime();
+                var e =  currentTime() - startTime;
                 return niceDuration(e);
             } 
             return 'n/a';
         });
         
-        // var timer = window.setInterval(function () {
-        //     currentTime(new Date().getTime());
-        // }, 500);
-
-        // function dispose() {
-        //     if (timer) {
-        //         window.clearInterval(timer);
-        //     }
-        // }
+        function dispose() {
+            if (listener) {
+                Clock.globalClock.forget(listener);
+            }
+        }
 
         return Object.freeze({
-            elapsed: elapsed
+            elapsed: elapsed,
             // LIFECYCLE
-            // dispose: dispose
+            dispose: dispose
         });
     }
     
