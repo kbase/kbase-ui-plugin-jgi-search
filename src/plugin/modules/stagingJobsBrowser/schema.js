@@ -9,7 +9,7 @@ define([
     var columns = [
         {
             name: 'started',
-            label: 'Started',
+            label: 'Submitted',
             type: 'date',
             format: 'elapsed',
             width: 20,
@@ -20,6 +20,17 @@ define([
             },
             // component: 'jgi-search/staging-jobs-browser/started-clock'
             component: StartedClockComponent.name
+        },
+        {
+            name: 'status',
+            label: 'Status',
+            type: 'string',
+            width: 20,
+            sort: {
+                keyName: 'status_code',
+                direction: ko.observable('descending'),
+                // active: ko.observable(false)
+            }
         },
         {
             name: 'elapsed',
@@ -34,17 +45,7 @@ define([
             //     // active: ko.observable(false) 
             // }
         },
-        {
-            name: 'status',
-            label: 'Status',
-            type: 'string',
-            width: 20,
-            sort: {
-                keyName: 'status_code',
-                direction: ko.observable('descending'),
-                // active: ko.observable(false)
-            }
-        },
+        
         // {
         //     name: 'path',
         //     label: 'Path',
