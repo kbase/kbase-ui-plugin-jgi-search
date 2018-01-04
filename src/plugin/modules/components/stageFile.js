@@ -384,6 +384,14 @@ define([
                 }),
                 '<!-- /ko -->',
 
+                '<!-- ko if: $data.error -->',
+                p({
+                    dataBind: {
+                        text: '$data.error'
+                    }
+                }),
+                '<!-- /ko -->',
+
                 '<!-- ko if: $data.exists -->',
                 p('A filename with this name already exists.'),
                 p([
@@ -700,7 +708,7 @@ define([
                                 name: '"jgi-search/stage-file-control"',
                                 params: {
                                     id: 'id',
-                                    fileName: 'fileName',
+                                    fileName: 'destinationFileName',
                                     doStage: 'doStage',
                                     transferJob: 'transferJob',
                                     enabled: 'stageButtonEnabled'

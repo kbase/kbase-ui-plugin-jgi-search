@@ -600,6 +600,9 @@ define([
                     .spread(function (result, error) {
                         if (error) {
                             console.error('ERROR checking filename.', error);
+                            return {
+                                error: error
+                            };
                         } else {
                             if (result) {
                                 return {
