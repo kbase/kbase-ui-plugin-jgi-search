@@ -113,16 +113,11 @@ define([
         var historyContainerId = html.genId();
 
         function clickListener (ev) {
-            // in history container?
-            var t = ev.target;
-            if (t.getAttribute('data-type') === 'history-item') {
-                return true;
-            }
-            if (t.getAttribute('data-type') === 'history-toggle-button') {
-                return true;
-            }
-
-            if (showHistory()) {
+            // We don't want to handle clicks for the history control itself -- either
+            // an item in the list or the button. The handlers for these things will do 
+            // the right thing.
+            var elementType = ev.target.getAttribute('data-type');
+            if (['history-toggle-button', 'history-toggle-button-icon', 'history-item'].indexOf(elementType) == -1) {
                 showHistory(false);
             }
             return true;
@@ -360,6 +355,7 @@ define([
                     }
                 }
             }, span({
+                dataType: 'history-toggle-button-icon',
                 class: 'fa fa-history'
             })),
             div({
