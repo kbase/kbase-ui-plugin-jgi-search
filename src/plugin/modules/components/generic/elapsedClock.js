@@ -103,7 +103,7 @@ define([
         // var startTime = .getTime();
 
         // var currentTime = ko.observable(new Date().getTime());
-        var currentTime = ko.observable();
+        var currentTime = ko.observable((new Date()).getTime());
 
         var listener = Clock.globalClock.listen(function () {
             currentTime((new Date()).getTime());
