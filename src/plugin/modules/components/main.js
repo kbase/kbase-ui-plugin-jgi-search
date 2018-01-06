@@ -260,7 +260,7 @@ define([
 
                         return job;
                     } else {
-                        console.error('ERROR staging', error);
+                        console.error('ERROR staging', error, result);
                         throw new Error('Empty result when staging');
                     }
                 })

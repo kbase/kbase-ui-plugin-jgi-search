@@ -71,6 +71,10 @@ install:
       module: components/stageControl
       type: factory
     -
+      name: jgi-search/stage-status
+      module: components/stageStatus
+      type: factory
+    -
       name: jgi-search/staging-status-indicator
       module: components/stagingStatusIndicator
       type: factory

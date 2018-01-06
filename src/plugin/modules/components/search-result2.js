@@ -341,9 +341,20 @@ define([
             {
                 name: 'copy',
                 label: 'Copy',
-                type: 'action',
                 width: 5,
                 component: 'jgi-search/stage-control',
+                rowStyle: {
+                    textAlign: 'center'
+                },
+                headerStyle: {
+                    textAlign: 'center'
+                }
+            },
+            {
+                name: 'status',
+                label: 'Status',
+                width: 5,
+                component: 'jgi-search/stage-status',
                 rowStyle: {
                     textAlign: 'center'
                 },
