@@ -31,6 +31,10 @@ define([
                 viewModel: {}
             });
         }
+
+        function doClearInput() {
+            params.search.searchInput('');
+        }
        
         var showHistory = ko.observable(false);
 
@@ -157,6 +161,7 @@ define([
             doHelp: doHelp,
             doRunSearch: doRunSearch,
             doKeyUp: doKeyUp,
+            doClearInput: doClearInput,
 
             // LIFECYCLE
             dispose: dispose
@@ -200,6 +205,21 @@ define([
                     backgroundColor: 'silver'
                 }
             }
+        },
+        addonButton: {
+            css: {
+                color: 'black',
+                cursor: 'pointer'
+            },
+            pseudo: {
+                hover: {
+                    backgroundColor: 'silver'
+                },
+                active: {
+                    backgroundColor: 'gray',
+                    color: 'white'
+                }
+            }
         }
     });
 
@@ -214,7 +234,7 @@ define([
         }, [
             '<!-- ko if: logo -->',
             div({
-                class: 'input-group-addon',
+                class: 'input-group-addon ',
                 style: {
                     padding: '0',
                     border: 'none',
@@ -234,9 +254,8 @@ define([
             })),
             '<!-- /ko -->',
             div({
-                class: 'input-group-addon',
+                class: 'input-group-addon ' + styles.classes.addonButton,
                 style: {
-                    cursor: 'pointer',
                     borderRadius: '4px',
                     borderTopRightRadius: '0',
                     borderBottomRightRadius: '0',
@@ -256,7 +275,6 @@ define([
                 class: 'fa',
                 style: {
                     fontSize: '100%',
-                    color: '#000'
                 },
                 dataBind: {
                     css: {
@@ -321,11 +339,16 @@ define([
                 '<!-- /ko -->'
             ]),
             div({
-                class: 'input-group-addon',
+                class: 'input-group-addon ' + styles.classes.addonButton,
+                dataBind: {
+                    click: 'doClearInput'
+                }
+            }, span({
+                class: 'fa fa-times'
+            })),
+            div({
+                class: 'input-group-addon ' + styles.classes.addonButton,
                 dataType: 'history-toggle-button',
-                style: {
-                    cursor: 'pointer'
-                },
                 dataBind: {
                     click: 'doToggleHistory',
                     style: {
@@ -337,10 +360,7 @@ define([
                 class: 'fa fa-history'
             })),
             div({
-                class: 'input-group-addon',
-                style: {
-                    cursor: 'pointer'
-                },
+                class: 'input-group-addon '  + styles.classes.addonButton,
                 dataBind: {
                     click: 'doHelp'
                 }
