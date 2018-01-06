@@ -222,6 +222,21 @@ define([
                     backgroundColor: 'silver'
                 }
             }
+        },
+        addonButton: {
+            css: {
+                color: 'black',
+                cursor: 'pointer'
+            },
+            pseudo: {
+                hover: {
+                    backgroundColor: 'silver'
+                },
+                active: {
+                    backgroundColor: 'gray',
+                    color: 'white'
+                }
+            }
         }
     });
 
@@ -256,9 +271,8 @@ define([
             })),
             '<!-- /ko -->',
             div({
-                class: 'input-group-addon',
+                class: 'input-group-addon ' + styles.classes.addonButton,
                 style: {
-                    cursor: 'pointer',
                     borderRadius: '4px',
                     borderTopRightRadius: '0',
                     borderBottomRightRadius: '0',
@@ -343,7 +357,7 @@ define([
                 '<!-- /ko -->'
             ]),
             div({
-                class: 'input-group-addon',
+                class: 'input-group-addon ' + styles.classes.addonButton,
                 dataType: 'history-toggle-button',
                 style: {
                     cursor: 'pointer'
@@ -359,7 +373,7 @@ define([
                 class: 'fa fa-history'
             })),
             div({
-                class: 'input-group-addon',
+                class: 'input-group-addon ' + styles.classes.addonButton,
                 dataType: 'refresh-button',
                 style: {
                     cursor: 'pointer'
@@ -374,7 +388,7 @@ define([
                 class: 'fa fa-refresh'
             })),
             div({
-                class: 'input-group-addon',
+                class: 'input-group-addon ' + styles.classes.addonButton,
                 style: {
                     cursor: 'pointer'
                 },
