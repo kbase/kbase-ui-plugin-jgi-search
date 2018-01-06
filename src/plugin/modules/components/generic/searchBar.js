@@ -1,11 +1,9 @@
 define([
     'knockout-plus',
-    'kb_common/html',
-    '../../lib/profile'
+    'kb_common/html'
 ], function (
     ko,
-    html,
-    UserProfile
+    html
 ) {
     'use strict';
 
@@ -32,9 +30,6 @@ define([
             });
         }
 
-        function doClearInput() {
-            params.search.searchInput('');
-        }
        
         var showHistory = ko.observable(false);
 
@@ -99,6 +94,11 @@ define([
 
             return null;
         });
+
+        function doClearInput() {
+            params.search.searchInput('');
+        }
+
 
         function doRunSearch() {
             addToSearchHistory(searchControlValue());
@@ -219,6 +219,12 @@ define([
                     backgroundColor: 'gray',
                     color: 'white'
                 }
+            }
+        },
+        addonButtonDisabled: {
+            css: {
+                color: 'gray',
+                cursor: 'normal'
             }
         }
     });
@@ -341,7 +347,8 @@ define([
             div({
                 class: 'input-group-addon ' + styles.classes.addonButton,
                 dataBind: {
-                    click: 'doClearInput'
+                    click: 'searchControlValue() ? doClearInput : null',
+                    css: 'searchControlValue() ? "' + styles.classes.addonButton + '" : "' + styles.classes.addonButtonDisabled + '"'
                 }
             }, span({
                 class: 'fa fa-times'
