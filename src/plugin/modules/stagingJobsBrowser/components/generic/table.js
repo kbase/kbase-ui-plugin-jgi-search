@@ -520,7 +520,8 @@ define([
                                 params: {
                                     field: 'row[column.name]',
                                     row: 'row',
-                                    search: '$component.search'
+                                    search: '$component.search',
+                                    actions: '$component.actions'
                                 }
                             }
                             // text: 'column.component'

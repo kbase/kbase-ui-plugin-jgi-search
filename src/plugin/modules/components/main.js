@@ -152,7 +152,8 @@ define([
 
         function getStagingJobStatus() {
             var param = {
-                username: runtime.service('session').getUsername()
+                username: runtime.service('session').getUsername(),
+                job_monitoring_ids: []
             };
             return rpc.call('jgi_gateway_eap', 'staging_jobs_summary', param)
                 .spread(function (result, error) {
@@ -160,8 +161,9 @@ define([
                         console.error('ERROR', error);
                         return;
                     }
+                    // console.log('got job status summary...', result);
                     ['sent', 'submitted', 'queued', 'restoring', 'copying', 'completed', 'error'].forEach(function (state) {
-                        stagingJobStates[state](result.state[state]);
+                        stagingJobStates[state](result.states[state]);
                     });
                 })
                 .catch(function (err) {
@@ -1467,7 +1469,7 @@ define([
 
             '<!-- /ko -->',
             utils.komponent({
-                name: 'generic/overlay-panel',
+                name: 'generic/overlay-panel-bootstrappish',
                 params: {
                     component: 'overlayComponent',
                     hostVm: 'search'

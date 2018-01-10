@@ -27,6 +27,10 @@ define([
             }           
         });
 
+        function showFeedback() {
+            alert('redirect to feedback form...');
+        }
+
         function attach(node) {
             hostNode = node;
             // container = node;
@@ -50,7 +54,7 @@ define([
                 },
                 callback: function() {
                     // runtime.send('copyWidget', 'toggle');
-                    alert('does not do anything yet...');
+                    showFeedback();
                 }
             });
 

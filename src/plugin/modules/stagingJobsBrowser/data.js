@@ -16,6 +16,27 @@ define([
 
         var rpc = Rpc.make({runtime: runtime});
 
+        function deleteStagingJob(jobMonitoringId) {
+            var param = {
+                username: runtime.service('session').getUsername(),
+                job_monitoring_id: jobMonitoringId
+            };
+            return rpc.call('jgi_gateway_eap', 'remove_staging_job', param)
+                .spread(function (result, error) {
+                    // console.log('deletion result...', result, error);
+                    if (result) {
+                        // console.log('Yay!');
+                    } else if (error) {
+                        console.error('ERROR', error);
+                    } else {
+                        throw new Error('Unexpected - both result and error are null!!');
+                    }
+                })
+                .catch(function (err) {
+                    console.error('EX', err);
+                });
+        }
+
         function fetchStagingJobs(page, pageSize, filterSpec, sortSpec) {
             var start = (page - 1) * pageSize;
             var limit = pageSize;
@@ -31,8 +52,11 @@ define([
             return rpc.call('jgi_gateway_eap', 'staging_jobs', param)
                 .spread(function (result, error) {
                     if (result) {
+                        // console.log('got staging jobs...', result);
                         var stagingJobs = result.jobs.map(function (job) {
                             return {
+                                jobMonitoringId: job.job_monitoring_id,
+                                jamoId: job.jamo_id,
                                 dbId: job.jamo_id,
                                 filename: job.filename,
                                 jobId: job.job_id,
@@ -69,7 +93,8 @@ define([
         }
 
         return Object.freeze({
-            fetchStagingJobs: fetchStagingJobs
+            fetchStagingJobs: fetchStagingJobs,
+            deleteStagingJob: deleteStagingJob
         });
     }
 

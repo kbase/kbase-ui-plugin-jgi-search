@@ -49,7 +49,10 @@ define([
     }
 
     function template() {
-        return ui.buildDialog(span({dataBind: {text: 'title'}}), buildHelpViewer());        
+        return ui.buildDialog({
+            title: span({dataBind: {text: 'title'}}), 
+            body: buildHelpViewer()
+        });
     }
 
     function component() {

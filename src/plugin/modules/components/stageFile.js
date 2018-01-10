@@ -35,6 +35,7 @@ define([
         
 
         var filenameStatus = {
+            exists: ko.observable(),
             error: ko.observable(),
             loading: ko.observable()
         };
@@ -69,11 +70,16 @@ define([
             // detect duplicate filename here, and set status accordingly.
             filenameStatus.loading(true);
             params.checkFilename(actualFilename)
-                .then(function (problem) {
-                    if (problem) {
-                        filenameStatus.error(problem);
+                .then(function (result) {
+                     console.log('filename check?', result.exists ? 'true' : 'false');
+                    if (result.exists) {
+                        filenameStatus.exists(result.exists);
+                        filenameStatus.error(null);
+                    } else if (result.error) {
+                        filenameStatus.error(result.error);
                     } else {
                         // destinationFileName(actualFilename);
+                        filenameStatus.exists(null);
                         filenameStatus.error(null);
                     }                    
                 })
@@ -354,7 +360,56 @@ define([
                 }),
                 ' This filename is ok :)'
             ]),
-            
+            '<!-- /ko -->',
+
+            '<!-- ko if: filenameStatus.exists -->',
+            div({
+                class: 'alert alert-warning',
+                style: {
+                    width: '100%',
+                    whiteSpace: 'normal'
+                },
+                dataBind: {
+                    with: 'filenameStatus.exists'
+                }
+            }, [
+                p('A filename with this name already exists.'),
+                table({
+                    class: 'table',
+                    style: {
+                        backgroundColor: 'transparent',
+                        marginTop: '6px'
+                    }
+                }, [
+                    tr([
+                        th('Copied on'),
+                        td({
+                            dataBind: {
+                                typedText: {
+                                    value: 'mtime',
+                                    type: '"date"',
+                                    format: '"elapsed"'
+                                    // format: '"YYYY/MM/DD"'
+                                }
+                            }
+                        })
+                    ]),
+                    tr([
+                        th('Copied on'),
+                        td({
+                            dataBind: {
+                                typedText: {
+                                    value: 'size',
+                                    type: '"number"',
+                                    format: '"0.0b"'
+                                }
+                            }
+                        })
+                    ])
+                ]),
+                p('You may still copy this file to your Staging Area, but it will overwrite the existing file.'),
+                p('You may change the filename above to create a unique filename.')
+            ]),
             '<!-- /ko -->',
 
             '<!-- ko if: filenameStatus.error -->',
@@ -390,36 +445,8 @@ define([
                         text: '$data.error'
                     }
                 }),
-                '<!-- /ko -->',
-
-                '<!-- ko if: $data.exists -->',
-                p('A filename with this name already exists.'),
-                p([
-                    'Uploaded: ', 
-                    span({
-                        dataBind: {
-                            typedText: {
-                                value: 'mtime',
-                                type: '"date"',
-                                format: '"elapsed"'
-                                // format: '"YYYY/MM/DD"'
-                            }
-                        }
-                    })
-                ]),
-                p([
-                    'Size: ', 
-                    span({
-                        dataBind: {
-                            typedText: {
-                                value: 'size',
-                                type: '"number"',
-                                format: '"0.0b"'
-                            }
-                        }
-                    })
-                ]),
                 '<!-- /ko -->'
+               
             ]),
             '<!-- /ko -->',
 
@@ -768,7 +795,7 @@ define([
             div({
                 style: {
                     color: 'white',
-                    backgroundColor: 'rgba(0,0,0,0.6)',
+                    backgroundColor: 'rgba(0,0,0,1)',
                     fontSize: '150%',
                     padding: '8px',
                     borderBottom: '1px green solid'
@@ -779,7 +806,7 @@ define([
                 style: {
                     padding: '8px',
                     minHeight: '10em',
-                    backgroundColor: 'rgba(255,255,255,0.8)',
+                    backgroundColor: 'rgba(255,255,255,1)',
                 }
             }, body),
             // buttons

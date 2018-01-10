@@ -1,9 +1,11 @@
 define([
     'knockout-plus',
-    'kb_common/html'
+    'kb_common/html',
+    '../lib/ui'
 ], function (
     ko,
-    html
+    html,
+    ui
 ) {
     'use strict';
 
@@ -90,6 +92,7 @@ define([
             ],
             error: error,
             close: close,
+            onClose: doClose,
             // The error component VM interface
             source: source,
             code: code,
@@ -99,7 +102,7 @@ define([
         };
     }
 
-    function builErrorViewer() {
+    function buildErrorViewer() {
         return div({
             dataBind: {
                 component: {
@@ -116,51 +119,69 @@ define([
         });
     }
 
-    function template() {
-        return div({}, [
-            // title
-            div({
-                dataBind: {
-                    text: 'title'
-                },
-                style: {
-                    color: 'white',
-                    backgroundColor: 'rgba(0,0,0,0.6)',
-                    fontSize: '150%',
-                    padding: '8px',
-                    borderBottom: '1px green solid',
-                    // height: '50px'
-                }
-            }),
-            // body
-            div({
-                style: {
-                    padding: '8px',
-                    minHeight: '10em',
-                    maxHeight: '85vh',
-                    overflowY: 'auto',
-                    backgroundColor: 'rgba(255,255,255,0.8)',
-                }
-            }, builErrorViewer()),
-            div({
-                dataBind: {
-                    foreach: 'buttons'
-                },
-                style: {
-                    padding: '8px',
-                    textAlign: 'right',
-                    backgroundColor: 'transparent'
-                }
-            }, button({
-                type: 'button',
-                class: 'btn btn-default',
-                dataBind: {
-                    text: 'title',
-                    click: 'action'
-                }
-            }))
-        ]);
+    function buildTitle() {
+        return div({
+            dataBind: {
+                text: 'title'
+            }
+        });
     }
+
+    function template() {
+        return ui.buildDialog({
+            type: 'error',
+            title: buildTitle(), 
+            body: buildErrorViewer()
+        });
+    }
+
+    // function template() {
+    //     return div({}, [
+    //         // title
+    //         div({
+    //             dataBind: {
+    //                 text: 'title'
+    //             },
+    //             style: {
+    //                 color: '#2e618d',
+    //                 backgroundColor: 'rgba(255,255,255,1)',
+    //                 fontSize: '130%',
+    //                 fontWeight: 'bold',
+    //                 padding: '15px',
+    //                 borderBottom: '1px solid #e5e5e5'
+    //                 // height: '50px'
+    //             }
+    //         }),
+    //         // body
+    //         div({
+    //             style: {
+    //                 padding: '15px',
+    //                 minHeight: '10em',
+    //                 maxHeight: '85vh',
+    //                 overflowY: 'auto',
+    //                 backgroundColor: 'rgba(255,255,255,1)',
+    //             }
+    //         }, builErrorViewer()),
+    //         div({
+    //             dataBind: {
+    //                 foreach: 'buttons'
+    //             },
+    //             style: {
+    //                 padding: '15px',
+    //                 textAlign: 'right',
+    //                 backgroundColor: 'rgba(255,255,255,1)',
+    //                 borderTop: '1px solid #e5e5e5'
+    //             }
+    //         }, button({
+    //             type: 'button',
+    //             class: 'btn btn-default',
+    //             dataBind: {
+    //                 text: 'title',
+    //                 click: 'action'
+    //             }
+    //         }))
+    //     ]);
+    // }
 
     function component() {
         return {

@@ -148,7 +148,11 @@ install:
     -
       name: jgi-search/staging-jobs-browser/job-clock
       module: stagingJobsBrowser/components/jobClock
-      type: factory            
+      type: factory    
+    -
+      name: jgi-search/staging-jobs-browser/delete-job
+      module: stagingJobsBrowser/components/deleteJob
+      type: factory                
         
      
     # GENERIC

@@ -341,7 +341,7 @@ define([
             
             // '<!-- /ko -->',
 
-            '<!-- ko if: search.stagingJobsState().some -->',
+            // '<!-- ko if: search.stagingJobsState().some -->',
             button({
                 dataBind: {
                     click: 'doShowStagingStatus',
@@ -361,7 +361,7 @@ define([
                 '<!-- /ko -->',
                 'View Staging Jobs'
             ]),
-            '<!-- /ko -->'
+            // '<!-- /ko -->'
         ];
         
     }

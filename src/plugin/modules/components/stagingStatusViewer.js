@@ -1,11 +1,13 @@
 define([
     'knockout-plus',
     'kb_common/html',
-    '../lib/utils'
+    '../lib/utils',
+    '../lib/ui'
 ], function (
     ko,
     html,
-    utils
+    utils,
+    ui
 ) {
     'use strict';
 
@@ -36,53 +38,7 @@ define([
         };
     }
 
-    function buildDialog(title, body) {
-        return div({
-            style: {
-                flex: '1 1 0px',
-                display: 'flex',
-                flexDirection: 'column'
-            }
-        }, [
-            // title
-            div({
-                style: {
-                    color: 'white',
-                    backgroundColor: 'rgba(0,0,0,0.6)',
-                    fontSize: '150%',
-                    padding: '8px',
-                    borderBottom: '1px green solid'
-                }
-            }, title),
-            // body
-            div({
-                style: {
-                    padding: '8px',
-                    minHeight: '10em',
-                    // maxHeight: 'calc(100vh - 100px)',
-                    backgroundColor: 'rgba(255,255,255,0.8)',
-                    overflowY: 'auto',
-                    flex: '1 1 0px',
-                    display: 'flex',
-                    flexDirection: 'column'
-                }
-            }, body),
-            // buttons
-            div({
-                style: {
-                    padding: '8px',
-                    textAlign: 'right',
-                    backgroundColor: 'transparent'
-                }
-            }, button({
-                type: 'button',
-                class: 'btn btn-default',
-                dataBind: {
-                    click: 'onClose'
-                }
-            }, 'Close'))
-        ]);
-    }
+   
 
     function buildJobsBrowser() {
         return utils.komponent({
@@ -101,7 +57,10 @@ define([
                 flexDirection: 'column'
             }
         }, [
-            buildDialog('Staging Jobs', buildJobsBrowser())
+            ui.buildFullHeightDialog({
+                title: 'Staging Jobs', 
+                body: buildJobsBrowser()
+            })
         ]);
     }
 

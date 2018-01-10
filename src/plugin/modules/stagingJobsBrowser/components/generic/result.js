@@ -69,7 +69,10 @@ define([
                 isLoading: search.searching,
                 pageSize: search.pageSize,
                 state: search.searchState,
-                sortBy: search.sortBy
+                sortBy: search.sortBy,
+                env: {
+                    removeJob: search.removeJob
+                }
             },
         };
     }

@@ -116,7 +116,7 @@ define([
 
             '<!-- ko ifnot: row.fileType.error -->', 
 
-            '<!-- ko ifnot: row.transferJob() -->',
+            // '<!-- ko ifnot: row.transferJob() -->',
             span({
                 class: styles.classes.miniButton,
                 dataBind: {
@@ -134,16 +134,16 @@ define([
                 },
                 class: 'fa fa-download fa-rotate-270'
             })),
-            '<!-- /ko -->',
+            // '<!-- /ko -->',
 
-            '<!-- ko if: row.transferJob() -->',
-            utils.komponent({
-                name: 'jgi-search/staging-status-indicator',
-                params: {
-                    status: 'row.transferJob().status'
-                }
-            }),
-            '<!-- /ko -->',
+            // '<!-- ko if: row.transferJob() -->',
+            // utils.komponent({
+            //     name: 'jgi-search/staging-status-indicator',
+            //     params: {
+            //         status: 'row.transferJob().status'
+            //     }
+            // }),
+            // '<!-- /ko -->',
 
             '<!-- /ko -->'
         ]);

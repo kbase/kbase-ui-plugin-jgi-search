@@ -317,7 +317,11 @@ define([
     }
 
     function template() {        
-        return ui.buildDialog('Inspector', buildInspector());
+        return ui.buildDialog({
+            type: 'default',
+            title: 'Inspector', 
+            body: buildInspector()
+        });
     }
 
     function component() {

@@ -111,6 +111,20 @@ define([
 
         // Data fetch
 
+        function removeJob(jobMonitoringId) {
+            console.log('removing job...', jobMonitoringId);
+            return data.deleteStagingJob(jobMonitoringId)
+                .then(function () {
+                    console.log('job deleted...');
+                })
+                .catch(function (err) {
+                    console.error('ERROR!', err);
+                })
+                .finally(function () {
+                    refreshSearch();
+                });
+        }
+
 
         function fetchData(page, pageSize, filterSpec, sortSpec) {
             var now = new Date().getTime();
@@ -131,7 +145,8 @@ define([
                                 value: row.filename
                             },
                             jobId: {
-                                value: row.jobId
+                                value: row.jobId,
+                                jobMonitoringId: row.jobMonitoringId
                             },
                             started: {
                                 value: row.started,
@@ -190,8 +205,29 @@ define([
         }
 
         function refreshSearch() {
-            doSearch();
+            if (refreshTimer) {
+                window.clearTimeout(refreshTimer);
+                refreshTimer = null;
+            }
+            doSearch()
+                .finally(function () {
+                    refreshLoop();
+                });
         }
+
+        var refreshTimer;
+
+        function refreshLoop() {
+            refreshTimer = window.setTimeout(function () {
+                if (refreshTimer === null) {
+                    return;
+                }
+                doSearch();
+                refreshLoop();
+            }, 10000);
+        }
+
+        refreshLoop();
 
        
         // Subscriptions
@@ -352,6 +388,11 @@ define([
         function dispose() {
             if (clockInterval) {
                 window.clearInterval(clockInterval);
+                clockInterval = null;
+            }
+            if (refreshTimer) {
+                window.clearTimeout(refreshTimer);
+                refreshTimer = null;
             }
         }
 
@@ -403,6 +444,9 @@ define([
                 refreshSearch: refreshSearch,
                 showOverlay: showOverlay,
                 // error: error,
+
+                // actions
+                removeJob: removeJob,
 
                 columns: columns
             },

@@ -239,7 +239,6 @@ define([
  
         var doRowAction;
         if (table.rowAction) {
-            console.log('ROW ACTION', table.rowAction);
             doRowAction = function (data) {
                 if (table.rowAction) {
                     table.rowAction(data);

@@ -86,7 +86,13 @@ define([
             //     direction: ko.observable('descending'),
             //     active: ko.observable(true)
             // }
-        }        
+        },
+        {
+            name: 'delete',
+            label: '',
+            width: 10,
+            component: 'jgi-search/staging-jobs-browser/delete-job'
+        }
     ];
 
     var columnsMap = columns.reduce(function (acc, col) {
