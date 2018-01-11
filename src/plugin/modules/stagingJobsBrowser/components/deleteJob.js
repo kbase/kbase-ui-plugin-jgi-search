@@ -13,10 +13,12 @@ define([
 
     function viewModel(params) {
         function doDelete(data) {
+            console.log('deleting job', data, params);
             params.env.removeJob(data.jobMonitoringId);
         }
         return {
             doDelete: doDelete,
+            status: params.row.status.value,
             jobMonitoringId: params.row.jobId.jobMonitoringId
         };
     }
@@ -47,6 +49,7 @@ define([
             class: 'btn-group pull-right'
         }, [
             styles.sheet,
+            '<!-- ko if: status() === "completed" || status() === "error" -->',
             button({
                 class: 'btn pull-right ' + styles.classes.dangerButton,                
                 dataBind: {
@@ -54,7 +57,8 @@ define([
                 }
             }, span({
                 class: 'fa fa-times'
-            }))
+            })),
+            '<!-- /ko -->'
         ]);
     }
 
