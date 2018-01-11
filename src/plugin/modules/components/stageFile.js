@@ -1,14 +1,15 @@
 define([
     'knockout-plus',
-    'kb_common/html'
+    'kb_common/html',
+    '../lib/ui'
 ], function (
     ko,
-    html
+    html,
+    ui
 ) {
     var t = html.tag,
         div = t('div'),
         span = t('span'),
-        button = t('button'),
         p = t('p'),
         input = t('input'),
         table = t('table'),
@@ -71,7 +72,6 @@ define([
             filenameStatus.loading(true);
             params.checkFilename(actualFilename)
                 .then(function (result) {
-                     console.log('filename check?', result.exists ? 'true' : 'false');
                     if (result.exists) {
                         filenameStatus.exists(result.exists);
                         filenameStatus.error(null);
@@ -785,60 +785,7 @@ define([
         ]);
     }
 
-    function buildDialog(title, body) {
-        return div({
-            style: {
-                // backgroundColor: 'white'
-            }
-        }, [
-            // title
-            div({
-                style: {
-                    color: 'white',
-                    backgroundColor: 'rgba(0,0,0,1)',
-                    fontSize: '150%',
-                    padding: '8px',
-                    borderBottom: '1px green solid'
-                }
-            }, title),
-            // body
-            div({
-                style: {
-                    padding: '8px',
-                    minHeight: '10em',
-                    backgroundColor: 'rgba(255,255,255,1)',
-                }
-            }, body),
-            // buttons
-            div({
-                // dataBind: {
-                //     foreach: 'buttons'
-                // },
-                class: 'btn-toolbar pull-right',
-                style: {
-                    padding: '8px',
-                    textAlign: 'right',
-                    backgroundColor: 'transparent'
-                }
-            }, [
-                button({
-                    type: 'button',
-                    class: 'btn btn-default',
-                    dataBind: {
-                        click: 'doOpenJobsMonitor'
-                    }
-                }, 'Close & Monitor Jobs'),
-                button({
-                    type: 'button',
-                    class: 'btn btn-default',
-                    dataBind: {
-                        click: 'onClose'
-                    }
-                }, 'Close')
-            ]),
-
-        ]);
-    }
+   
 
     function buildTitle() {
         return div([
@@ -865,7 +812,21 @@ define([
     function template() {
         return div([
             styles.sheet,
-            buildDialog(buildTitle(), buildBody())
+            // buildDialog(buildTitle(), buildBody()),
+            ui.buildDialog({
+                title: buildTitle(),
+                body: buildBody(),
+                buttons: [
+                    {
+                        label: 'Close & Monitor Jobs',
+                        onClick: 'doOpenJobsMonitor'
+                    },
+                    {
+                        label: 'Close',
+                        onClick: 'onClose'
+                    }
+                ]
+            })
         ]);
     }
 

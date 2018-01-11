@@ -31,6 +31,23 @@ define([
         default: 
             titleColor = '#000';
         }
+
+        var buttons = arg.buttons || [{
+            label: 'Close',
+            onClick: 'onClose'
+        }];
+
+        var buttonsContent = buttons.map(function (btn) {
+            return button({
+                type: 'button',
+                class: 'btn btn-' + btn.type || 'default',
+                dataBind: {
+                    click: btn.onClick
+                }
+            }, btn.label);
+        }).join(' ');
+
+
         return div({
         }, [
             // title
@@ -56,20 +73,19 @@ define([
             }, arg.body),
             // buttons
             div({
+                class: 'clearfix',
                 style: {
                     padding: '15px',
                     textAlign: 'right',
                     backgroundColor: 'rgba(255,255,255,1)',
                     borderTop: '1px solid #e5e5e5'
                 }
-            }, button({
-                type: 'button',
-                class: 'btn btn-default',
-                dataBind: {
-                    click: 'onClose'
+            }, div({
+                class: 'btn-toolbar pull-right',
+                style: {
+                    textAlign: 'right',
                 }
-            }, 'Close')),
-
+            }, buttonsContent))
         ]);
     }
 
@@ -121,6 +137,22 @@ define([
         default: 
             titleColor = '#000';
         }
+
+        var buttons = arg.buttons || [{
+            label: 'Close',
+            onClick: 'onClose'
+        }];
+
+        var buttonsContent = buttons.map(function (btn) {
+            return button({
+                type: 'button',
+                class: 'btn btn-' + btn.type || 'default',
+                dataBind: {
+                    click: btn.onClick
+                }
+            }, btn.label);
+        }).join(' ');
+
         return div({
             style: {
                 flex: '1 1 0px',
@@ -154,19 +186,19 @@ define([
             }, arg.body),
             // buttons
             div({
+                class: 'clearfix',
                 style: {
                     padding: '15px',
                     textAlign: 'right',
                     backgroundColor: 'rgba(255,255,255,1)',
                     borderTop: '1px solid #e5e5e5'
                 }
-            }, button({
-                type: 'button',
-                class: 'btn btn-default',
-                dataBind: {
-                    click: 'onClose'
+            }, div({
+                class: 'btn-toolbar pull-right',
+                style: {
+                    textAlign: 'right',
                 }
-            }, 'Close'))
+            }, buttonsContent))
         ]);
     }
 
