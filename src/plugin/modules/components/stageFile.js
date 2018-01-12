@@ -11,6 +11,7 @@ define([
         div = t('div'),
         span = t('span'),
         p = t('p'),
+        b = t('b'),
         input = t('input'),
         table = t('table'),
         colgroup = t('colgroup'),
@@ -37,6 +38,7 @@ define([
 
         var filenameStatus = {
             exists: ko.observable(),
+            identical: ko.observable(),
             error: ko.observable(),
             loading: ko.observable()
         };
@@ -47,6 +49,8 @@ define([
                 method: 'notifyWhenChangesStop'
             }
         });
+
+        var fileDetail;
 
         destinationFileBaseName.subscribe(function (newValue) {
 
@@ -73,6 +77,11 @@ define([
             params.checkFilename(actualFilename)
                 .then(function (result) {
                     if (result.exists) {
+                        if (fileDetail.file.md5sum === result.exists.md5) {
+                            filenameStatus.identical(true);
+                        } else {
+                            filenameStatus.identical(false);
+                        }
                         filenameStatus.exists(result.exists);
                         filenameStatus.error(null);
                     } else if (result.error) {
@@ -99,16 +108,19 @@ define([
         var stageButtonEnabled = ko.pureComputed(function () {
             if (filenameStatus.error()) {
                 return false;
-            }
+            } 
             if (filenameStatus.loading()) {
                 return false;
             }
             return true;
         });
 
+       
         params.getDetail(params.id)
             .then(function (result) {
                 item(result);
+
+                fileDetail = result;
 
                 destinationFileExtension(result.file.parts.extension);
                 destinationFileBaseName(result.file.parts.base);
@@ -370,11 +382,17 @@ define([
                     whiteSpace: 'normal'
                 },
                 dataBind: {
-                    with: 'filenameStatus.exists'
+                    with: 'filenameStatus'
                 }
-            }, [
-                p('A filename with this name already exists.'),
+            }, [   
+                p({style: {
+                    fontWeight: 'bold'
+                }}, 'A filename with this name already exists in your staging area.'),
+                             
                 table({
+                    dataBind: {
+                        with: 'exists'
+                    },
                     class: 'table',
                     style: {
                         backgroundColor: 'transparent',
@@ -382,7 +400,7 @@ define([
                     }
                 }, [
                     tr([
-                        th('Copied on'),
+                        th('Copied'),
                         td({
                             dataBind: {
                                 typedText: {
@@ -395,7 +413,7 @@ define([
                         })
                     ]),
                     tr([
-                        th('Copied on'),
+                        th('Size'),
                         td({
                             dataBind: {
                                 typedText: {
@@ -407,7 +425,21 @@ define([
                         })
                     ])
                 ]),
-                p('You may still copy this file to your Staging Area, but it will overwrite the existing file.'),
+                '<!-- ko if: identical -->',
+                p([
+                    'It is ',
+                    b('identical'),
+                    ' to the file you are copying, so copying is unnecceary.'
+                ]),
+                '<!-- /ko -->',
+                '<!-- ko ifnot: identical -->',
+                p([
+                    'It is ',
+                    b('different'), 
+                    ' than the one you are copying.'
+                ]),
+                '<!-- /ko -->',
+                // p('You may still copy this file to your Staging Area, but it will overwrite the existing file.'),
                 p('You may change the filename above to create a unique filename.')
             ]),
             '<!-- /ko -->',

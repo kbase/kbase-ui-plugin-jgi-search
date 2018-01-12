@@ -87,7 +87,7 @@ define([
                                 margin: '0 4px 0 0'
                             }
                         }),
-                        'Copy JGI File to your Data Staging Area'
+                        'Copy File to your Data Staging Area'
                     ])
                 ]),
                 div({
