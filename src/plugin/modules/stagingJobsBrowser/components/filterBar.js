@@ -69,7 +69,7 @@ define([
             }, [
                 label('Job Status '),
                
-                utils.komponent({
+                ko.kb.komponent({
                     name: 'jgi-search/staging-jobs-browser/job-status-filter',
                     params: {
                         jobStatusFilter: 'jobStatusFilter'

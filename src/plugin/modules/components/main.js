@@ -171,18 +171,27 @@ define([
                 });
         }
 
-        var timer;
+        var disposables = {};
 
-        function jobStatusLoop() {
+        function jobStatusLoop(disposable) {
             getStagingJobStatus()
                 .finally(function () {
-                    timer = window.setTimeout(function () {
-                        jobStatusLoop();
+                    disposable.timeoutId = window.setTimeout(function () {
+                        jobStatusLoop(disposable);
                     }, 10000);
                 });
         }
 
-        jobStatusLoop();
+        var disposable = {
+            disposer: function () {
+                if (this.timeoutId) {
+                    window.clearTimeout(this.timeoutId);
+                }
+            },
+            timoutId: null
+        };
+        disposables['job-status-loop-timer'] = disposable;
+        jobStatusLoop(disposable);
 
 
 
@@ -510,7 +519,8 @@ define([
                             added: utils.usDate(hit.source.added_date),
                             status: hit.source.file_status,
                             types: utils.normalizeFileType(hit.source.file_type),
-                            typing: fileType
+                            typing: fileType,
+                            md5sum: hit.source.md5sum
                         },
                         proposal: hit.source.metadata.proposal,
                         sequencingProject: sequencingProject,
@@ -1358,6 +1368,20 @@ define([
             sortColumns.push(column);
         }
 
+        console.log('hmm');
+        function dispose() {
+            console.log('running disposables...');
+            Object.keys(disposables).forEach(function (key) {
+                var disposable = disposables[key];
+                try {
+                    console.log('running disposer for :' + key)
+                    disposables[key].disposer.call(disposable);
+                } catch (ex) {
+                    console.log('ERROR running disposer "' + key + '"', ex);
+                }
+            });
+        }
+
         var vm = {
             search: {
                 // INPUTS
@@ -1423,7 +1447,8 @@ define([
 
                 sortBy: sortBy
             },
-            overlayComponent: overlayComponent
+            overlayComponent: overlayComponent,
+            dispose: dispose
         };
         return vm;
     }
@@ -1449,7 +1474,7 @@ define([
 
             '<!-- ko case: "needagreement" -->', 
             // '<!-- ko ifnot: $component.search.jgiTermsAgreed() -->',
-            utils.komponent({
+            ko.kb.komponent({
                 name: 'jgi-search/terms',
                 params: {
                     search: 'search'
@@ -1459,7 +1484,7 @@ define([
 
             '<!-- ko case: "agreed" -->', 
             // '<!-- ko if: $component.search.jgiTermsAgreed() -->',
-            utils.komponent({
+            ko.kb.komponent({
                 name: 'jgi-search/search',
                 params: {
                     search: 'search'
@@ -1468,7 +1493,7 @@ define([
             '<!-- /ko -->',
 
             '<!-- /ko -->',
-            utils.komponent({
+            ko.kb.komponent({
                 name: 'generic/overlay-panel-bootstrappish',
                 params: {
                     component: 'overlayComponent',

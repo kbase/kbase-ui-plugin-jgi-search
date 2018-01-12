@@ -1,43 +1,23 @@
-/*
-Top level panel for jgi search
-*/
 define([
-    'knockout-plus',
-    'kb_common/html',
-    './lib/utils'
+    'knockout-plus'
 ], function (
-    ko,
-    html,
-    utils
+    ko
 ) {
     'use strict';
-
-    var t = html.tag,
-        div = t('div');
 
     function factory(config) {
         var runtime = config.runtime;
         var hostNode, container;
-
-        var styles = html.makeStyles({
-            plugin: {
-                flex: '1 1 0px',
-                display: 'flex',
-                flexDirection: 'column'
-            }           
-        });
-
+        var rootComponent;
+       
         function showFeedback() {
             alert('redirect to feedback form...');
         }
 
         function attach(node) {
             hostNode = node;
-            // container = node;
-            container = hostNode.appendChild(document.createElement('div'));
-            container.style.flex = '1 1 0px';
-            container.style.display = 'flex';
-            container.style['flex-direction'] = 'column';
+            rootComponent = ko.kb.createRootComponent(runtime, 'jgi-search/main');
+            container = hostNode.appendChild(rootComponent.node);
         }
 
         function start() {
@@ -58,25 +38,11 @@ define([
                 }
             });
 
-            container.innerHTML = div({
-                class: styles.classes.plugin
-            }, [
-                styles.sheet,
-                utils.komponent({
-                    name: 'jgi-search/main',
-                    params: {
-                        runtime: 'runtime'
-                    }
-                })
-            ]);
-            var vm = {
-                runtime: runtime
-            };
-            ko.applyBindings(vm, container);
+            rootComponent.vm.running(true);
         }
 
         function stop() {
-            // nothing yet.
+            rootComponent.vm.running(false);
         }
 
         function detach() {

@@ -108,7 +108,7 @@ define([
     }
 
     function buildInputArea() {
-        return utils.komponent({
+        return ko.kb.komponent({
             name: 'generic/search-bar',
             params: {
                 logo: 'logo',
@@ -411,7 +411,7 @@ define([
     }
 
     function buildResultsArea() {
-        return utils.komponent({
+        return ko.kb.komponent({
             name: 'jgi-search/browser',
             params: {
                 search: 'search',

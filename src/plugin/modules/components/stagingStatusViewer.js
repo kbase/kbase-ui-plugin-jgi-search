@@ -41,7 +41,7 @@ define([
    
 
     function buildJobsBrowser() {
-        return utils.komponent({
+        return ko.kb.komponent({
             name: 'jgi-search/staging-jobs-browser/main',
             params: {
                 runtime: 'runtime'

@@ -493,7 +493,7 @@ define([
     });
 
     function buildInputArea() {
-        return utils.komponent({
+        return ko.kb.komponent({
             name: 'jgi-search/staging-jobs-browser/search-bar',
             params: {
                 search: 'search'
@@ -502,7 +502,7 @@ define([
     }
     
     function buildFilterArea() {
-        return utils.komponent({
+        return ko.kb.komponent({
             name: 'jgi-search/staging-jobs-browser/filter-bar',
             params: {
                 search: 'search'
@@ -511,7 +511,7 @@ define([
     }
 
     function buildResultsArea() {
-        return utils.komponent({
+        return ko.kb.komponent({
             name: 'jgi-search/staging-jobs-browser/generic/browser',
             params: {
                 search: 'search'

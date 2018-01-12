@@ -9,44 +9,7 @@ define([
     'use strict';
 
     var t = html.tag,
-        div = t('div'),
-        style = t('style');
-
-    function komponent(componentDef) {
-        return '<!-- ko component: {name: "' + componentDef.name +
-            '", params: {' +
-            Object.keys(componentDef.params).map(function (key) {
-                return key + ':' + componentDef.params[key];
-            }).join(',') + '}}--><!-- /ko -->';
-    }
-
-    function camelToHyphen(s) {
-        return s.replace(/[A-Z]/g, function (m) {
-            return '-' + m.toLowerCase();
-        });
-    }
-
-    function makeStyleAttribs(attribs) {
-        if (attribs) {
-            return Object.keys(attribs)
-                .map(function (rawKey) {
-                    var value = attribs[rawKey],
-                        key = camelToHyphen(rawKey);
-
-                    if (typeof value === 'string') {
-                        return key + ': ' + value;
-                    }
-                    // just ignore invalid attributes for now
-                    // TODO: what is the proper thing to do?
-                    return '';
-                })
-                .filter(function (field) {
-                    return field ? true : false;
-                })
-                .join('; ');
-        }
-        return '';
-    }
+        div = t('div');
 
     function grokFastq(dataTypeDef, hit) {
 
@@ -408,75 +371,6 @@ define([
             extensionToDataType[extension] = dataType;
         });
     });
-
-    function grokFileTypex(extension, indexedFileTypes) {
-        // The file type provided by the metadata may be a string,
-        // array, or missing.
-        if (!indexedFileTypes) {
-            indexedFileTypes = [];
-        } else if (typeof indexedFileTypes === 'string') {
-            indexedFileTypes = [indexedFileTypes];
-        }
-
-        // Rely on the indexed file type to determine the data representation.
-        // TODO: how is this determined?
-        // Here we find the canonical types, and hopefully condensed down to one...
-
-        var dataTypes = {};
-        var encodings = {};
-
-        // First we inspect the indexed file types as provided by JGI. If just
-        // all matching ones resolve to the same data type, we have a
-        // match.
-        // At the same time, we get the encoding by the same method.
-        // In some cases there is a base data type (e.g. fasta) and a
-        // encoded data type (e.g. fasta.gz) in the file types list provided
-        // by jgi.
-        indexedFileTypes.forEach(function (type) {
-            var indexedType = Import.indexedTypes[type];
-            // console.log('grokking...', type, indexedType);
-            if (indexedType) {
-                if (indexedType.dataType) {
-                    dataTypes[indexedType.dataType] = true;
-                }
-                if (indexedType.encoding) {
-                    encodings[indexedType.encoding] = true;
-                }
-            }
-        });
-        if (Object.keys(dataTypes).length > 1) {
-            throw new Error('Too many types matched: ' + dataTypes.join(', '));
-        }
-        if (Object.keys(encodings).length > 1) {
-            throw new Error('Too many encodings matched: ' + encodings.joins(', '));
-        }
-        if (Object.keys(dataTypes).length === 1) {
-            var dataType = Object.keys(dataTypes)[0];
-            var encoding = Object.keys(encodings)[0] || 'none';
-            return {
-                dataType: dataType,
-                encoding: encoding
-            };
-        }
-
-        // If we get here, the file type matching strategy didn't work.
-        // Some file types are too generic (e.g. text for genbank).
-        // In this case, we just trust the file extension.
-        // TODO: we can also inspect other properties of the metadata to
-        // be sure, or to filter for certain properties which tell us we
-        // can't import it.
-        dataType = extensionToDataType[extension];
-        if (dataType) {
-            return {
-                dataType: dataType.name,
-                enconding: null
-            };
-        }
-        return {
-            dataType: null,
-            encoding: null
-        };
-    }
 
     var supportedTypes = {
         fasta: {
@@ -1123,7 +1017,6 @@ define([
     JGISearchError.prototype.name = 'JGISearchError';
 
     return {
-        komponent: komponent,
         grokTitle: grokTitle,
         grokScientificName: grokScientificName,
         grokPI: grokPI,
