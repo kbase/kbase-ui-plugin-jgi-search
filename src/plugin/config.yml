@@ -21,10 +21,6 @@ install:
       id: jgi-search_tabs
       type: factory
       css: true
-    # -
-    #   module: listJobs
-    #   id: kb_jgi_search_list_jobs
-    #   type: factory
   ko-components:
     -
       name: jgi-search/main
@@ -39,27 +35,13 @@ install:
       module: components/browser
       type: factory
     -
-      name: 'jgi-search/search-result'
-      module: components/search-result
-      type: factory
-    -
       name: 'jgi-search/search-result2'
       module: components/search-result2
       type: factory
-    # -
-    #   name: 'jgi-search/table'
-    #   module: components/table
-    #   type: factory
-      
-
     -
       name: 'help'
       module: 'components/help'
       css: true
-      type: factory
-    -
-      name: jgi-search/quick-view
-      module: components/quickView
       type: factory
     -
       name: jgi-search/terms
