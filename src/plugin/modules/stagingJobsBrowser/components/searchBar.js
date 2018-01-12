@@ -44,8 +44,6 @@ define([
             }
         }
 
-        
-
         // When it is updated by either of those methods, we save
         // it in the search history, and also forward the value to
         // the search query.

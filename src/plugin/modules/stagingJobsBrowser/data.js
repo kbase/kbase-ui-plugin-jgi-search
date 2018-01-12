@@ -21,7 +21,7 @@ define([
                 username: runtime.service('session').getUsername(),
                 job_monitoring_id: jobMonitoringId
             };
-            return rpc.call('jgi_gateway_eap', 'remove_staging_job', param)
+            return rpc.call('jgi_gateway', 'remove_staging_job', param)
                 .spread(function (result, error) {
                     // console.log('deletion result...', result, error);
                     if (result) {
@@ -49,7 +49,7 @@ define([
                     limit: limit
                 }
             };
-            return rpc.call('jgi_gateway_eap', 'staging_jobs', param)
+            return rpc.call('jgi_gateway', 'staging_jobs', param)
                 .spread(function (result, error) {
                     if (result) {
                         // console.log('got staging jobs...', result);

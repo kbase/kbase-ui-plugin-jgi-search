@@ -3,7 +3,7 @@
 
 function monitorProgress(jobId, progress, color) {
     function checkProgress() {
-        return rpc.call('jgi_gateway_eap', 'stage_status', {
+        return rpc.call('jgi_gateway', 'stage_status', {
                 job_id: jobId
             })
             .spread(function (result, stats) {
@@ -52,7 +52,7 @@ var statusConfig = {
 };
 
     function doStage(stagingSpec) {
-        return rpc.call('jgi_gateway_eap', 'stage', {
+        return rpc.call('jgi_gateway', 'stage', {
                 ids: [stagingSpec.indexId]
             })
             .spread(function (result) {

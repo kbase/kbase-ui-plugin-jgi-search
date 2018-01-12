@@ -155,7 +155,7 @@ define([
                 username: runtime.service('session').getUsername(),
                 job_monitoring_ids: []
             };
-            return rpc.call('jgi_gateway_eap', 'staging_jobs_summary', param)
+            return rpc.call('jgi_gateway', 'staging_jobs_summary', param)
                 .spread(function (result, error) {
                     if (error) {
                         console.error('ERROR', error);
@@ -214,7 +214,7 @@ define([
         //             limit: 1000
         //         }
         //     };
-        //     return rpc.call('jgi_gateway_eap', 'staging_jobs', param)
+        //     return rpc.call('jgi_gateway', 'staging_jobs', param)
         //         .spread(function (result, error) {
         //             if (result) {
         //                 result.jobs.forEach(function (job) {
@@ -243,7 +243,7 @@ define([
         // getStagingJobs();
 
         function doStage(id, fileName) {
-            return rpc.call('jgi_gateway_eap', 'stage', {
+            return rpc.call('jgi_gateway', 'stage', {
                 file: {
                     id: id,
                     filename: fileName,
@@ -321,7 +321,7 @@ define([
                 page: page,
                 include_private: 0
             };
-            return rpc.call('jgi_gateway_eap', 'search', param);
+            return rpc.call('jgi_gateway', 'search', param);
         }
 
         function doRemoveError(data) {
@@ -417,7 +417,7 @@ define([
                 page: 1,
                 include_private: 0
             };
-            return rpc.call('jgi_gateway_eap', 'search', param)
+            return rpc.call('jgi_gateway', 'search', param)
                 .catch(function (err) {
                     console.error('ERROR', err, query, typeof page, typeof pageSize);
                     throw err;

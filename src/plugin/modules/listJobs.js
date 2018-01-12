@@ -45,7 +45,7 @@ define([
         function start(params) {
             container.innerHTML = 'jobs...';
 
-            return serviceCall('jgi_gateway_eap', 'list_jobs', [])
+            return serviceCall('jgi_gateway', 'list_jobs', [])
                 .then(function (result) {
                     console.log('got it!', result);
                 })

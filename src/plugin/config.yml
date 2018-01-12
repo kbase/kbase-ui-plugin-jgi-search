@@ -76,7 +76,6 @@ install:
       name: jgi-search/staging-status
       module: components/stagingStatus
       type: factory
-
     -
       name: jgi-search/inspect-control
       module: components/inspectControl

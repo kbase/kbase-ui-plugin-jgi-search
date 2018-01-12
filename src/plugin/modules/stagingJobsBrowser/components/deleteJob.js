@@ -13,7 +13,6 @@ define([
 
     function viewModel(params) {
         function doDelete(data) {
-            console.log('deleting job', data, params);
             params.env.removeJob(data.jobMonitoringId);
         }
         return {

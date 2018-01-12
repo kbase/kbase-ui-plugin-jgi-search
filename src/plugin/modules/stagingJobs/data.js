@@ -26,7 +26,7 @@ define([
                     limit: count
                 }
             };
-            return rpc.call('jgi_gateway_eap', 'staging_jobs', param)
+            return rpc.call('jgi_gateway', 'staging_jobs', param)
                 .spread(function (result, error) {
                     if (result) {
                         result.jobs.forEach(function (job) {

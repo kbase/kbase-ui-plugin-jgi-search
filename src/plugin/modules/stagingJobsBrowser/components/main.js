@@ -112,10 +112,9 @@ define([
         // Data fetch
 
         function removeJob(jobMonitoringId) {
-            console.log('removing job...', jobMonitoringId);
             return data.deleteStagingJob(jobMonitoringId)
                 .then(function () {
-                    console.log('job deleted...');
+                    // console.log('job deleted...');
                 })
                 .catch(function (err) {
                     console.error('ERROR!', err);

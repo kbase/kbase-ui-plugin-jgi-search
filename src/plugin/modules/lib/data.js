@@ -26,7 +26,7 @@ define([
                 page: 1,
                 include_private: 0
             };
-            return rpc.call('jgi_gateway_eap', 'search', param)
+            return rpc.call('jgi_gateway', 'search', param)
                 .catch(function (err) {
                     console.error('ERROR', err, query, typeof page, typeof pageSize);
                     throw err;
