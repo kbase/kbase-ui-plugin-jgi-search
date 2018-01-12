@@ -171,26 +171,33 @@ define([
                 });
         }
 
-        var disposables = {};
+        var disposables = [];
 
         function jobStatusLoop(disposable) {
             getStagingJobStatus()
                 .finally(function () {
-                    disposable.timeoutId = window.setTimeout(function () {
-                        jobStatusLoop(disposable);
-                    }, 10000);
+                    if (disposable.looping) {
+                        disposable.timeoutId = window.setTimeout(function () {
+                            disposable.timeoutId = null;
+                            jobStatusLoop(disposable);
+                        }, 10000);
+                    }
                 });
         }
 
         var disposable = {
+            name: 'Job Status Loop',
             disposer: function () {
                 if (this.timeoutId) {
+                    this.looping = false;
                     window.clearTimeout(this.timeoutId);
+                    this.timeoutId = null;
                 }
             },
+            looping: true,
             timoutId: null
         };
-        disposables['job-status-loop-timer'] = disposable;
+        disposables.push(disposable);
         jobStatusLoop(disposable);
 
 
@@ -1368,16 +1375,12 @@ define([
             sortColumns.push(column);
         }
 
-        console.log('hmm');
         function dispose() {
-            console.log('running disposables...');
-            Object.keys(disposables).forEach(function (key) {
-                var disposable = disposables[key];
+            disposables.forEach(function (disposable) {
                 try {
-                    console.log('running disposer for :' + key)
-                    disposables[key].disposer.call(disposable);
+                    disposable.disposer.call(disposable);
                 } catch (ex) {
-                    console.log('ERROR running disposer "' + key + '"', ex);
+                    console.log('ERROR running disposer "' + disposable.name + '"', ex);
                 }
             });
         }
