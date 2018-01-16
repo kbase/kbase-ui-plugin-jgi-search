@@ -1,10 +1,13 @@
 define([
     'kb_common/jsonRpc/dynamicServiceClient',
     'kb_common/jsonRpc/genericClient',
-
+    'kb_common/jsonRpc/exceptions',
+    './utils'
 ], function (
     DynamicService,
-    GenericClient
+    GenericClient,
+    exceptions,
+    utils
 ) {
     function factory(config) {
         var runtime = config.runtime;
@@ -30,7 +33,25 @@ define([
             }
             return client.callFunc(functionName, [
                 params
-            ]);
+            ])
+                .catch(function (err) {
+                    console.log('err', err instanceof Error, err instanceof exceptions.CustomError, err instanceof exceptions.AjaxError, err instanceof exceptions.ServerError);
+                    if (err instanceof exceptions.AjaxError) {
+                        console.error('AJAX Error', err);
+                        throw new utils.JGISearchError('ajax', err.code, err.message, null, {
+                            originalError: err
+                        });
+                    } else if (err instanceof exceptions.RpcError) {
+                        console.error('RPC Error', err);
+                        throw new utils.JGISearchError('ajax', err.name, err.message, null , {
+                            originalError: err
+                        });
+                    } else {
+                        throw new utils.JGISearchError('rpc-call', err.name, err.message, null, {
+                            originalError: err
+                        });
+                    }
+                });
         }
 
         return {

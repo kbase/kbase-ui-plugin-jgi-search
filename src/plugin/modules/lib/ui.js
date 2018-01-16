@@ -7,29 +7,52 @@ define([
 
     var t = html.tag,
         button = t('button'),    
+        span = t('span'),
         div = t('div');
 
-    
     function buildDialog(arg) {
         var type = arg.type || 'default';
         var titleColor;
+        var iconClass;
         switch (type) {
         case 'warning':
+            iconClass = 'exclamation-triangle';
             titleColor = '#8a6d3b';
             break;
         case 'danger':
         case 'error':
+            iconClass = 'frown-o';
             titleColor = '#a94442';
             break;
         case 'succcess':
+            iconClass = 'thumbs-up-o';
             titleColor = '##3c763d;';
             break;
+        case 'info':
+            iconClass = 'info';
+            titleColor = '#2e618d';
+            break;
         case 'primary':
+            iconClass = null;
             titleColor = '#2e618d';
             break;
         case 'default':
         default: 
             titleColor = '#000';
+        }
+
+        var icon;
+        if (iconClass) {
+            icon = span({
+                class: 'fa fa-' + iconClass,
+                style: {
+                    marginRight: '4px',
+                    fontWeight: 'bold',
+                    fontSize: '120%'
+                }
+            });
+        } else {
+            icon = '';
         }
 
         var buttons = arg.buttons || [{
@@ -60,7 +83,10 @@ define([
                     padding: '15px',
                     borderBottom: '1px solid #e5e5e5'
                 }
-            }, arg.title),
+            }, [
+                icon,
+                arg.title
+            ]),
             // body
             div({
                 style: {
@@ -119,23 +145,44 @@ define([
     function buildFullHeightDialog(arg) {
         var type = arg.type || 'default';
         var titleColor;
+        var iconClass;
         switch (type) {
         case 'warning':
+            iconClass = 'exclamation-triangle';
             titleColor = '#8a6d3b';
             break;
         case 'danger':
         case 'error':
+            iconClass = 'frown-o';
             titleColor = '#a94442';
             break;
         case 'succcess':
+            iconClass = 'thumbs-up-o';
             titleColor = '##3c763d;';
             break;
+        case 'info':
+            iconClass = 'info';
+            titleColor = '#2e618d';
+            break;
         case 'primary':
+            iconClass = null;
             titleColor = '#2e618d';
             break;
         case 'default':
         default: 
             titleColor = '#000';
+        }
+
+        var icon;
+        if (iconClass) {
+            icon = span({
+                class: 'fa fa-' + iconClass,
+                style: {
+                    marginRight: '4px'
+                }
+            });
+        } else {
+            icon = '';
         }
 
         var buttons = arg.buttons || [{
@@ -170,7 +217,10 @@ define([
                     padding: '15px',
                     borderBottom: '1px solid #e5e5e5'
                 }
-            }, arg.title),
+            }, [
+                icon,
+                arg.title
+            ]),
             // body
             div({
                 style: {

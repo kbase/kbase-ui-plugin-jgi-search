@@ -16,145 +16,6 @@ install:
       id: jgi-search_panel
       type: factory
       css: true
-    -
-      module: widgets/tabsWidget
-      id: jgi-search_tabs
-      type: factory
-      css: true
-  ko-components:
-    -
-      name: jgi-search/main
-      module: components/main
-      type: factory
-    -
-      name: 'jgi-search/search'
-      module: components/search
-      type: factory
-    -
-      name: 'jgi-search/browser'
-      module: components/browser
-      type: factory
-    -
-      name: 'jgi-search/search-result2'
-      module: components/search-result2
-      type: factory
-    -
-      name: 'help'
-      module: 'components/help'
-      css: true
-      type: factory
-    -
-      name: jgi-search/terms
-      module: components/terms
-      type: factory
-      css: true
-    -
-      name: jgi-search/stage-control
-      module: components/stageControl
-      type: factory
-    -
-      name: jgi-search/stage-status
-      module: components/stageStatus
-      type: factory
-    -
-      name: jgi-search/staging-status-indicator
-      module: components/stagingStatusIndicator
-      type: factory
-    -
-      name: jgi-search/stage-file
-      module: components/stageFile
-      type: factory
-    -
-      name: jgi-search/stage-file-control
-      module: components/stageFileControl
-      type: factory
-    -
-      name: jgi-search/staging-status-viewer
-      module: components/stagingStatusViewer
-      type: factory
-    -
-      name: jgi-search/staging-status
-      module: components/stagingStatus
-      type: factory
-    -
-      name: jgi-search/inspect-control
-      module: components/inspectControl
-      type: factory
-    -
-      name: jgi-search/inspector
-      module: components/inspector
-      type: factory
-    -
-      name: jgi-search/search-help
-      module: components/searchHelp
-      type: factory
-    -
-      name: jgi-search/search-error
-      module: components/searchError
-      type: factory  
-
-    # Staging Browser
-    -
-      name: jgi-search/staging-jobs-browser/main
-      module: stagingJobsBrowser/components/main
-      type: factory
-    -
-      name: jgi-search/staging-jobs-browser/filter-bar
-      module: stagingJobsBrowser/components/filterBar
-      type: factory      
-    -
-      name: jgi-search/staging-jobs-browser/job-status-filter
-      module: stagingJobsBrowser/components/jobStatusFilter
-      type: factory      
-    -
-      name: jgi-search/staging-jobs-browser/generic/paging-bar
-      module: stagingJobsBrowser/components/generic/pagingBar
-      type: factory      
-    -
-      name: jgi-search/staging-jobs-browser/search-bar
-      module: stagingJobsBrowser/components/searchBar
-      type: factory      
-    -
-      name: jgi-search/staging-jobs-browser/generic/browser
-      module: stagingJobsBrowser/components/generic/browser
-      type: factory 
-    -
-      name: jgi-search/staging-jobs-browser/generic/result
-      module: stagingJobsBrowser/components/generic/result
-      type: factory     
-    -
-      name: jgi-search/staging-jobs-browser/generic/table
-      module: stagingJobsBrowser/components/generic/table
-      type: factory   
-    -
-      name: jgi-search/staging-jobs-browser/job-clock
-      module: stagingJobsBrowser/components/jobClock
-      type: factory    
-    -
-      name: jgi-search/staging-jobs-browser/delete-job
-      module: stagingJobsBrowser/components/deleteJob
-      type: factory                
-        
-     
-    # GENERIC
-    -
-      name: generic/search-bar
-      module: components/generic/searchBar
-      type: factory
-    -
-      name: 'generic/json-viewer'
-      module: 'components/generic/jsonViewer'
-      css: true
-      type: factory
-    -
-      name: generic/elapsed-clock
-      module: components/generic/elapsedClock
-      type: factory
-    -
-      name: generic/relative-clock
-      module: components/generic/relativeClock
-      type: factory            
-
   routes:
     -
       path: ['jgi', 'search']
@@ -164,18 +25,13 @@ install:
       path: ['jgi', 'listjobs']
       widget: 'kb_jgi_search_list_jobs'
       authorization: true
+
   menu:
     -
       name: jgi-search
       definition:
         path: jgi/search
         label: JGI Search
-        icon: search-plus
-    -
-      name: jgi-search2
-      definition:
-        path: jgi/search2
-        label: JGI Search2
         icon: search-plus
   schema:
     -

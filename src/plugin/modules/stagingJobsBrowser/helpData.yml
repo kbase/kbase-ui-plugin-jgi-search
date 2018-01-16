@@ -1,0 +1,38 @@
+# JGI Search Help Topics
+---
+topics:
+  -
+    id: overview
+    title: Overview
+    content: |
+      This is JGI Search, a tool which allows you to search through public JGI archived data and import
+      it into a KBase Narrative.
+      
+      To get started, simply type your search terms into the search box.
+
+  -
+    id: search-syntax
+    title: Search Syntax
+    content: |
+      You may simply enter all search terms by which you want to restrict the search by typing the words seaprated by at least one space -- all terms are "anded" together. The asterisk "*" may be appended to a term to match anything beginning with it. Searches are case insensitive.
+
+      Note that this is a free-text search, so terms will match any available field. Searching by a genus, for instance, will match not just the genus field, but may match a title, description, scientific name, or file name.
+
+      You may also use the following search operators:
+
+        - **and**: include only items which include the follow term (this is the default when one search term follows another)
+        - **or**: include all items which also may include the following term
+        - **not**: reverses the meaning of the term -- "and not" means include only items which do not include the following term; "or not" means to include all items which do not include the following term;
+
+      > Example: ```strep* and fastq``` will find all items with a word beginning with "strep" and including the exact word "fastq". To restrict the search to a more specific genus you could instead use "streptococcus and fastq"
+  -
+    id: how-indexed
+    title: What data is indexed?
+    content: |
+        We are still trying to sort that out...  
+
+references:
+  -
+    url: http://kbase.us/help/jgi-search-and-import/
+    title: Help Page for JGI Search and Import
+    external: true

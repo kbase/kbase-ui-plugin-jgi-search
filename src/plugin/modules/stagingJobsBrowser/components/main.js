@@ -5,7 +5,10 @@ define([
     '../../lib/utils',
     '../../lib/profile',
     '../data',
-    '../schema'
+    '../schema',
+    './searchBar',
+    './filterBar',
+    './browser'
 ], function(
     ko,
     moment,
@@ -13,7 +16,10 @@ define([
     utils,
     Profile,
     Data,
-    schema
+    schema,
+    SearchBarComponent,
+    FilterBarComponent,
+    BrowserComponent
 ) {
     'use strict';
 
@@ -493,7 +499,7 @@ define([
 
     function buildInputArea() {
         return ko.kb.komponent({
-            name: 'jgi-search/staging-jobs-browser/search-bar',
+            name: SearchBarComponent.name(),
             params: {
                 search: 'search'
             }
@@ -502,7 +508,7 @@ define([
     
     function buildFilterArea() {
         return ko.kb.komponent({
-            name: 'jgi-search/staging-jobs-browser/filter-bar',
+            name: FilterBarComponent.name(),
             params: {
                 search: 'search'
             }
@@ -511,7 +517,7 @@ define([
 
     function buildResultsArea() {
         return ko.kb.komponent({
-            name: 'jgi-search/staging-jobs-browser/generic/browser',
+            name: BrowserComponent.name(),
             params: {
                 search: 'search'
             }
@@ -547,5 +553,5 @@ define([
         };
     }
 
-    return component;
+    return ko.kb.registerComponent(component);
 });

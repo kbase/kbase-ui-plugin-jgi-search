@@ -1,18 +1,17 @@
 define([
     'knockout-plus',
     'kb_common/html',
-    '../../lib/utils'
+    './jobStatusFilter'
 ], function(
     ko,
     html,
-    utils
+    JobStatusFilterComponent
 ) {
     'use strict';
 
     var t = html.tag,
         span = t('span'),
         label = t('label'),
-        select = t('select'),
         div = t('div');
 
     function viewModel(params) {      
@@ -46,8 +45,6 @@ define([
         }
     });
 
-
-
     function buildFilterArea() {
         return div({
             class: 'form-inline',
@@ -70,7 +67,7 @@ define([
                 label('Job Status '),
                
                 ko.kb.komponent({
-                    name: 'jgi-search/staging-jobs-browser/job-status-filter',
+                    name: JobStatusFilterComponent.name(),
                     params: {
                         jobStatusFilter: 'jobStatusFilter'
                     }
@@ -91,5 +88,5 @@ define([
         };
     }
 
-    return component;
+    return ko.kb.registerComponent(component);
 });

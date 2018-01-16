@@ -11,7 +11,7 @@ define([
 
     var t = html.tag,
         div = t('div'),
-        button = t('button');
+        span = t('span');
 
     function validateViewModel(params) {
         var spec = {            
@@ -76,6 +76,12 @@ define([
             }
             return error().info;
         });
+        var stackTrace = ko.pureComputed(function () {
+            if (!error()) {
+                return;
+            }
+            return error().stackTrace;
+        });
 
         function doClose() {
             params.onClose();
@@ -98,7 +104,8 @@ define([
             code: code,
             message: message,
             detail: detail,
-            info: info
+            info: info,
+            stackTrace: stackTrace
         };
     }
 
@@ -112,7 +119,8 @@ define([
                         code: 'code',
                         message: 'message',
                         detail: 'detail',
-                        info: 'info'
+                        info: 'info',
+                        stackTrace: 'stackTrace'
                     }
                 }
             }
@@ -120,7 +128,7 @@ define([
     }
 
     function buildTitle() {
-        return div({
+        return span({
             dataBind: {
                 text: 'title'
             }
@@ -190,5 +198,5 @@ define([
         };
     }
 
-    return component;
+    return ko.kb.registerComponent(component);
 });

@@ -160,8 +160,10 @@ define([
                     var profile = Props.make({
                         data: profiles[0]
                     });
-
-                    var history = profile.getItem('profile.plugins.jgi-search.settings.searchInputHistory', {});
+                    var history = profile.getItem('profile.plugins.jgi-search.settings.searchInputHistory');
+                    if (!(history.history instanceof Array)) {
+                        history.history = [];
+                    }
                     return [history.history || [], null];
                 })
                 .catch(function (err) {

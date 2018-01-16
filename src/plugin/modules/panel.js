@@ -1,7 +1,9 @@
 define([
-    'knockout-plus'
+    'knockout-plus',
+    './components/main'
 ], function (
-    ko
+    ko,
+    MainComponent
 ) {
     'use strict';
 
@@ -16,7 +18,7 @@ define([
 
         function attach(node) {
             hostNode = node;
-            rootComponent = ko.kb.createRootComponent(runtime, 'jgi-search/main');
+            rootComponent = ko.kb.createRootComponent(runtime, MainComponent.name());
             container = hostNode.appendChild(rootComponent.node);
         }
 

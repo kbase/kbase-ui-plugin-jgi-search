@@ -1,9 +1,13 @@
 define([
     'knockout-plus',
-    './components/startedClock'
+    './components/controls/startedClock',
+    './components/controls/jobClock',
+    './components/controls/deleteJob'
 ], function (
     ko,
-    StartedClockComponent
+    StartedClockComponent,
+    JobClockComponent,
+    DeleteJobComponent
 ) {
     
     var columns = [
@@ -18,8 +22,7 @@ define([
                 direction: ko.observable('descending'),
                 // active: ko.observable(false) 
             },
-            // component: 'jgi-search/staging-jobs-browser/started-clock'
-            component: StartedClockComponent.name
+            component: StartedClockComponent.name()
         },
         {
             name: 'status',
@@ -38,7 +41,7 @@ define([
             type: 'date',
             format: 'duration',
             width: 20,
-            component: 'jgi-search/staging-jobs-browser/job-clock'
+            component: JobClockComponent.name()
             // sort: {
             //     keyName: 'updated',
             //     direction: ko.observable('descending'),
@@ -91,7 +94,7 @@ define([
             name: 'delete',
             label: '',
             width: 10,
-            component: 'jgi-search/staging-jobs-browser/delete-job'
+            component: DeleteJobComponent.name()
         }
     ];
 

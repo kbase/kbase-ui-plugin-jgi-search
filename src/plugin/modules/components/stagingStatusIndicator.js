@@ -1,6 +1,8 @@
 define([
+    'knockout-plus',
     'kb_common/html'
 ], function (
+    ko,
     html
 ) {
     'use strict';
@@ -135,5 +137,5 @@ define([
         };
     }
 
-    return component;
+    return ko.kb.registerComponent(component);
 });

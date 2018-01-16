@@ -2,17 +2,18 @@ define([
     'knockout-plus',
     'kb_common/html',
     '../lib/utils',
-    '../lib/ui'
+    '../lib/ui',
+    '../stagingJobsBrowser/components/main'
 ], function (
     ko,
     html,
     utils,
-    ui
+    ui,
+    StagingJobsBrowserComponent
 ) {
     'use strict';
 
-    var t = html.tag,
-        button = t('button'),    
+    var t = html.tag, 
         div = t('div');
 
     function viewModel(params) {
@@ -42,7 +43,7 @@ define([
 
     function buildJobsBrowser() {
         return ko.kb.komponent({
-            name: 'jgi-search/staging-jobs-browser/main',
+            name: StagingJobsBrowserComponent.name(),
             params: {
                 runtime: 'runtime'
             }
@@ -71,5 +72,5 @@ define([
         };
     }
 
-    return component;
+    return ko.kb.registerComponent(component);
 });

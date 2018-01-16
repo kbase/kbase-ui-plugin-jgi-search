@@ -1,7 +1,7 @@
 define([
     'knockout-plus',
     'kb_common/html',
-    './help'
+    '../../help/components/searchHelp'
 ], function (
     ko,
     html,
@@ -92,6 +92,11 @@ define([
             return null;
         });
 
+        function doClearInput() {
+            params.search.searchInput('');
+        }
+
+
         function doRunSearch() {
             addToSearchHistory(searchControlValue());
             params.search.searchInput(searchControlValue());
@@ -125,12 +130,6 @@ define([
 
         document.addEventListener('click', clickListener, true);
 
-        function doRefreshSearch() {
-            params.search.refreshSearch();
-        }
-
-        // LIFECYCLE
-
         function dispose() {
             if (clickListener) {
                 document.removeEventListener('click', clickListener, true);
@@ -159,7 +158,7 @@ define([
             doHelp: doHelp,
             doRunSearch: doRunSearch,
             doKeyUp: doKeyUp,
-            doRefreshSearch: doRefreshSearch,
+            doClearInput: doClearInput,
 
             // LIFECYCLE
             dispose: dispose
@@ -218,6 +217,12 @@ define([
                     color: 'white'
                 }
             }
+        },
+        addonButtonDisabled: {
+            css: {
+                color: 'gray',
+                cursor: 'normal'
+            }
         }
     });
 
@@ -232,7 +237,7 @@ define([
         }, [
             '<!-- ko if: logo -->',
             div({
-                class: 'input-group-addon',
+                class: 'input-group-addon ',
                 style: {
                     padding: '0',
                     border: 'none',
@@ -273,7 +278,6 @@ define([
                 class: 'fa',
                 style: {
                     fontSize: '100%',
-                    color: '#000'
                 },
                 dataBind: {
                     css: {
@@ -304,7 +308,7 @@ define([
                             keyup: 'doKeyUp'
                         }
                     },
-                    placeholder: 'Search File Staging Jobs'
+                    placeholder: 'Search JGI Data'
                 }),
                 '<!-- ko if: showHistory -->',
                 div({
@@ -339,10 +343,16 @@ define([
             ]),
             div({
                 class: 'input-group-addon ' + styles.classes.addonButton,
+                dataBind: {
+                    click: 'searchControlValue() ? doClearInput : null',
+                    css: 'searchControlValue() ? "' + styles.classes.addonButton + '" : "' + styles.classes.addonButtonDisabled + '"'
+                }
+            }, span({
+                class: 'fa fa-times'
+            })),
+            div({
+                class: 'input-group-addon ' + styles.classes.addonButton,
                 dataType: 'history-toggle-button',
-                style: {
-                    cursor: 'pointer'
-                },
                 dataBind: {
                     click: 'doToggleHistory',
                     style: {
@@ -354,25 +364,7 @@ define([
                 class: 'fa fa-history'
             })),
             div({
-                class: 'input-group-addon ' + styles.classes.addonButton,
-                dataType: 'refresh-button',
-                style: {
-                    cursor: 'pointer'
-                },
-                dataBind: {
-                    click: 'doRefreshSearch',
-                    style: {
-                        'background-color': 'searching() ? "silver" : null'
-                    }
-                }
-            }, span({
-                class: 'fa fa-refresh'
-            })),
-            div({
-                class: 'input-group-addon ' + styles.classes.addonButton,
-                style: {
-                    cursor: 'pointer'
-                },
+                class: 'input-group-addon '  + styles.classes.addonButton,
                 dataBind: {
                     click: 'doHelp'
                 }
