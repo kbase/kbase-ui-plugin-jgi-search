@@ -1,3 +1,10 @@
+/*
+stageFileControl
+
+A subcomponent of the stageFileDialog, provides the button and associated staging
+feedback for issuing a request to copy a JAMO file to KBase Staging, and to subsequently
+monitor it.
+*/
 define([
     'knockout-plus',
     'kb_common/html',
@@ -18,8 +25,6 @@ define([
     function viewModel(params) {
         var id = params.id;
         var fileName = params.fileName;
-        var transferJob = params.transferJob;
-        var enabled = params.enabled;
 
         var stagingStatus = ko.observable();
         var error = ko.observable();
@@ -32,32 +37,38 @@ define([
             // stagingStatus('requesting');
 
             // TODO: need to work on the detail item structure!
+            params.doStage();
+            // todo: reflect simple error status here? 
 
-            params.doStage(id, fileName())
-                .then(function (result) {
-                    if ('jobId' in result) {
-                        transferJob(result);
-                        // stagingStatus('sent');
-                    } else {
-                        // stagingStatus('error');
-                        error(result);
-                    }
-                })
-                .catch(function (err) {
-                    // stagingStatus('error');
-                    error({
-                        message: err.message,
-                        error: err
-                    });
-                });
+            // params.doStage(id, fileName())
+            //     .then(function (result, error) {
+            //         console.log('staged??', result);
+            //         if (result) {
+            //             // create a transfer job
+            //             transferJob(result);
+            //             // stagingStatus('sent');
+            //         } else {
+            //             // stagingStatus('error');
+            //             error(error);
+            //         }
+            //     })
+            //     .catch(function (err) {
+            //         // stagingStatus('error');
+
+            //         console.error('ERROR', err);
+            //         error({
+            //             message: err.message,
+            //             error: err
+            //         });
+            //     });
         }
 
         return {
             doStage: doStage,
             stagingStatus: stagingStatus,
-            transferJob: transferJob,
+            transferJobMonitor: params.transferJobMonitor,
             error: error,
-            enabled: enabled
+            enabled: params.enabled
         };
     }
 
@@ -73,13 +84,16 @@ define([
                     margin: '10px auto 20px auto'
                 }
             }, [
+                '<!-- ko ifnot: transferJobMonitor.status() -->',
+                // Button to request copy to staging
+                // disabled when the transfer is in progress or completed.
                 div({
                     class: 'button-group'
                 }, [
                     button({
                         dataBind: {
                             click: '$component.doStage',
-                            disable: 'transferJob() || !enabled()'
+                            disable: 'transferJobMonitor.status() || !enabled()'
                         },
                         class: 'btn btn-primary'
                     }, [
@@ -92,30 +106,31 @@ define([
                         'Copy File to your Data Staging Area'
                     ])
                 ]),
-                div({
-                    style: {
-                        textAlign: 'center',
-                        marginTop: '4px'
-                    }
-                }, [
+                '<!-- /ko -->'
+                // div({
+                //     style: {
+                //         textAlign: 'center',
+                //         marginTop: '4px'
+                //     }
+                // }, [
 
-                    '<!-- ko if: $component.error -->',
-                    div({
-                        dataBind: {
-                            with: '$component.error'
-                        },
-                        style: {
-                            border: '2px red solid'
-                        }
-                    }, [
-                        div({
-                            dataBind: {
-                                text: 'message'
-                            }
-                        })
-                    ]),
-                    '<!-- /ko -->'
-                ])
+                //     '<!-- ko if: transferJobMonitor.error -->',
+                //     div({
+                //         dataBind: {
+                //             with: 'transferJobMonitor.error'
+                //         },
+                //         style: {
+                //             border: '2px red solid'
+                //         }
+                //     }, [
+                //         div({
+                //             dataBind: {
+                //                 text: 'message'
+                //             }
+                //         })
+                //     ]),
+                //     '<!-- /ko -->'
+                // ])
             ]),
             div({
                 style: {
@@ -123,9 +138,10 @@ define([
                     margin: '10px auto 20px auto'
                 }
             }, [
-                '<!-- ko if: transferJob() -->',
+                // show status if we have any...
+                '<!-- ko if: transferJobMonitor.status() -->',
 
-                '<!-- ko if: transferJob().status() !== "completed" -->',
+                '<!-- ko if: transferJobMonitor.status() !== "completed" -->',
                 div({
                     style: {
                         border: '1px orange solid',
@@ -137,12 +153,16 @@ define([
                             textAlign: 'center'
                         }
                     }, [
+                        /*
+                            This component just shows the status of the staging job,
+                            given a job status which may be an observable.
+                        */
                         span({
                             dataBind: {
                                 component: {
                                     name: StagingStatusIndicatorComponent.quotedName(),
                                     params: {
-                                        status: 'transferJob().status'
+                                        status: 'transferJobMonitor.status'
                                     }
                                 }
                             }
@@ -152,7 +172,7 @@ define([
                 ]),
                 '<!-- /ko -->',
 
-                '<!-- ko if: transferJob().status() == "completed" -->',
+                '<!-- ko if: transferJobMonitor.status() == "completed" -->',
                 div({
                     style: {
                         border: '1px green solid',
@@ -166,12 +186,25 @@ define([
                 ]),
                 '<!-- /ko -->',
 
+                '<!-- ko if: transferJobMonitor.status() == "error" -->',
+                div({
+                    style: {
+                        border: '1px red solid',
+                        padding: '10px'
+                    }
+                }, [
+                    p([
+                        'Error with transfer (no more info!)'
+                    ])
+                ]),
                 '<!-- /ko -->',
 
-                '<!-- ko if: $component.error -->',
+                '<!-- /ko -->',
+
+                '<!-- ko if: transferJobMonitor.error -->',
                 div({
                     dataBind: {
-                        with: '$component.error'
+                        with: 'transferJobMonitor.error()'
                     },
                     style: {
                         border: '2px red solid'

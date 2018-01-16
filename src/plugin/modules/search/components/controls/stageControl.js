@@ -1,11 +1,18 @@
+/*
+stageControl Component
+Small control which, when clicked, pops up a dialog allowing the user to attempt
+to request a copy of the given JAMO file to KBase Staging.
+Will be disabled with special icon if the status of the record indicates that the
+file is not importable to kbase.
+*/
 define([
     'knockout-plus',
     'kb_common/html',
-    '../../../stageFile/components/stageFile'
+    '../../../stageFile/components/stageFileDialog'
 ], function (
     ko,
     html,
-    StageFileControl
+    StageFileDialogComponent
 ) {
     'use strict';
 
@@ -20,7 +27,7 @@ define([
 
         function doStage() {
             params.env.search.showOverlay({
-                name: StageFileControl.name(),
+                name: StageFileDialogComponent.name(),
                 // TODO: short this out ... I don't think we need all this
                 params: {
                     id: 'id',

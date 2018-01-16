@@ -672,7 +672,7 @@ define([
         // ACTIONS
 
         function doStage(id, fileName) {
-            data.stageFile(id, fileName);
+            return data.stageFile(id, fileName);
         }
 
         function sortBy(column) {

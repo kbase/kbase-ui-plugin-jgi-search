@@ -1,3 +1,7 @@
+/*
+stageFileDialog
+    
+*/
 define([
     'knockout-plus',
     'kb_common/html',
@@ -149,6 +153,30 @@ define([
             params.showStageJobViewer();
         }
 
+        var transferJobMonitor = {
+            jobId: ko.observable(),
+            status: ko.observable(),
+            error: ko.observable()
+        };
+
+        function doStage() {
+            // doStage call is passed in.
+            return params.doStage(params.id, destinationFileName())
+                // but our reaction to it is not!
+                .spread(function (result, error) {
+                    console.log('staged?', result, error);
+                    if (result) {
+                        transferJobMonitor.jobId(result.job_id);
+                        transferJobMonitor.status('submitted');                        
+
+                        // TODO: start the monitor!
+                    } else {
+                        error(error);
+                        transferJobMonitor.error(error);
+                    }
+                });
+        }
+
         return {
             item: item,
             destinationFileBaseName: destinationFileBaseName,
@@ -166,8 +194,8 @@ define([
             id: params.id,
             fileName: fileName,
             filenameStatus: filenameStatus,
-            doStage: params.doStage,
-            transferJob: params.transferJob,
+            doStage: doStage,
+            transferJobMonitor: transferJobMonitor,
             stageButtonEnabled: stageButtonEnabled
         };
     }
@@ -771,7 +799,7 @@ define([
                                     id: 'id',
                                     fileName: 'destinationFileName',
                                     doStage: 'doStage',
-                                    transferJob: 'transferJob',
+                                    transferJobMonitor: 'transferJobMonitor',
                                     enabled: 'stageButtonEnabled'
                                 }
                             }

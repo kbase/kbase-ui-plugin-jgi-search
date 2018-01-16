@@ -160,7 +160,7 @@ define([
             // TODO: need to work on the detail item structure!
             //console.log('going to stage ...', data);
 
-            params.search.doStage(item.id)
+            return params.search.doStage(item.id)
                 .then(function (result) {
                     if ('jobId' in result) {
                         // we need to do this manually since main.js just
@@ -177,14 +177,6 @@ define([
                         // stagingStatus('error');
                         // error(result);
                     }
-                })
-                .catch(function (err) {
-                    console.error('ERROR', err);
-                    // stagingStatus('error');
-                    // error({
-                    //     message: err.message,
-                    //     error: err
-                    // });
                 });
         }
 
