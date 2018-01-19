@@ -142,7 +142,7 @@ define([
                     return [null, {
                         source: 'ProfileService:get_user_profile',
                         code: 'error-getting-user-profile',
-                        message: 'An error occurred attempting to get the user preferences: ' + err.message,
+                        message: 'An error occurred attempting to save the user preferences: ' + err.message,
                         errors: [
                             err
                         ],
@@ -161,8 +161,16 @@ define([
                         data: profiles[0]
                     });
                     var history = profile.getItem('profile.plugins.jgi-search.settings.searchInputHistory');
-                    if (!(history.history instanceof Array)) {
-                        history.history = [];
+                    if (!history) {
+                        history = {
+                            history: [],
+                            time: new Date().getTime()
+                        };
+                    } else if (!(history.history instanceof Array)) {
+                        history = {
+                            history: [],
+                            time: new Date().getTime()
+                        };
                     }
                     return [history.history || [], null];
                 })
