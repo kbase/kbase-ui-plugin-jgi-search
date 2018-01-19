@@ -8,28 +8,47 @@ topics:
       This is JGI Search, a tool which allows you to search through public JGI archived data and import
       it into a KBase Narrative.
       
-      To get started, simply type your search terms into the search box.
+      To get started, simply type your search terms into the search box and press the search button or press the Return/Enter key.
 
   -
-    id: search-syntax
-    title: Search Syntax
+    id: basic-search
+    title: Basic Searching
     content: |
-      You may simply enter all search terms by which you want to restrict the search by typing the words seaprated by at least one space -- all terms are "anded" together. The asterisk "*" may be appended to a term to match anything beginning with it. Searches are case insensitive.
+      You may simply enter all search terms by typing the words separated by at least one space -- all terms used in the search. The asterisk wildcard "*" may be put at the end of any term to match anything beginning with it. Searches are case insensitive.
 
       Note that this is a free-text search, so terms will match any available field. Searching by a genus, for instance, will match not just the genus field, but may match a title, description, scientific name, or file name.
 
-      You may also use the following search operators:
+      > Example: ```strep* fastq``` will find all items with a word beginning with "strep" and including the exact word "fastq". To restrict the search to a more specific genus you could instead use "streptococcus and fastq"
 
-        - **and**: include only items which include the follow term (this is the default when one search term follows another)
-        - **or**: include all items which also may include the following term
-        - **not**: reverses the meaning of the term -- "and not" means include only items which do not include the following term; "or not" means to include all items which do not include the following term;
-
-      > Example: ```strep* and fastq``` will find all items with a word beginning with "strep" and including the exact word "fastq". To restrict the search to a more specific genus you could instead use "streptococcus and fastq"
   -
-    id: how-indexed
-    title: What data is indexed?
+    id: advanced-search-syntax
+    title: Advanced Search Syntax
     content: |
-        We are still trying to sort that out...  
+      The JGI search service is currently implemented in "Elastic Search". The search phrase you enter may take advantage of the "Elastic Search Simple Query String" search syntax. This syntax allows you to negate terms, group terms, provide optional search terms, and more.
+
+      The syntax supports the following special characters:
+
+        # - ```+``` signifies AND operation
+        # - ```|``` signifies OR operation
+        - ```-``` negates a single token
+        # - ```"``` wraps a number of tokens to signify a phrase for searching
+        - ```*``` at the end of a term signifies a prefix query (wildcard)
+        # - ```(``` and ```)``` signify precedence
+        # - ```~N``` after a word signifies edit distance (fuzziness)
+        # - ```~N``` after a phrase signifies slop amount
+      
+      In order to search for any of these special characters, they will need to be escaped with \.
+
+      For example:
+
+      To search for "Streptococcus" files for PI "Klenk", simply enter ```streptococcus klenk```. To find files which are NOT associated with Klenk, you could enter ```streptococcus -klenk```. 
+
+      To match all words beginning with strep you may use with "strep*".
+  # -
+  #   id: how-indexed
+  #   title: What data is indexed?
+  #   content: |
+  #       We are still trying to sort that out...  
 
 references:
   -

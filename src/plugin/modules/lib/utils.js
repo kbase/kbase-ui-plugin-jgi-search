@@ -1,10 +1,11 @@
 define([
     'kb_common/html',
     'yaml!./import.yml',
-
+    'json!./stopWords.json'
 ], function (
     html,
-    Import
+    Import,
+    StopWords
 ) {
     'use strict';
 
@@ -855,6 +856,18 @@ define([
         var operator = null;
         // True if there is a modifier applied to this term (previously inserted)
         var modifier = null;
+
+        // strip out operator terms
+        terms = terms.filter(function (term) {
+            return StopWords.warn.indexOf(term.toLowerCase()) === -1;
+        });
+
+        // strip out other common high frequency semantically weak (in terms of search) terms
+        // see: http://xpo6.com/list-of-english-stop-words/
+        terms = terms.filter(function (term) {
+            return StopWords.ignore.indexOf(term.toLowerCase()) === -1;
+        });
+
         for (var i = 0; i < terms.length; i++) {
             // var term = terms[i].toLowerCase();
             var term = terms[i];
@@ -895,12 +908,12 @@ define([
             //     continue termsLoop;
             // }
 
-            // any very short word is tossed
-            if (term.length < 3) {
-                if (term !== '*') {
-                    continue;
-                }
-            }
+            // // any very short word is tossed
+            // if (term.length < 3) {
+            //     if (term !== '*') {
+            //         continue;
+            //     }
+            // }
 
             // escape any special chars stuck to or within the word
             term.replace(/[+-/|()]/g, '\\$&');
