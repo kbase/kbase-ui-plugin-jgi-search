@@ -164,7 +164,6 @@ define([
             return params.doStage(params.id, destinationFileName())
                 // but our reaction to it is not!
                 .spread(function (result, error) {
-                    console.log('staged?', result, error);
                     if (result) {
                         transferJobMonitor.jobId(result.job_id);
                         transferJobMonitor.status('submitted');                        
