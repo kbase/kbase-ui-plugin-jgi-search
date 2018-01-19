@@ -202,7 +202,7 @@ define([
             ko.kb.komponent({
                 name: TermsComponent.name(),
                 params: {
-                    search: 'search'
+                    jgiTermsAgreed: 'jgiTermsAgreed'
                 }
             }),
             '<!-- /ko -->',
