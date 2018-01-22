@@ -953,7 +953,7 @@ define([
             operator = null;
         }
         if (expression.length > 0) {
-            fieldTerms._all = expression.join(' + ');
+            fieldTerms._all = expression.join(' ');
         }
 
         return {
