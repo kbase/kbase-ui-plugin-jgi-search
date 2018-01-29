@@ -59,14 +59,6 @@ define([
         //     addToSearchHistory(newValue);
         // });
 
-        ko.subscribable.fn.syncFrom = function (targetObservable, callbackTarget, event) {
-            var sourceObservable = this; 
-            targetObservable.subscribe(function (v) { 
-                sourceObservable(v); 
-            }, callbackTarget, event); 
-            return sourceObservable; 
-        };
-
         // This is the obervable in the actual search input.
         var searchControlValue = ko.observable().syncFrom(params.search.searchInput);
 
