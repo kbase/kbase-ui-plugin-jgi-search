@@ -50,7 +50,7 @@ define([
             class: 'btn-group pull-right'
         }, [
             styles.sheet,
-            '<!-- ko if: status() === "completed" || status() === "error" -->',
+            '<!-- ko if: status() === "completed" || status() === "error" || status() === "notfound" -->',
             button({
                 class: 'btn pull-right ' + styles.classes.dangerButton,                
                 dataBind: {

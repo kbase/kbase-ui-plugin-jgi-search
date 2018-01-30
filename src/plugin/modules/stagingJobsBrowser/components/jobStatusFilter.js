@@ -51,6 +51,14 @@ define([
             {
                 value: 'completed',
                 label: 'Completed'
+            },
+            {
+                value: 'error',
+                label: 'Error'
+            },
+            {
+                value: 'notfound',
+                label: 'Not Found'
             }
         ];
         jobStatuses.forEach(function (status) {

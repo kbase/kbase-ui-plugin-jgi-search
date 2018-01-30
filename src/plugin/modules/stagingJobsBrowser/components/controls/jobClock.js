@@ -22,6 +22,7 @@ define([
             switch (unwrap(status)) {
             case 'completed':
             case 'error':
+            case 'notfound':
                 return false;
             default:
                 return true;
