@@ -18,19 +18,14 @@ install:
       css: true
   routes:
     -
-      path: ['jgi', 'search']
+      path: [jgi-search]
       widget: jgi-search_panel
       authorization: true
-    -
-      path: ['jgi', 'listjobs']
-      widget: 'kb_jgi_search_list_jobs'
-      authorization: true
-
   menu:
     -
       name: jgi-search
       definition:
-        path: jgi/search
+        path: jgi-search
         label: JGI Search
         icon: search-plus
   schema:
