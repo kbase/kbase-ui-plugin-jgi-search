@@ -23,7 +23,7 @@ define([
         }
 
         function start() {
-            runtime.send('ui', 'setTitle', 'JGI Search (beta)');
+            runtime.send('ui', 'setTitle', 'JGI Search (BETA)');
 
             runtime.send('ui', 'addButton', {
                 name: 'feedback',
