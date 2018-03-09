@@ -1,13 +1,16 @@
 define([
     'knockout-plus',
-    'kb_common/html'
+    'kb_common/html',
+    '../../components/table'
 ], function (
     ko,
-    html
+    html,
+    TableComponent
 ) {
     'use strict';
 
     var t = html.tag,
+        p = t('p'),
         div = t('div');
 
     var styles = html.makeStyles({
@@ -74,6 +77,14 @@ define([
                     removeJob: search.removeJob
                 }
             },
+            messages: {
+                none: div([
+                    p('No jobs to display')
+                ]),
+                notfound: div([
+                    p('No jobs to display')
+                ])
+            }
         };
     }
 
@@ -85,9 +96,10 @@ define([
             div({
                 dataBind: {
                     component: {
-                        name: '"generic/table"',
+                        name: TableComponent.quotedName(),
                         params: {
-                            table: 'table'
+                            table: 'table',
+                            messages: 'messages'
                         }
                     }
                 },

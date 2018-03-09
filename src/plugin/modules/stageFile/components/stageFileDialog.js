@@ -29,6 +29,7 @@ define([
 
     function viewModel(params) {
         var item = ko.observable();
+        var subscriptions = ko.kb.SubscriptionManager.make();
 
         var destinationFileBaseName = ko.observable();
         var destinationFileExtension = ko.observable();
@@ -58,7 +59,7 @@ define([
 
         var fileDetail;
 
-        destinationFileBaseName.subscribe(function (newValue) {
+        subscriptions.add(destinationFileBaseName.subscribe(function (newValue) {
 
             // Check the basename. These are special conditions for just the base
             // name to give somewhat better error messages for these conditions.
@@ -109,7 +110,7 @@ define([
                 .finally(function () {
                     filenameStatus.loading(false);
                 });
-        });
+        }));
 
         var stageButtonEnabled = ko.pureComputed(function () {
             if (filenameStatus.error()) {
@@ -176,6 +177,10 @@ define([
                 });
         }
 
+        function dispose() {
+            subscriptions.dispose();
+        }
+
         return {
             item: item,
             destinationFileBaseName: destinationFileBaseName,
@@ -195,7 +200,9 @@ define([
             filenameStatus: filenameStatus,
             doStage: doStage,
             transferJobMonitor: transferJobMonitor,
-            stageButtonEnabled: stageButtonEnabled
+            stageButtonEnabled: stageButtonEnabled,
+
+            dispose: dispose
         };
     }
 

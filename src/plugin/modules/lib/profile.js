@@ -110,8 +110,10 @@ define([
                 });
         }
 
-        function saveSearchHistory(history) {
+        function saveHistory(name, history) {
             var username = runtime.service('session').getUsername();
+
+            var key = ['jgi-search', 'settings', 'history', name];
 
             return profileService.callFunc('get_user_profile', [[username]])
                 .spread(function (profiles) {
@@ -121,7 +123,7 @@ define([
 
                     var prefs = Props.make({ data: profile.getItem('profile.plugins', {}) });
 
-                    prefs.setItem('jgi-search.settings.searchInputHistory', {
+                    prefs.setItem(key, {
                         history: history,
                         time: new Date().getTime()
                     });
@@ -153,14 +155,23 @@ define([
                 });
         }
 
-        function getSearchHistory() {
+        function getHistory(name) {
             var username = runtime.service('session').getUsername();
+
+            var key = ['jgi-search', 'settings', 'history', name];
+
             return profileService.callFunc('get_user_profile', [[username]])
                 .spread(function (profiles) {
                     var profile = Props.make({
                         data: profiles[0]
                     });
-                    var history = profile.getItem('profile.plugins.jgi-search.settings.searchInputHistory');
+                    var history = profile.getItem(key);
+                    if (!history) {
+                        if (name === 'search') {
+                            history = profile.getItem('profile.plugins.jgi-search.settings.searchInputHistory');
+                        }
+                    }
+                    
                     if (!history) {
                         history = {
                             history: [],
@@ -192,8 +203,8 @@ define([
         return Object.freeze({
             saveJgiAgreement: saveJgiAgreement,
             getJgiAgreement: getJgiAgreement,
-            getSearchHistory: getSearchHistory,
-            saveSearchHistory: saveSearchHistory
+            getHistory: getHistory,
+            saveHistory: saveHistory
         });
     }
 

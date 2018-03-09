@@ -29,6 +29,7 @@ define([
     function viewModel(params) {
         var runtime = params.runtime;
         var data = Data.make({runtime: runtime});
+        var subscriptions = ko.kb.SubscriptionManager.make();
 
         // OVERLAY
 
@@ -37,10 +38,10 @@ define([
         // specified component.
         var overlayComponent = ko.observable();
         var showOverlay = ko.observable();
-        showOverlay.subscribe(function (newValue) {
+        subscriptions.add(showOverlay.subscribe(function (newValue) {
             // if a good component...
             overlayComponent(newValue);
-        });
+        }));
 
         // SEARCH
         var searchInput = ko.observable();
@@ -237,11 +238,11 @@ define([
        
         // Subscriptions
 
-        searchParams.subscribe(function () {
+        subscriptions.add(searchParams.subscribe(function () {
             doSearch();
-        });
+        }));
 
-        searchQuery.subscribe(function () {
+        subscriptions.add(searchQuery.subscribe(function () {
             // reset the page back to 1 because we do not konw if the
             // new search will extend this far.
             if (!page()) {
@@ -249,11 +250,11 @@ define([
             } else if (page() > 1) {
                 page(1);
             }
-        });
+        }));
 
         // The job here is to reset the page, if necessary, due to 
         // a change in page size.
-        pageSize.subscribeChanged(function (newValue, oldValue) {
+        subscriptions.add(pageSize.subscribeChanged(function (newValue, oldValue) {
             var currentPage = page();
 
             if (!currentPage) {
@@ -262,7 +263,7 @@ define([
 
             var newPage = Math.floor((currentPage - 1) * oldValue / newValue) + 1;
             page(newPage);
-        });
+        }));
 
         // sortColumns is the ordered list of all columns currently
         // sorted. Each sort object is a reference to the actual column
@@ -280,9 +281,9 @@ define([
             });            
         });
 
-        sortSpec.subscribe(function (newValue) {
+        subscriptions.add(sortSpec.subscribe(function (newValue) {
             doSearch();
-        });
+        }));
 
         var filterSpec = ko.pureComputed(function () {
             var filter = {};
@@ -296,9 +297,9 @@ define([
             return filter;
         });
 
-        filterSpec.subscribe(function () {
+        subscriptions.add(filterSpec.subscribe(function () {
             doSearch();
-        });
+        }));
 
 
         function sortBy(column) {
@@ -338,6 +339,9 @@ define([
 
         sortBy(columnsMap.started);
 
+        // TODO TODO TODO!!
+        var showError = ko.observable();
+
         // SEARCH HISTORY
 
         var searchHistory = ko.observableArray();
@@ -346,7 +350,7 @@ define([
             var profile = Profile.make({
                 runtime: runtime
             });
-            return profile.getSearchHistory()
+            return profile.getHistory('jobsbrowser')
                 .spread(function (result, error) {
                     if (result) {
                         return result;
@@ -360,7 +364,7 @@ define([
             var profile = Profile.make({
                 runtime: runtime
             });
-            return profile.saveSearchHistory(history)
+            return profile.saveHistory('jobsbrowser', history)
                 .spread(function (result, error) {
                     if (result) {
                         return result;
@@ -370,9 +374,9 @@ define([
                 });
         }
 
-        searchHistory.subscribe(function (newValue) {
+        subscriptions.add(searchHistory.subscribe(function (newValue) {
             saveSearchHistory(newValue);
-        });
+        }));
 
         getSearchHistory()
             .then(function (history) {
@@ -399,6 +403,7 @@ define([
                 window.clearTimeout(refreshTimer);
                 refreshTimer = null;
             }
+            subscriptions.dispose();
         }
 
         // INIT
@@ -530,9 +535,9 @@ define([
         }, [
             styles.sheet,
             // The search input area
-            div({
-                class: styles.classes.searchArea
-            }, buildInputArea()),
+            // div({
+            //     class: styles.classes.searchArea
+            // }, buildInputArea()),
             // The search filter area
             div({
                 class: styles.classes.filterArea

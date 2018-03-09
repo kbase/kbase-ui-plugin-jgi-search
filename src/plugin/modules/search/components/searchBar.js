@@ -326,7 +326,9 @@ define([
                     '<!-- ko ifnot: searchHistory().length > 0 -->',
                     p({
                         style: {
-                            fontStyle: 'italic'
+                            fontStyle: 'italic',
+                            padding: '8px',
+                            margin: '0px'
                         }
                     }, 'no items in history yet - Search!'),
                     '<!-- /ko -->',
@@ -361,7 +363,7 @@ define([
                     click: 'doHelp'
                 }
             }, span({
-                class: 'fa fa-info'
+                class: 'fa fa-question'
             }))
         ]));
     }

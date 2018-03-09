@@ -51,6 +51,7 @@ define([
     function template() {
         return ui.buildDialog({
             title: span({dataBind: {text: 'title'}}), 
+            icon: 'question-circle',
             body: buildHelpViewer()
         });
     }

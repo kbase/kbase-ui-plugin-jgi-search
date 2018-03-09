@@ -40,6 +40,7 @@ define([
     // NB: hmm, it looks like the params are those active in the tab which spawned
     // this component...
     function viewModel(params) {
+        var subscriptions = ko.kb.SubscriptionManager.make();
         // From parent search component.
         var search = params.search;
         var totalCount = search.searchTotal;
@@ -94,9 +95,9 @@ define([
             }
             return sortFieldsMap[sortBy()];
         });
-        currentSortField.subscribe(function () {
+        subscriptions.add(currentSortField.subscribe(function () {
             params.search.doSearch();
-        });
+        }));
 
         var sortDirection = ko.observable('ascending');
         var sortDirections = [{
@@ -109,9 +110,9 @@ define([
         var sortDescending = ko.pureComputed(function () {
             return (sortDirection() === 'descending');
         });
-        sortDescending.subscribe(function () {
+        subscriptions.add(sortDescending.subscribe(function () {
             params.search.doSearch();
-        });
+        }));
 
         // PAGING
         // var pageSize = ko.observable(search.pageSize || 10).extend({
@@ -141,7 +142,7 @@ define([
                 method: 'notifyWhenChangesStop'
             }
         });
-        pageInput.subscribe(function (newValue) {
+        subscriptions.add(pageInput.subscribe(function (newValue) {
             // If bad input, don't do anything.
             if (newValue === '' || newValue === undefined || newValue === null) {
                 return;
@@ -163,12 +164,12 @@ define([
             if (value !== page()) {
                 page(value);
             }
-        });
-        page.subscribe(function (newValue) {
+        }));
+        subscriptions.add(page.subscribe(function (newValue) {
             if (newValue !== parseInt(pageInput())) {
                 pageInput(String(newValue));
             }
-        });
+        }));
         var pageValues = ko.pureComputed(function () {
             var values = [];
             if (totalPages() > 100) {
@@ -227,6 +228,7 @@ define([
             // subscriptions.forEach(function(subscription) {
             //     subscription.dispose();
             // });
+            subscriptions.dispose();
         }
 
         function isSearchState(states) {

@@ -154,14 +154,14 @@ define([
             var profile = Profile.make({
                 runtime: runtime
             });
-            return profile.getSearchHistory();                
+            return profile.getHistory('search');
         }
 
         function saveSearchHistory(history) {
             var profile = Profile.make({
                 runtime: runtime
             });
-            return profile.saveSearchHistory(history);                
+            return profile.saveHistory('search', history);                
         }
 
         return Object.freeze({

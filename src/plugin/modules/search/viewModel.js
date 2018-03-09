@@ -31,6 +31,7 @@ define([
         var showError = params.showError;
         var showOverlay = params.showOverlay;
         var error = params.error;
+        var subscriptions = ko.kb.SubscriptionManager.make();
 
 
         var maxSearchResults = 10000;
@@ -274,7 +275,7 @@ define([
         //     value: 'gff'
         // },
         {
-            label: 'BAM!',
+            label: 'BAM',
             value: 'bam'
         }].map(function (item) {
             item.enabled = ko.pureComputed(function () {
@@ -289,7 +290,7 @@ define([
         // project id fields -- sequencing and analysis.
         var seqProjectFilter = ko.observable();
 
-        seqProjectFilter.subscribe(function (newValue) {
+        subscriptions.add(seqProjectFilter.subscribe(function (newValue) {
             var filter = searchFilter();
             if (!newValue) {
                 delete filter.project_id;                
@@ -297,10 +298,10 @@ define([
                 filter.project_id = [newValue];
             }
             searchFilter(filter);
-        });
+        }));
 
         var proposalFilter = ko.observable();
-        proposalFilter.subscribe(function (newValue) {
+        subscriptions.add(proposalFilter.subscribe(function (newValue) {
             var filter = searchFilter();
             if (!newValue) {
                 delete filter.proposal_id;                
@@ -308,10 +309,10 @@ define([
                 filter.proposal_id = [newValue];
             }
             searchFilter(filter);
-        });
+        }));
 
         var piFilter = ko.observable();
-        piFilter.subscribe(function (newValue) {
+        subscriptions.add(piFilter.subscribe(function (newValue) {
             var filter = searchFilter();
             if (!newValue) {
                 delete filter.pi_name;                
@@ -319,7 +320,7 @@ define([
                 filter.pi_name = newValue;
             }            
             searchFilter(filter);
-        });
+        }));
         // SEARCH FLAGS
 
         var searching = ko.observable(false);
@@ -367,13 +368,13 @@ define([
             filter: {}
         });
 
-        searchInput.subscribe(function () {
+        subscriptions.add(searchInput.subscribe(function () {
             var newExpression = utils.parseSearchExpression(searchInput());
             if (utils.isEqual(newExpression, searchExpression())) {
                 return;
             }
             searchExpression(newExpression);
-        });
+        }));
 
 
         // This receives query fields from specific query controls.
@@ -397,7 +398,7 @@ define([
         //     }
         // });
 
-        typeFilter.subscribe(function (newValue) {
+        subscriptions.add(typeFilter.subscribe(function (newValue) {
             var newQuery = JSON.parse(JSON.stringify(searchAutoQuery()));
 
             var newTypeFilter = JSON.parse(JSON.stringify(newValue));
@@ -417,7 +418,7 @@ define([
                 return;
             }
             searchAutoQuery(newQuery);
-        });
+        }));
         // typeFilter([]);
 
         var currentSearch = {
@@ -476,8 +477,6 @@ define([
                 cancelled: false
             };
             var thisSearch = currentSearch;
-            var searchStart = new Date().getTime();
-
 
             searching(true);
 
@@ -513,8 +512,6 @@ define([
                         return true;
                     }
 
-                    var searchCallElapsed = new Date().getTime() - searchStart;
-                    console.log('ui search call elapsed', searchCallElapsed);
                     console.log('jgi search elapsed', stats);
 
                     if (result.total > maxSearchResults) {
@@ -526,18 +523,20 @@ define([
                         searchTotal(result.total);
                     }
 
-                    searchResults.removeAll();
+                    searchResults([]);
                     searchElapsed(stats.request_elapsed_time);
 
-                    var jobMap = {};
-                    stagingJobsVm.stagingJobs().forEach(function (job) {
-                        jobMap[job.dbId] = job;
-                    });
-                    
+                    // var jobMap = {};
+                    // stagingJobsVm.stagingJobs().forEach(function (job) {
+                    //     jobMap[job.dbId] = job;
+                    // });
 
-                    schema.hitsToRows(result.hits, doStage, jobMap).forEach(function (row) {                     
-                        searchResults.push(row);                        
-                    });
+                    var rows = schema.hitsToRows(result.hits, doStage);
+                    
+                    searchResults(rows);
+                    // schema.hitsToRows(result.hits, doStage).forEach(function (row) {                     
+                    //     searchResults.push(row);                        
+                    // });
                     return true;
                 })
                 .then(function (searched) {
@@ -559,15 +558,15 @@ define([
         }
 
         // EXPLICIT LISTENERS
-        page.subscribe(function () {
+        subscriptions.add(page.subscribe(function () {
             doSearch();
-        });
+        }));
 
-        pageSize.subscribe(function() {
+        subscriptions.add(pageSize.subscribe(function() {
             doSearch();
-        });
+        }));
 
-        searchQuery.subscribe(function (newValue) {
+        subscriptions.add(searchQuery.subscribe(function (newValue) {
             // reset the page back to 1 because we do not know if the
             // new search will extend this far.
             if (!newValue) {
@@ -580,7 +579,7 @@ define([
                 page(1);
             }
             doSearch();
-        });
+        }));
 
         // TRY COMPUTING UBER-STATE
 
@@ -613,14 +612,14 @@ define([
 
         var searchHistory = ko.observableArray();
 
-        searchHistory.subscribe(function (newValue) {
+        subscriptions.add(searchHistory.subscribe(function (newValue) {
             data.saveSearchHistory(newValue)
                 .spread(function (result, error) {
                     if (error) {
                         showError(error);
                     }
                 });
-        });
+        }));
 
         data.getSearchHistory()
             .spread(function (result, error) {
@@ -656,9 +655,9 @@ define([
             });            
         });
 
-        sortSpec.subscribe(function () {
+        subscriptions.add(sortSpec.subscribe(function () {
             doSearch();
-        });
+        }));
 
         // var health = ko.observable('healthy');
 
@@ -716,6 +715,13 @@ define([
 
         function stop() {
             stagingJobsVm.stop();
+        }
+
+        function dispose() {
+            subscriptions.dispose();
+            if (stagingJobsVm) {
+                stagingJobsVm.dispose();
+            }
         }
 
         return {
@@ -776,7 +782,8 @@ define([
             sortBy: sortBy,
             
             start: start,
-            stop: stop
+            stop: stop,
+            dispose: dispose
         };
     }
 

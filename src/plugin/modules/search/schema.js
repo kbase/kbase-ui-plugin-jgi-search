@@ -143,7 +143,7 @@ define([
         {
             name: 'copy',
             label: 'Copy',
-            width: 5,
+            width: 6,
             component: StageControl.name(),
             rowStyle: {
                 textAlign: 'center'
@@ -151,19 +151,19 @@ define([
             headerStyle: {
                 textAlign: 'center'
             }
-        },
-        {
-            name: 'status',
-            label: 'Status',
-            width: 5,
-            component: StageStatus.name(),
-            rowStyle: {
-                textAlign: 'center'
-            },
-            headerStyle: {
-                textAlign: 'center'
-            }
         }
+        // {
+        //     name: 'status',
+        //     label: 'Status',
+        //     width: 5,
+        //     component: StageStatus.name(),
+        //     rowStyle: {
+        //         textAlign: 'center'
+        //     },
+        //     headerStyle: {
+        //         textAlign: 'center'
+        //     }
+        // }
     ];
 
     var columnsMap = columns.reduce(function (acc, col) {
@@ -196,7 +196,8 @@ define([
         return null;
     }
 
-    function hitsToRows(hits, doStage, jobMap) {
+    function hitsToRows(hits, doStage) {
+    // function hitsToRows(hits, doStage, jobMap) {
         return hits.map(function (hit, index) {
             // var rowNumber = (page() - 1) * pageSize() + 1 + index;
 
@@ -365,20 +366,21 @@ define([
                 // view stuff
                 selected: ko.observable(false),
                 isPublic: utils.getProp(hit, 'source._es_public_data', false),
-                doTransfer: function () {
-                    try {
-                        doStage(hit.id, hit.source.file_name);
-                    } catch (ex) {
-                        console.error('ERROR staging', ex);
-                    }
-                },
+                // doTransfer: function () {
+                //     try {
+                //         doStage(hit.id, hit.source.file_name);
+                //     } catch (ex) {
+                //         console.error('ERROR staging', ex);
+                //     }
+                // },
                 stage: {
                     value: hit.source.file_name,
                     info: stagingInfo,
                     fileName: hit.source.file_name
                 },
                 // For reference, not direct display
-                transferJob: ko.observable(jobMap[hit.id]),
+                // transferJob: ko.observable(jobMap[hit.id]),
+                transferJob: ko.observable(),
                 fileType: fileType
             };
 

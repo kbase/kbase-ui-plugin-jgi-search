@@ -16,14 +16,15 @@ define([
 
     function viewModel(params) {  
         var jobStatusInput = ko.observable('_select_');
+        var subscriptions = ko.kb.SubscriptionManager.make();
 
         var selectedJobStatuses = ko.observableArray();
 
-        selectedJobStatuses.subscribe(function (newValue) {
+        subscriptions.add(selectedJobStatuses.subscribe(function (newValue) {
             params.jobStatusFilter(newValue.map(function (option) {
                 return option.value;
             }));
-        });
+        }));
 
         var jobStatusOptions = ko.observableArray();
 
@@ -94,12 +95,17 @@ define([
             data.jobStatusInput('_select_');
         }
 
+        function dispose() {
+            subscriptions.dispose();
+        }
+
         return { 
             jobStatusInput: jobStatusInput,
             jobStatusOptions: jobStatusOptions,
             selectedJobStatuses: selectedJobStatuses,
             doSelectJobStatus: doSelectJobStatus,
-            doRemoveJobStatus: doRemoveJobStatus
+            doRemoveJobStatus: doRemoveJobStatus,
+            dispose: dispose
         };
     }
 

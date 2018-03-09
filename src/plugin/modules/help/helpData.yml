@@ -14,36 +14,28 @@ topics:
     id: basic-search
     title: Basic Searching
     content: |
-      You may simply enter all search terms by typing the words separated by at least one space -- all terms used in the search. The asterisk wildcard "*" may be put at the end of any term to match anything beginning with it. Searches are case insensitive.
+      You may simply enter all search terms with which you wish to limit the search.
+      
+      Searches are case insensitive.
 
-      Note that this is a free-text search, so terms will match any available field. Searching by a genus, for instance, will match not just the genus field, but may match a title, description, scientific name, or file name.
-
-      > Example: ```strep* fastq``` will find all items with a word beginning with "strep" and including the exact word "fastq". To restrict the search to a more specific genus you could instead use "streptococcus and fastq"
+      This is a free-text search, so terms will match any available field. Searching by a specific genus, for instance, will match not just the genus field, but may match a title, description, scientific name, or file name.
 
   -
     id: advanced-search-syntax
     title: Advanced Search Syntax
     content: |
-      The JGI search service is currently implemented in "Elastic Search". The search phrase you enter may take advantage of the "Elastic Search Simple Query String" search syntax. This syntax allows you to negate terms, group terms, provide optional search terms, and more.
-
-      The syntax supports the following special characters:
-
-        # - ```+``` signifies AND operation
-        # - ```|``` signifies OR operation
-        - ```-``` negates a single token
-        # - ```"``` wraps a number of tokens to signify a phrase for searching
+      The search query supports some basic extended search syntax as described below:
+     
+        - ```-``` in front of a term negates it
         - ```*``` at the end of a term signifies a prefix query (wildcard)
-        # - ```(``` and ```)``` signify precedence
-        # - ```~N``` after a word signifies edit distance (fuzziness)
-        # - ```~N``` after a phrase signifies slop amount
       
-      In order to search for any of these special characters, they will need to be escaped with \.
+      In order to search for any of these special characters, they will need to be escaped with \\.
 
       For example:
 
       To search for "Streptococcus" files for PI "Klenk", simply enter ```streptococcus klenk```. To find files which are NOT associated with Klenk, you could enter ```streptococcus -klenk```. 
 
-      To match all words beginning with strep you may use with "strep*".
+      To match all words beginning with strep you may use with ```strep*```.
   # -
   #   id: how-indexed
   #   title: What data is indexed?

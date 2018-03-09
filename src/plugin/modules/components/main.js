@@ -38,6 +38,7 @@ define([
    
     function viewModel(params) {
         var runtime = params.runtime;
+        var subscriptions = ko.kb.SubscriptionManager.make();
 
         var data = Data.make({
             runtime: runtime
@@ -109,7 +110,7 @@ define([
  
         var jgiTermsAgreed = ko.observable(false);
 
-        jgiTermsAgreed.subscribe(function (newValue) {
+        subscriptions.add(jgiTermsAgreed.subscribe(function (newValue) {
             // save the agreed-to-state in the user's profile.
             data.saveJgiAgreement(newValue)
                 .spread(function (result, error) {
@@ -123,7 +124,7 @@ define([
                         showError(error);
                     }
                 });
-        });
+        }));
 
         data.getJgiAgreement()
             .spread(function (result, error) {
@@ -148,9 +149,9 @@ define([
     
         var showOverlay = ko.observable();
 
-        showOverlay.subscribe(function (newValue) {
+        subscriptions.add(showOverlay.subscribe(function (newValue) {
             overlayComponent(newValue);
-        });
+        }));
 
         // SEARCH
 
@@ -163,6 +164,8 @@ define([
 
         function dispose() {
             searchVm.stop();
+            searchVm.dispose();
+            subscriptions.dispose();
         }
 
         searchVm.start();

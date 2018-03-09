@@ -8,6 +8,7 @@ define([
 
     function factory(config) {
         var runtime = config.runtime;
+        var subscriptions = ko.kb.SubscriptionManager.make();
         var data = Data.make({
             runtime: runtime
         });
@@ -64,9 +65,9 @@ define([
             });
         }
 
-        stagingJobs.subscribe(function () {
+        subscriptions.add(stagingJobs.subscribe(function () {
             updateStagingJobStates();
-        });
+        }));
 
         var disposables = [];
 
@@ -114,12 +115,17 @@ define([
             });
         }
 
+        function dispose() {
+            subscriptions.dispose();
+        }
+
         return {
             stagingJobs: stagingJobs,
             stagingJobsState: stagingJobsState,
             stagingJobStates: stagingJobStates,
             start: start,
-            stop: stop
+            stop: stop,
+            dispose: dispose
         };
     }
 

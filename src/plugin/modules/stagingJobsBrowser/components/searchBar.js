@@ -368,17 +368,17 @@ define([
             }, span({
                 class: 'fa fa-refresh'
             })),
-            div({
-                class: 'input-group-addon ' + styles.classes.addonButton,
-                style: {
-                    cursor: 'pointer'
-                },
-                dataBind: {
-                    click: 'doHelp'
-                }
-            }, span({
-                class: 'fa fa-info'
-            }))
+            // div({
+            //     class: 'input-group-addon ' + styles.classes.addonButton,
+            //     style: {
+            //         cursor: 'pointer'
+            //     },
+            //     dataBind: {
+            //         click: 'doHelp'
+            //     }
+            // }, span({
+            //     class: 'fa fa-question'
+            // }))
         ]));
     }
 

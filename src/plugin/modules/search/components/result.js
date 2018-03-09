@@ -2,16 +2,20 @@ define([
     'knockout-plus',
     'kb_common/html',
     '../../lib/utils',
-    '../schema'
+    '../schema',
+    '../../components/table'
 ], function (
     ko,
     html,
     utils,
-    schema
+    schema,
+    TableComponent
 ) {
     'use strict';
 
     var t = html.tag,
+        p = t('p'),
+        hr = t('hr'),
         div = t('div');
 
     var styles = html.makeStyles({
@@ -180,6 +184,20 @@ define([
                 });
         }
 
+        var messages = {
+            none: div([
+                p('No active search.'),
+                hr({style: {width: '50%'}}),
+                p('Please enter one or more search terms and/or filters to initiate a search.')
+            ]),
+            notfound: div([
+                p('Sorry, nothing was found with this search.'),
+                hr({style: {width: '50%'}}),
+                p('Try reducing the number of search terms and/or filters.'),
+                p('tip: You can use a wildcard search to find more stuff. E.g. rhodo*'),
+            ])
+        };
+
         return {
             search: params.search,
             searchResults: searchResults,
@@ -203,6 +221,7 @@ define([
                 },
                 sortBy: search.sortBy
             },
+            messages: messages,
             searching: searching,
             infoTopics: infoTopics,
             doShowTip: doShowTip,
@@ -221,9 +240,10 @@ define([
             div({
                 dataBind: {
                     component: {
-                        name: '"generic/table"',
+                        name: TableComponent.quotedName(),
                         params: {
-                            table: 'table'
+                            table: 'table',
+                            messages: 'messages'
                         }
                     }
                 },
