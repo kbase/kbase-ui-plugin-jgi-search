@@ -13,7 +13,7 @@ define([
         var rootComponent;
        
         function showFeedback() {
-            alert('redirect to feedback form...');
+            window.open('https://docs.google.com/forms/d/e/1FAIpQLScfZEQlO2Zq1ZgYQkn0pEIlXJapEOxrdeZmHY4PqvIyy7sugw/viewform', '_blank');
         }
 
         function attach(node) {
