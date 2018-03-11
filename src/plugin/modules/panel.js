@@ -1,8 +1,10 @@
 define([
     'knockout-plus',
+    'kb_common/httpUtils',
     './components/main'
 ], function (
     ko,
+    httpUtils,
     MainComponent
 ) {
     'use strict';
@@ -11,9 +13,27 @@ define([
         var runtime = config.runtime;
         var hostNode, container;
         var rootComponent;
+
+        function googleFormLink(arg) {
+            var baseUrl = 'https://docs.google.com/forms/d/e/1FAIpQLScfZEQlO2Zq1ZgYQkn0pEIlXJapEOxrdeZmHY4PqvIyy7sugw/viewform';
+            var query = {
+                usp: 'pp_url',
+                'entry.45112532': arg.username,
+                'entry.1257375807': arg.realname,
+                'entry.1670959681': arg.email,
+                'entry.250050267': arg.subject
+            };
+            return baseUrl + '?' + httpUtils.encodeQuery(query);
+        }
        
         function showFeedback() {
-            window.open('https://docs.google.com/forms/d/e/1FAIpQLScfZEQlO2Zq1ZgYQkn0pEIlXJapEOxrdeZmHY4PqvIyy7sugw/viewform', '_blank');
+            var fields = {
+                username: runtime.service('session').getUsername(),
+                realname: runtime.service('session').getRealname() || '',
+                email: runtime.service('session').getEmail(),
+                subject: 'JGI Search'
+            };
+            window.open(googleFormLink(fields), '_blank');
         }
 
         function attach(node) {

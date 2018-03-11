@@ -39,10 +39,10 @@ define([
                 return;
             }
             
-            searchHistory.push(value);
+            searchHistory.unshift(value);
 
             if (searchHistory().length > 10) {
-                searchHistory.shift();
+                searchHistory.pop();
             }
         }
 

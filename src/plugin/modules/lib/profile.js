@@ -1,11 +1,9 @@
 define([
     'kb_common/jsonRpc/genericClient',
-    'kb_common/props',
-    'kb_plugin_jgi-search'
+    'kb_common/props'
 ], function (
     GenericClient,
-    Props,
-    Plugin
+    Props
 ) {
     'use strict';
 
@@ -110,6 +108,18 @@ define([
                 });
         }
 
+        function sameArray(a1, a2) {
+            if (a1.length !== a2.length) {
+                return false;
+            }
+            for (var i = 0; i < a1.length; i += 1) {
+                if (a1[i] !== a2[i]) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
         function saveHistory(name, history) {
             var username = runtime.service('session').getUsername();
 
@@ -123,10 +133,19 @@ define([
 
                     var prefs = Props.make({ data: profile.getItem('profile.plugins', {}) });
 
+                    if (prefs.hasItem(key)) {
+                        if (sameArray(prefs.getItem(key).history, history)) {
+                            return [true, null];
+                        }
+                    }
+
                     prefs.setItem(key, {
                         history: history,
                         time: new Date().getTime()
                     });
+
+                    // remove legacy settings.
+                    prefs.deleteItem(['jgi-search', 'settings', 'searchInputHistory']);
 
                     var profileUpdate = {
                         profile: {
@@ -155,23 +174,40 @@ define([
                 });
         }
 
+        function firstSuccess(array, fun) {
+            for (var i = 0; i < array.length; i += 1) {
+                var result = fun(array[i]);
+                if (result) {
+                    return result;
+                }
+            }
+        }
+
         function getHistory(name) {
             var username = runtime.service('session').getUsername();
 
-            var key = ['jgi-search', 'settings', 'history', name];
+            var key = ['profile', 'plugins', 'jgi-search', 'settings', 'history', name];
 
             return profileService.callFunc('get_user_profile', [[username]])
                 .spread(function (profiles) {
                     var profile = Props.make({
                         data: profiles[0]
                     });
-                    var history = profile.getItem(key);
-                    if (!history) {
-                        if (name === 'search') {
-                            history = profile.getItem('profile.plugins.jgi-search.settings.searchInputHistory');
-                        }
+
+                    var keys;
+                    if (name === 'search') {
+                        keys = [
+                            key,
+                            ['profile', 'plugins', 'jgi-search', 'settings', 'searchInputHistory']
+                        ];
+                    } else {
+                        keys = [key];
                     }
-                    
+
+                    var history= firstSuccess(keys, function (key) {
+                        return profile.getItem(key);
+                    });
+
                     if (!history) {
                         history = {
                             history: [],
@@ -183,7 +219,7 @@ define([
                             time: new Date().getTime()
                         };
                     }
-                    return [history.history || [], null];
+                    return [history.history, null];
                 })
                 .catch(function (err) {
                     return [null, {

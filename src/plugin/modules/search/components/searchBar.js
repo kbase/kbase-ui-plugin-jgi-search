@@ -35,14 +35,16 @@ define([
         var searchHistory = params.search.searchHistory;
 
         function addToSearchHistory(value) {
-            if (searchHistory.indexOf(value) !== -1) {
-                return;
-            }
-            
-            searchHistory.push(value);
+            // Remove the search input if it is already in the list
+            searchHistory.remove(value);
 
+            // Add the item to the top of the list.
+            searchHistory.unshift(value);
+
+            // remove the last entry if we have exceeded 10 items.
+            // the last entry will be the oldest one.
             if (searchHistory().length > 10) {
-                searchHistory.shift();
+                searchHistory.pop();
             }
         }
 
@@ -90,8 +92,16 @@ define([
 
 
         function doRunSearch() {
-            addToSearchHistory(searchControlValue());
-            params.search.searchInput(searchControlValue());
+
+            // filter out nonsensical searches
+            var query = searchControlValue();
+            var emptyRe = /^\s*$/;
+            if (emptyRe.test(query)) {
+                return;
+            }
+
+            addToSearchHistory(query);
+            params.search.searchInput(query);
         }
 
         function doKeyUp(data, ev) {

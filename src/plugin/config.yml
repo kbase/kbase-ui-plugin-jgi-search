@@ -16,11 +16,21 @@ install:
       id: jgi-search_panel
       type: factory
       css: true
+    -
+      module: adminPanel
+      id: jgi-search_admin
+      type: factory
+      css: false
   routes:
     -
       path: [jgi-search]
       widget: jgi-search_panel
       authorization: true
+    -
+      path: [jgi-search, admin]
+      widget: jgi-search_admin
+      authorization: true
+      rolesRequired: [Admin]
   menu:
     -
       name: jgi-search
@@ -28,6 +38,12 @@ install:
         path: jgi-search
         label: JGI Search
         icon: search
+    -
+      name: jgi-search-admin
+      definition:
+        path: jgi-search/admin
+        label: JGI Search Admin
+        icon: cog
   schema:
     -
       name: jgi-search/query/input
