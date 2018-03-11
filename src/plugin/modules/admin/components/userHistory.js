@@ -44,6 +44,9 @@ define([
                     .reduce(function (profiles, rawProfile) {
                         var profile = Props.make({data: rawProfile});
                         if (profile.hasItem('profile.plugins.jgi-search.settings.jgiDataTerms.agreed')) {
+
+                            var agreedAt = profile.getItem('profile.plugins.jgi-search.settings.jgiDataTerms.time');
+                        
                             var history;
                             var savedAt;
                             var source;
@@ -67,6 +70,7 @@ define([
                                 username: profile.getItem('user.username'),
                                 realname: profile.getItem('user.realname', '** MISSING **'),
                                 history: history,
+                                agreedAt: agreedAt,
                                 savedAt: savedAt,
                                 source: source,
                                 hasV1: hasV1
@@ -218,12 +222,17 @@ define([
                     }, 'Username'),
                     th({
                         style: {
-                            width: '25%'
+                            width: '15%'
                         }
                     }, 'Realname'),
                     th({
                         style: {
-                            width: '20%'
+                            width: '15%'
+                        }
+                    }, 'Agreed at'),
+                    th({
+                        style: {
+                            width: '15%'
                         }
                     }, 'Saved at'),
                     th({
@@ -257,6 +266,15 @@ define([
                     td({
                         dataBind: {
                             text: 'realname'
+                        }
+                    }),
+                    td({
+                        dataBind: {
+                            typedText: {
+                                value: 'agreedAt',
+                                type: '"date"',
+                                format: '"YYYY-MM-DD @ hh:mm:ss"'
+                            }
                         }
                     }),
                     td({

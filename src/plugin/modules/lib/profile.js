@@ -1,11 +1,9 @@
 define([
     'kb_common/jsonRpc/genericClient',
-    'kb_common/props',
-    'kb_plugin_jgi-search'
+    'kb_common/props'
 ], function (
     GenericClient,
-    Props,
-    Plugin
+    Props
 ) {
     'use strict';
 
