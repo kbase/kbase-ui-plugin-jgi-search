@@ -147,7 +147,6 @@ define([
                 runtime: runtime
             });
             return profile.getJgiAgreement();
-               
         }
 
         function getSearchHistory() {
