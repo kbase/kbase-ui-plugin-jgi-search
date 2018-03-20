@@ -879,7 +879,6 @@ define([
 
     function template() {
         return div([
-            styles.sheet,
             // buildDialog(buildTitle(), buildBody()),
             ui.buildDialog({
                 title: buildTitle(),
@@ -901,7 +900,8 @@ define([
     function component() {
         return {
             viewModel: viewModel,
-            template: template()
+            template: template(),
+            stylesheet: styles.sheet
         };
     }
 

@@ -37,8 +37,6 @@ define([
     function template() {
         return  div({
         }, [
-            styles.sheet,
-
             '<!-- ko switch: status() -->', 
 
             '<!-- ko case: "none" -->',
@@ -135,7 +133,8 @@ define([
     function component() {
         return {
             viewModel: viewModel,
-            template: template()
+            template: template(),
+            stylesheet: styles.sheet
         };
     }
 

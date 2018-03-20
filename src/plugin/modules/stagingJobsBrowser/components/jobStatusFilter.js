@@ -139,7 +139,6 @@ define([
                 margin: '0 4px'
             }
         }, [
-            styles.sheet,
             label('Type'),
             select({
                 dataBind: {
@@ -198,7 +197,8 @@ define([
     function component() {
         return {
             viewModel: viewModel,
-            template: template()
+            template: template(),
+            stylesheet: styles.sheet
         };
     }
 

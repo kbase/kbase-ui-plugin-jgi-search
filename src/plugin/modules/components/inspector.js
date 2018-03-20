@@ -300,7 +300,6 @@ define([
             '<!-- /ko -->',
 
             '<!-- ko if: details() -->',
-            styles.sheet,
             BS.buildTabs({
                 tabs: [{
                     id: 'project',
@@ -327,7 +326,8 @@ define([
     function component() {
         return {
             viewModel: viewModel,
-            template: template()
+            template: template(),
+            stylesheet: styles.sheet
         };
     }
 
