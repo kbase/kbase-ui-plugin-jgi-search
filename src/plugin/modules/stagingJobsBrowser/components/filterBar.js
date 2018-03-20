@@ -52,7 +52,6 @@ define([
                 display: 'inline-block'
             }
         }, [
-            styles.sheet,
             span({
                 class: [styles.classes.filterLabel]
             }, 'Filters: '),
@@ -84,7 +83,8 @@ define([
     function component() {
         return {
             viewModel: viewModel,
-            template: template()
+            template: template(),
+            stylesheet: styles.sheet
         };
     }
 

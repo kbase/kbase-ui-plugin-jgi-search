@@ -186,7 +186,8 @@ define([
                 flex: '1 1 0px',
                 display: 'flex',
                 flexDirection: 'column',
-                padding: '10px'
+                paddingRight: '12px',
+                paddingLeft: '12px'
             }
         }, [
             '<!-- ko switch: status -->',
@@ -197,7 +198,7 @@ define([
             // error
 
             '<!-- ko case: "none" -->', 
-            'loading...',
+            // 'loading...',
             '<!-- /ko -->',
 
             '<!-- ko case: "needagreement" -->', 

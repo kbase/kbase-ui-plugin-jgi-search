@@ -380,7 +380,6 @@ define([
 
     function template() {
         return div({}, [
-            styles.sheet,
             buildSearchBar()
         ]);
     }
@@ -388,7 +387,8 @@ define([
     function component() {
         return {
             viewModel: viewModel,
-            template: template()
+            template: template(),
+            stylesheet: styles.sheet
         };
     }
 

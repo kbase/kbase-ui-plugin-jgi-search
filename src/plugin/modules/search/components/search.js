@@ -4,6 +4,7 @@ define([
     'kb_common/ui',
     '../../lib/utils',
     'kb_plugin_jgi-search',
+    './navBar',
     './searchBar',
     './browser'
 ], function (
@@ -12,6 +13,7 @@ define([
     ui,
     utils,
     Plugin,
+    NavBarComponent,
     SearchBarComponent,
     SearchBrowserComponent
 ) {
@@ -115,6 +117,14 @@ define([
             params: {
                 logo: 'logo',
                 search: 'search'
+            }
+        });
+    }
+
+    function buildNavArea() {
+        return ko.kb.komponent({
+            name: NavBarComponent.name(),
+            params: {
             }
         });
     }
@@ -338,6 +348,9 @@ define([
             display: 'flex',
             flexDirection: 'column'
         },
+        navArea: {
+            flex: '0 0 50px',
+        },
         searchArea: {
             flex: '0 0 50px',
         },
@@ -359,7 +372,9 @@ define([
         return div({
             class: styles.classes.component
         }, [
-            styles.sheet,
+            div({
+                class: styles.classes.navArea
+            }, buildNavArea()),
             // The search input area
             div({
                 class: styles.classes.searchArea
@@ -380,7 +395,8 @@ define([
     function component() {
         return {
             viewModel: viewModel,
-            template: template()
+            template: template(),
+            stylesheet: styles.sheet
         };
     }
 

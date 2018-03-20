@@ -49,7 +49,6 @@ define([
         return div({
             class: 'btn-group pull-right'
         }, [
-            styles.sheet,
             '<!-- ko if: status() === "completed" || status() === "error" || status() === "notfound" -->',
             button({
                 class: 'btn pull-right ' + styles.classes.dangerButton,                
@@ -66,7 +65,8 @@ define([
     function component() {
         return {
             viewModel: viewModel,
-            template: template()
+            template: template(),
+            stylesheet: styles.sheet
         };
     }
 

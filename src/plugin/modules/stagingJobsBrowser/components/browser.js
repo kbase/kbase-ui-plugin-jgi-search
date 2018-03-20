@@ -431,7 +431,6 @@ define([
         return div({
             class: styles.classes.component
         }, [
-            styles.sheet,
             div({
                 class: styles.classes.controls
             }, buildPagingControls()),
@@ -452,7 +451,8 @@ define([
     function component() {
         return {
             viewModel: viewModel,
-            template: template()
+            template: template(),
+            stylesheet: styles.sheet
         };
     }
 

@@ -59,7 +59,6 @@ define([
     function template() {
         return  div({
         }, [
-            styles.sheet,
             span({
                 class: styles.classes.miniButton,
                 dataBind: {
@@ -78,7 +77,8 @@ define([
     function component() {
         return {
             viewModel: viewModel,
-            template: template()
+            template: template(),
+            stylesheet: styles.sheet
         };
     }
 

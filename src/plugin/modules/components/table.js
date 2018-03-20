@@ -867,7 +867,6 @@ define([
         return div({
             class: styles.classes.body
         }, [
-            styles.sheet,
             buildResultsHeader(),
             // '<!-- ko if: search.isError -->',
             // buildError(),
@@ -931,7 +930,8 @@ define([
             viewModel: {
                 createViewModel: viewModel
             },
-            template: template()
+            template: template(),
+            stylesheet: styles.sheet
         };
     }
 

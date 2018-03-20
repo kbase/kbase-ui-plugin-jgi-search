@@ -632,9 +632,6 @@ define([
             .catch(function (err) {
                 console.error('ERROR retrieving search history', err);
             });
-
-      
-
        
 
         // SORTING support

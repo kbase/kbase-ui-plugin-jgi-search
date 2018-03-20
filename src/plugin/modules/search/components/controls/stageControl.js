@@ -94,8 +94,6 @@ define([
     function template() {
         return  div({
         }, [
-            styles.sheet,
-
             '<!-- ko if: row.fileType.error -->', 
             span({
                 class: styles.classes.disabledMiniButton,
@@ -161,7 +159,8 @@ define([
     function component() {
         return {
             viewModel: viewModel,
-            template: template()
+            template: template(),
+            stylesheet: styles.sheet
         };
     }
 
