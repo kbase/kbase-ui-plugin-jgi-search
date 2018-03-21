@@ -125,6 +125,7 @@ define([
         return ko.kb.komponent({
             name: NavBarComponent.name(),
             params: {
+                searchInput: 'searchInput'
             }
         });
     }
@@ -170,19 +171,30 @@ define([
                     display: 'inline-block'
                 }
             }, [
-                span([
+                span({
+                    style: {
+                        display: 'inline-block',
+                        margin: '0 4px'
+                    },
+                }, [
                     span(({
                         dataBind: {
                             text: '$data'
                         },
+                        // style: {
+                        //     backgroundColor: 'transparent',
+                        //     borderColor: 'transparent'
+                        // },
                         class: ['form-control', styles.classes.activeFilterInput]
                     })),
                     span({
                         dataBind: {
                             click: '$component.doRemoveTypeFilter'
                         },
-                        class: 'kb-btn-mini'
-                    }, 'x')
+                        class: 'kb-btn-mini -danger'
+                    }, span({
+                        class: 'fa fa-times'
+                    }))
                 ])
             ])
         ]);
@@ -217,15 +229,19 @@ define([
                 dataBind: {
                     click: 'function() {seqProjectFilter("");}'
                 },
-                class: 'kb-btn-mini'
-            }, 'x'),
+                class: 'kb-btn-mini -danger'
+            }, span({
+                class: 'fa fa-times'
+            })),
             '<!-- /ko -->',
             // disable the clear button
-            '<!-- ko ifnot: seqProjectFilter -->',
-            span({                
-                class: 'kb-btn-mini -hidden'
-            }, 'x'),
-            '<!-- /ko -->'
+            // '<!-- ko ifnot: seqProjectFilter -->',
+            // span({                
+            //     class: 'kb-btn-mini -danger -hidden'
+            // }, span({
+            //     class: 'fa fa-times'
+            // })),
+            // '<!-- /ko -->'
         ]);
     }
 
@@ -258,15 +274,19 @@ define([
                 dataBind: {
                     click: 'function() {proposalFilter("");}'
                 },
-                class: 'kb-btn-mini'
-            }, 'x'),
+                class: 'kb-btn-mini -danger'
+            }, span({
+                class: 'fa fa-times'
+            })),
             '<!-- /ko -->',
             // disable the clear button
-            '<!-- ko ifnot: proposalFilter -->',
-            span({                
-                class: 'kb-btn-mini -hidden'
-            }, 'x'),
-            '<!-- /ko -->'
+            // '<!-- ko ifnot: proposalFilter -->',
+            // span({                
+            //     class: 'kb-btn-mini -danger -hidden'
+            // }, span({
+            //     class: 'fa fa-times'
+            // })),
+            // '<!-- /ko -->'
         ]);
     }
 
@@ -299,15 +319,19 @@ define([
                 dataBind: {
                     click: 'function() {piFilter("");}'
                 },
-                class: 'kb-btn-mini'
-            }, 'x'),
+                class: 'kb-btn-mini -danger'
+            }, span({
+                class: 'fa fa-times'
+            })),
             '<!-- /ko -->',
             // disable the clear button
-            '<!-- ko ifnot: piFilter -->',
-            span({                
-                class: 'kb-btn-mini -hidden'
-            }, 'x'),
-            '<!-- /ko -->'
+            // '<!-- ko ifnot: piFilter -->',
+            // span({                
+            //     class: 'kb-btn-mini -hidden'
+            // }, span({
+            //     class: 'fa fa-times'
+            // })),
+            // '<!-- /ko -->'
         ]);
     }
 

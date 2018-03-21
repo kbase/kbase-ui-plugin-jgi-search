@@ -38,7 +38,7 @@ define([
    
     function viewModel(params) {
         var runtime = params.runtime;
-        var subscriptions = ko.kb.SubscriptionManager.make();
+        var subscriptions = ko.kb.SubscriptionManager.make();        
 
         var data = Data.make({
             runtime: runtime
@@ -155,11 +155,19 @@ define([
 
         // SEARCH
 
+        // TODO: make better!
+        // console.log('params.initialParams', params.initialParams);
+        var initialParams = params.initialParams();
+        // if (params.initialParams.q) {
+        //     initialParams.query = initialParams.q;
+        // }
+
         var searchVm = SearchVm.make({
             runtime: runtime,
             error: error,
             showError: showError,
-            showOverlay: showOverlay
+            showOverlay: showOverlay,
+            initialQuery: initialParams.q
         });
 
         function dispose() {

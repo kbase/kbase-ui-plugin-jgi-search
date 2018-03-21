@@ -1,3 +1,5 @@
+// TODO: replace this with a custom console
+/*eslint no-console: ["error", {allow: ["info", "warn", "error"]}] */
 define([
     'kb_common/html',
     'yaml!./import.yml',
@@ -218,7 +220,7 @@ define([
         return org;
     }
 
-    function grokPI(hit, fileType) {
+    function grokPI(hit) {
         var lastName = getProp(hit.source.metadata, 'proposal.pi.last_name');
         var firstName = getProp(hit.source.metadata, 'proposal.pi.first_name');
         if (lastName) {
@@ -687,7 +689,7 @@ define([
             var em = errorRe.test(message);
 
             if (!em) {
-                console.log('unknown1...', message);
+                console.warn('unknown1...', message);
                 return {
                     status: 'unknown1'
                 };
@@ -701,7 +703,7 @@ define([
         // For now we just support one file at a time.
         // If we support more than one file, this logic will need to change to
         // support that.
-        var totalFiles = parseInt(m[1]);
+        // var totalFiles = parseInt(m[1]);
         var completed = parseInt(m[2]);
         var restoring = parseInt(m[3]);
         var copying = parseInt(m[4]);
@@ -838,7 +840,7 @@ define([
     - a ( or ) is preserved but split off and re-inserted
     */
     function parseSearchExpression(input) {
-        var allTerm;
+        // var allTerm;
         var fieldTerms = {};
         var filter = {};
 
@@ -851,11 +853,11 @@ define([
 
         var terms = input.split(/\s+/);
         var expression = [];
-        var termCount = 0;
+        // var termCount = 0;
         // True if there is an operator already active (previously inserted)
-        var operator = null;
+        // var operator = null;
         // True if there is a modifier applied to this term (previously inserted)
-        var modifier = null;
+        // var modifier = null;
 
         // strip out operator terms
         terms = terms.filter(function (term) {
@@ -948,9 +950,9 @@ define([
             } else {
                 expression.push(term);
             }
-            termCount += 1;
-            modifier = null;
-            operator = null;
+            // termCount += 1;
+            // modifier = null;
+            // operator = null;
         }
         if (expression.length > 0) {
             fieldTerms._all = expression.join(' ');
@@ -1006,7 +1008,7 @@ define([
                     if (k1.length !== k2.length) {
                         return false;
                     }
-                    for (var i = 0; i < k1.length; i++) {
+                    for (let i = 0; i < k1.length; i++) {
                         if (!iseq(v1[k1[i]], v2[k1[i]])) {
                             return false;
                         }
@@ -1041,6 +1043,10 @@ define([
     JGISearchError.prototype.constructor = JGISearchError;
     JGISearchError.prototype.name = 'JGISearchError';
 
+    function logInfo(msg) {
+        console.info(msg);
+    }
+
     return {
         grokTitle: grokTitle,
         grokScientificName: grokScientificName,
@@ -1057,6 +1063,7 @@ define([
         hasProp: hasProp,
         parseSearchExpression: parseSearchExpression,
         isEqual: isEqual,
-        JGISearchError: JGISearchError
+        JGISearchError: JGISearchError,
+        logInfo: logInfo
     };
 });

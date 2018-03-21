@@ -23,8 +23,8 @@ define([
         button = t('button');
 
     function viewModel(params) {
-        var id = params.id;
-        var fileName = params.fileName;
+        // var id = params.id;
+        // var fileName = params.fileName;
 
         var stagingStatus = ko.observable();
         var error = ko.observable();

@@ -43,23 +43,23 @@ define([
 
         // console.log('in result?', params);
 
-        function sortBy(column) {
-            // fake for now...
-            if (!column.sort) {
-                return;
-            }
-            if (!column.sort.active()) {
-                column.sort.active(true);
-            }
+        // function sortBy(column) {
+        //     // fake for now...
+        //     if (!column.sort) {
+        //         return;
+        //     }
+        //     if (!column.sort.active()) {
+        //         column.sort.active(true);
+        //     }
 
-            if (column.sort.direction() === 'ascending') {
-                column.sort.direction('descending');
-            } else {
-                column.sort.direction('ascending');
-            }
+        //     if (column.sort.direction() === 'ascending') {
+        //         column.sort.direction('descending');
+        //     } else {
+        //         column.sort.direction('ascending');
+        //     }
            
-            search.sortBy(column.sort);
-        }
+        //     search.sortBy(column.sort);
+        // }
 
         // search.searchResults.subscribe(function (newValue) {
         //     console.log('got the change...', newValue);

@@ -9,6 +9,7 @@ define([
     exceptions,
     utils
 ) {
+    'use strict';
     function factory(config) {
         var runtime = config.runtime;
 
@@ -35,7 +36,7 @@ define([
                 params
             ])
                 .catch(function (err) {
-                    console.log('err', err instanceof Error, err instanceof exceptions.CustomError, err instanceof exceptions.AjaxError, err instanceof exceptions.ServerError);
+                    console.error('err', err instanceof Error, err instanceof exceptions.CustomError, err instanceof exceptions.AjaxError, err instanceof exceptions.ServerError);
                     if (err instanceof exceptions.AjaxError) {
                         console.error('AJAX Error', err);
                         throw new utils.JGISearchError('ajax', err.code, err.message, null, {

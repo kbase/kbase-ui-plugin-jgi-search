@@ -1,13 +1,67 @@
 define([
-    'knockout-plus',
+    'kb_ko/KO',
     'kb_common/httpUtils',
+    'kb_common/html',
     './components/main'
 ], function (
-    ko,
+    KO,
     httpUtils,
+    html,
     MainComponent
 ) {
     'use strict';
+
+    let ko = KO.ko;
+    let t = html.tag,
+        div = t('div');
+
+    // creates a top level component which has good integration
+    // with a panel widget.
+    function createRootComponent(runtime, name) {
+        var vm = {
+            runtime: runtime,
+            running: ko.observable(false),
+            initialParams: ko.observable()
+        };
+        var temp = document.createElement('div');
+        temp.innerHTML = div({
+            style: {
+                flex: '1 1 0px',
+                display: 'flex',
+                flexDirection: 'column'
+            }
+        }, [
+            '<!-- ko if: running -->',
+            KO.komponent({
+                name: name,
+                params: {
+                    runtime: 'runtime',
+                    initialParams: 'initialParams'
+                }
+            }),
+            '<!-- /ko -->'
+        ]);
+        var node = temp.firstChild;
+        ko.applyBindings(vm, node, function (context) {
+            context.runtime = runtime;
+        });
+
+        function start(params) {
+            vm.initialParams(params);
+            vm.running(true);
+        }
+
+        function stop() {
+            vm.running(false);
+        }
+       
+        return {
+            vm: vm,
+            node: node,
+            start: start,
+            stop: stop
+        };
+    }
 
     function factory(config) {
         var runtime = config.runtime;
@@ -38,11 +92,11 @@ define([
 
         function attach(node) {
             hostNode = node;
-            rootComponent = ko.kb.createRootComponent(runtime, MainComponent.name());
+            rootComponent = createRootComponent(runtime, MainComponent.name());
             container = hostNode.appendChild(rootComponent.node);
         }
 
-        function start() {
+        function start(params) {
             runtime.send('ui', 'setTitle', 'JGI Search (BETA)');
 
             runtime.send('ui', 'addButton', {
@@ -60,11 +114,11 @@ define([
                 }
             });
 
-            rootComponent.vm.running(true);
+            rootComponent.start(params);
         }
 
         function stop() {
-            rootComponent.vm.running(false);
+            rootComponent.stop();
         }
 
         function detach() {

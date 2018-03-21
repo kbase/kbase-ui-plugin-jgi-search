@@ -819,11 +819,11 @@ define([
 
     function buildNoActiveSearch() {
         return div({
-            class: 'well',
+            class: 'alert alert-info',
             style: {
-                backgroundColor: 'transparent',
-                width: '50%',
-                margin: '30px auto'
+                margin: '40px auto 0 auto',
+                maxWidth: '40em',
+                padding: '20px'
             }
         }, [
             '<!-- ko if: $component.isLoading -->',
@@ -842,11 +842,11 @@ define([
 
     function buildNoResults() {
         return div({
-            class: 'well',
+            class: 'alert alert-warning',
             style: {
-                backgroundColor: 'transparent',
-                width: '50%',
-                margin: '30px auto'
+                margin: '40px auto 0 auto',
+                maxWidth: '40em',
+                padding: '20px'
             }
         }, [
             '<!-- ko if: $component.isLoading -->',
@@ -882,7 +882,7 @@ define([
                 div({
                     style: {
                         padding: '12px',
-                        backgroundColor: 'silver',
+                        // backgroundColor: 'silver',
                         textAlign: 'center'
                     }
                 }, buildNoResults()),
@@ -894,7 +894,7 @@ define([
                 div({
                     style: {
                         padding: '12px',
-                        backgroundColor: 'silver',
+                        // backgroundColor: 'silver',
                         textAlign: 'center'
                     }
                 }, buildNoActiveSearch()), // buildNoActiveSearch()),

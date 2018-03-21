@@ -1,11 +1,9 @@
 define([
     'kb_common/jsonRpc/genericClient',
-    'kb_common/jsonRpc/dynamicServiceClient',
-    'kb_common/html'
+    'kb_common/jsonRpc/dynamicServiceClient'
 ], function (
     GenericClient,
-    DynamicService,
-    html
+    DynamicService
 ) {
     'use strict';
 
@@ -16,7 +14,7 @@ define([
 
         function serviceCall(moduleName, functionName, params) {
             var override = runtime.config(['services', moduleName, 'url'].join('.'));
-            console.log('overriding?', moduleName, override);
+            // console.log('overriding?', moduleName, override);
             var token = runtime.service('session').getAuthToken();
             var client;
             if (override) {
@@ -42,13 +40,10 @@ define([
             container = hostNode.appendChild(document.createElement('div'));
         }
 
-        function start(params) {
+        function start() {
             container.innerHTML = 'jobs...';
 
             return serviceCall('jgi_gateway', 'list_jobs', [])
-                .then(function (result) {
-                    console.log('got it!', result);
-                })
                 .catch(function (err) {
                     console.error('ERROR', err);
                 });
