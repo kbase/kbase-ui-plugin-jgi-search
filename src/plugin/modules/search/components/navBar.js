@@ -1,13 +1,13 @@
 define([
-    'knockout-plus',
+    'kb_ko/KO',
     'kb_common/html'
 ], function (
-    ko,
+    KO,
     html
 ) {
     'use strict';
-
-    var t = html.tag,
+    let ko = KO.ko;
+    let t = html.tag,
         div = t('div'),
         span = t('span'),
         a = t('a');
@@ -18,9 +18,12 @@ define([
         searchInput
         searchHistory
     */
-    function viewModel() {
+    function viewModel(params) {
+        let searchInputQueryValue = ko.pureComputed(function () {
+            return encodeURIComponent(params.searchInput() || '');
+        });
         return {
-           
+            searchInputQueryValue
         };
     }
 
@@ -101,17 +104,31 @@ define([
         },
         navLink: {
             css: {
-                padding: '4px'
+                display: 'inline-block',
+                padding: '6px',
+                margin: '4px',
+                cursor: 'pointer',
+                verticalAlign: 'center',
+            },
+            pseudo: {
+                hover: {
+                    backgroundColor: '#DDD'
+                }
+            },
+            modifiers: {
+                active: {
+                    backgroundColor: '#DDD'
+                }
             }
         },
         label: {
             css: {
                 fontWeight: 'bold',
-                color: 'gray'
+                color: 'gray',
+                marginRight: '4px'
             }
         }
     });
-  
 
     function buildNavBar() {
         return div({
@@ -121,17 +138,21 @@ define([
                 class: styles.classes.label
             }, 'Search:'),
             span({
-                class: styles.classes.navLink
+                class: [styles.classes.navLink, styles.scopes.active].join(' ')
             }, 'JGI'), 
             a({
                 class: styles.classes.navLink,
-                href: '#search'
-            }, 'KBase'),
-            ' ',
-            a({
-                class: styles.classes.navLink,
-                href: '#search?tab=reference-data'
-            }, 'Reference Data')
+                dataBind: {
+                    attr: {
+                        href: '"#search?q=" + searchInputQueryValue()'
+                    }
+                },
+            }, 'KBase - User Data, Reference Data, Features'),
+            // ' ',
+            // a({
+            //     class: styles.classes.navLink,
+            //     href: '#search?tab=reference-data'
+            // }, 'Reference Data')
         ]);
     }
 

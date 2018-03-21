@@ -23,17 +23,20 @@
     padding: 2px;
     border: 2px transparent solid;
     cursor: pointer;
+    opacity: 0.5;
 }
 
 .kb-btn-mini:hover {
-    border: 2px gray solid;
+    /* border: 2px gray solid; */
     cursor: pointer;
+    opacity: 1;
 }
 
 .kb-btn-mini:active {
-    border: 2px gray solid;
+    /* border: 2px gray solid; */
     background-color: #555;
     color: #FFF;
+    opacity: 1;
 }
 
 .kb-btn-mini.-hidden {
@@ -55,6 +58,24 @@
     border: 2px transparent solid;
     background-color: inherit;
     color: inherit;
+}
+
+.kb-btn-mini.-danger.-hidden {
+    color: transparent;
+}
+
+.kb-btn-mini.-danger {
+    color: #a94442;
+}
+
+.kb-btn-mini.-danger:hover {
+    color: #a94442;
+    /* border: 2px #a94442 solid; */
+}
+.kb-btn-mini.-danger:active {
+    color: #a94442;
+    background-color: #a94442;
+    color: white;
 }
 
 

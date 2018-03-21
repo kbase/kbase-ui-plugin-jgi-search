@@ -3,16 +3,15 @@ define([
     'knockout-plus',
     '../lib/utils',
     './components/controls/inspectControl',
-    './components/controls/stageControl',
-    './components/controls/stageStatus',
+    './components/controls/stageControl'
 ], function (
     numeral,
     ko,
     utils,
     InspectControl,
-    StageControl,
-    StageStatus
+    StageControl
 ) {
+    'use strict';
     var columns = [
         {
             name: 'title',
@@ -196,9 +195,9 @@ define([
         return null;
     }
 
-    function hitsToRows(hits, doStage) {
+    function hitsToRows(hits) {
     // function hitsToRows(hits, doStage, jobMap) {
-        return hits.map(function (hit, index) {
+        return hits.map(function (hit) {
             // var rowNumber = (page() - 1) * pageSize() + 1 + index;
 
             var sequencingProjectId = (function (id) {

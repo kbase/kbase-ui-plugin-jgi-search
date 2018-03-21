@@ -5,7 +5,7 @@ define([
     ko,
     Data
 ) {
-
+    'use strict';
     function factory(config) {
         var runtime = config.runtime;
         var subscriptions = ko.kb.SubscriptionManager.make();
@@ -73,10 +73,13 @@ define([
 
         function jobStatusLoop(state) {
             data.getStagingJobStatus()
-                .spread(function (result, error) {
+                // TODO: handle error!
+                // .spread(function (result, error) {
+                .spread(function (result) {
                     ['sent', 'submitted', 'queued', 'restoring', 'copying', 'completed', 'error'].forEach(function (state) {
                         stagingJobStates[state](result.states[state]);
                     });
+                    
                 })
                 .finally(function () {
                     if (state.looping) {
@@ -110,7 +113,7 @@ define([
                 try {
                     disposable.disposer.call(disposable);
                 } catch (ex) {
-                    console.log('ERROR running disposer "' + disposable.name + '"', ex);
+                    console.error('ERROR running disposer "' + disposable.name + '"', ex);
                 }
             });
         }

@@ -9,7 +9,7 @@ define([
     JobClockComponent,
     DeleteJobComponent
 ) {
-    
+    'use strict';
     var columns = [
         {
             name: 'started',

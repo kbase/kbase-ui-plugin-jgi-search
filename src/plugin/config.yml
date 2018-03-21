@@ -24,6 +24,8 @@ install:
   routes:
     -
       path: [jgi-search]
+      queryParams:
+        q: {}
       widget: jgi-search_panel
       authorization: true
     -

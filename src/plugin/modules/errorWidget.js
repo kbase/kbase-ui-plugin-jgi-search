@@ -2,14 +2,12 @@ define([
     'bluebird',
     'jquery',
     'kb_common/html',
-    'kb_common/bootstrapUtils',
-    'kb_common/ui'
+    'kb_common/bootstrapUtils'
 ], function (
     Promise,
     $,
     html,
-    BS,
-    ui
+    BS
 ) {
     'use strict';
 

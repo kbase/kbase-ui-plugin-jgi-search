@@ -184,7 +184,7 @@ define([
             if (!page()) {
                 return;
             }
-             // TODO: proper concurrency and cancellation...
+            // TODO: proper concurrency and cancellation...
 
             if (searching()) {
                 return;
@@ -281,7 +281,7 @@ define([
             });            
         });
 
-        subscriptions.add(sortSpec.subscribe(function (newValue) {
+        subscriptions.add(sortSpec.subscribe(function () {
             doSearch();
         }));
 
@@ -502,14 +502,14 @@ define([
         }
     });
 
-    function buildInputArea() {
-        return ko.kb.komponent({
-            name: SearchBarComponent.name(),
-            params: {
-                search: 'search'
-            }
-        });
-    }
+    // function buildInputArea() {
+    //     return ko.kb.komponent({
+    //         name: SearchBarComponent.name(),
+    //         params: {
+    //             search: 'search'
+    //         }
+    //     });
+    // }
     
     function buildFilterArea() {
         return ko.kb.komponent({

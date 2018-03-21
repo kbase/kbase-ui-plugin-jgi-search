@@ -33,7 +33,6 @@ define([
         var error = params.error;
         var subscriptions = ko.kb.SubscriptionManager.make();
 
-
         var maxSearchResults = 10000;
         var data = Data.make({
             runtime: runtime
@@ -442,8 +441,6 @@ define([
             };
         }
 
-        
-
         function doSearch() {
             // Search cancellation
             if (currentSearch.search) {
@@ -512,7 +509,7 @@ define([
                         return true;
                     }
 
-                    console.log('jgi search elapsed', stats);
+                    console.warn('jgi search elapsed', stats);
 
                     if (result.total > maxSearchResults) {
                         actualSearchTotal(result.total);
@@ -720,6 +717,11 @@ define([
                 stagingJobsVm.dispose();
             }
         }
+
+        // MAIN
+
+        searchInput(params.initialQuery);
+        // doSearch();
 
         return {
             // health: health,

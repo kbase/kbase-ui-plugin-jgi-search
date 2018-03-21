@@ -12,7 +12,6 @@ define([
         div = t('div');
 
     function viewModel(params) {
-        console.log('staging status??', params);
         return {
             status: params.status
         };

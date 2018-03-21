@@ -13,35 +13,35 @@ define([
         div = t('div'),
         span = t('span');
 
-    function validateViewModel(params) {
-        var spec = {            
-            source: {
-                type: 'string',
-                required: false
-            },
-            code: {
-                type: 'string',
-                required: true
-            },
-            message: {
-                type: 'string',
-                required: true
-            },
-            detail: {
-                type: 'string',
-                required: true
-            },
-            info: {
-                type: 'object',
-                required: false
-            },
-            onClose: {
-                type: 'function',
-                required: true
-            }
-        };
+    // function validateViewModel(params) {
+    //     var spec = {            
+    //         source: {
+    //             type: 'string',
+    //             required: false
+    //         },
+    //         code: {
+    //             type: 'string',
+    //             required: true
+    //         },
+    //         message: {
+    //             type: 'string',
+    //             required: true
+    //         },
+    //         detail: {
+    //             type: 'string',
+    //             required: true
+    //         },
+    //         info: {
+    //             type: 'object',
+    //             required: false
+    //         },
+    //         onClose: {
+    //             type: 'function',
+    //             required: true
+    //         }
+    //     };
 
-    }
+    // }
 
     function viewModel(params) {
         var error = params.error;
