@@ -572,14 +572,14 @@ define([
                                 disable: '!page() || page() === 1 || searching()'
                             },
                             class: 'btn btn-default'
-                        }, buildIcon('backward')),
+                        }, buildIcon('chevron-left')),
                         button({
                             dataBind: {
                                 click: 'doNextPage',
                                 disable: '!page() || page() === totalPages() || searching()'
                             },
                             class: 'btn btn-default'
-                        }, buildIcon('forward')),
+                        }, buildIcon('chevron-right')),
                         button({
                             dataBind: {
                                 click: 'doLast',
