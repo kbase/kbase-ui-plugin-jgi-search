@@ -34,20 +34,6 @@ define([
 
         var searchHistory = params.search.searchHistory;
 
-        function addToSearchHistory(value) {
-            // Remove the search input if it is already in the list
-            searchHistory.remove(value);
-
-            // Add the item to the top of the list.
-            searchHistory.unshift(value);
-
-            // remove the last entry if we have exceeded 10 items.
-            // the last entry will be the oldest one.
-            if (searchHistory().length > 10) {
-                searchHistory.pop();
-            }
-        }
-
         // When it is updated by either of those methods, we save
         // it in the search history, and also forward the value to
         // the search query.
@@ -55,12 +41,6 @@ define([
         // This is the search value the user has commited by clicking
         // the search button or pressing the Enter key.
        
-        // var searchInput = ko.observable().syncWith(params.search.searchInput);
-        
-        // searchInput.subscribe(function (newValue) {
-        //     addToSearchHistory(newValue);
-        // });
-
         // This is the obervable in the actual search input.
         var searchControlValue = ko.observable().syncFrom(params.search.searchInput);
 
@@ -90,9 +70,7 @@ define([
             params.search.searchInput('');
         }
 
-
         function doRunSearch() {
-
             // filter out nonsensical searches
             var query = searchControlValue();
             var emptyRe = /^\s*$/;
@@ -100,7 +78,6 @@ define([
                 return;
             }
 
-            addToSearchHistory(query);
             params.search.searchInput(query);
         }
 

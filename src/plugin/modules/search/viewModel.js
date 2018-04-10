@@ -143,7 +143,6 @@ define([
                         return job.dbId === hit.id;
                     });
                     var transferJob = jobs[0];
-                    // console.log('HIT', hit);
                     var analysisProject;
                     if (utils.hasProp(hit.source.metadata, 'analysis_project')) {
                         analysisProject = {
@@ -367,11 +366,26 @@ define([
             filter: {}
         });
 
-        subscriptions.add(searchInput.subscribe(function () {
+        function addToSearchHistory(value) {
+            // Remove the search input if it is already in the list
+            searchHistory.remove(value);
+
+            // Add the item to the top of the list.
+            searchHistory.unshift(value);
+
+            // remove the last entry if we have exceeded 10 items.
+            // the last entry will be the oldest one.
+            if (searchHistory().length > 10) {
+                searchHistory.pop();
+            }
+        }
+
+        subscriptions.add(searchInput.subscribe(function (newSearchInput) {
             var newExpression = utils.parseSearchExpression(searchInput());
             if (utils.isEqual(newExpression, searchExpression())) {
                 return;
             }
+            addToSearchHistory(newSearchInput);
             searchExpression(newExpression);
         }));
 
@@ -618,17 +632,7 @@ define([
                 });
         }));
 
-        data.getSearchHistory()
-            .spread(function (result, error) {
-                if (error) {
-                    showError(error);
-                } else {
-                    searchHistory(result);                    
-                }
-            })
-            .catch(function (err) {
-                console.error('ERROR retrieving search history', err);
-            });
+        
        
 
         // SORTING support
@@ -720,8 +724,21 @@ define([
 
         // MAIN
 
-        searchInput(params.initialQuery);
-        // doSearch();
+        data.getSearchHistory()
+            .spread(function (result, error) {
+                if (error) {
+                    showError(error);
+                } else {
+                    searchHistory(result);                    
+                }
+            })
+            .then(function () {
+                searchInput(params.initialQuery);
+            })
+            .catch(function (err) {
+                console.error('ERROR retrieving search history', err);
+            });
+
 
         return {
             // health: health,
