@@ -70,7 +70,7 @@ define([
                 }
             }
         },
-       
+
         sectionHeader: {
             padding: '4px',
             fontWeight: 'bold',
@@ -188,7 +188,8 @@ define([
             none: div([
                 p('No active search.'),
                 hr({style: {width: '50%'}}),
-                p('Please enter one or more search terms and/or filters to initiate a search.')
+                p('Enter one or more terms above to search for reads and assemblies contained in the Joint Genome Institute (JGI) Genomes Online Database (GOLD) to use in KBase.')
+                p('Multiple search terms are treated as “AND”  statements. The search will find objects or text that include all of the terms you submit. Terms are matched against whole words; no partial matches will be listed. Wildcards are supported--use an asterisk (*) as a wildcard (for example, “lacto*” would match “lactobacillus” and “lactococcus”). Other search operators are not currently supported.')
             ]),
             notfound: div([
                 p('Sorry, nothing was found with this search.'),
@@ -251,7 +252,7 @@ define([
                     flexDirection: 'column',
                     flex: '1 1 0px'
                 }
-            })           
+            })
         ]);
     }
 
