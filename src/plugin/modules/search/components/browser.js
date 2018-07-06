@@ -606,13 +606,21 @@ define([
                         }, [
                             span({
                                 dataBind: {
-                                    text: 'pageFrom()'
+                                    typedText: {
+                                        value: 'pageFrom()',
+                                        type: '"number"',
+                                        format: '"0,0"'
+                                    }
                                 }
                             }),
                             ' to ',
                             span({
                                 dataBind: {
-                                    text: 'pageTo()'
+                                    typedText: {
+                                        value: 'pageTo()',
+                                        type: '"number"',
+                                        format: '"0,0"'
+                                    }
                                 }
                             }),
                             ' of ',
