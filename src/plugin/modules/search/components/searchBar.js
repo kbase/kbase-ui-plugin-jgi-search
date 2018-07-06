@@ -238,36 +238,6 @@ define([
             })),
             '<!-- /ko -->',
             div({
-                class: 'input-group-addon ' + styles.classes.addonButton,
-                style: {
-                    borderRadius: '4px',
-                    borderTopRightRadius: '0',
-                    borderBottomRightRadius: '0',
-                    paddingLeft: '8px',
-                    paddingRight: '8px'
-                },
-                dataBind: {
-                    click: 'doRunSearch'
-                }
-            }, span({
-                style: {
-                    display: 'inline-block',
-                    width: '2em',
-                    textAlign: 'center'
-                }
-            }, span({
-                class: 'fa',
-                style: {
-                    fontSize: '100%',
-                },
-                dataBind: {
-                    css: {
-                        'fa-search': '!searching()',
-                        'fa-spinner fa-pulse': 'searching()'
-                    }
-                }
-            }))),
-            div({
                 class: 'form-control',
                 style: {
                     display: 'inline-block',
@@ -324,6 +294,30 @@ define([
                 ]),
                 '<!-- /ko -->'
             ]),
+            div({
+                class: 'input-group-addon ' + styles.classes.addonButton,
+                // style: {
+                //     borderRadius: '4px',
+                //     borderTopRightRadius: '0',
+                //     borderBottomRightRadius: '0',
+                //     paddingLeft: '8px',
+                //     paddingRight: '8px'
+                // },
+                dataBind: {
+                    click: 'doRunSearch'
+                }
+            }, span({
+                class: 'fa',
+                style: {
+                    fontSize: '100%',
+                },
+                dataBind: {
+                    css: {
+                        'fa-search': '!searching()',
+                        'fa-spinner fa-pulse': 'searching()'
+                    }
+                }
+            })),
             div({
                 class: 'input-group-addon ' + styles.classes.addonButton,
                 dataBind: {
