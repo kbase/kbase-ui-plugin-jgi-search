@@ -220,7 +220,7 @@ define([
                 placeholder: 'Filter by seq. project id',
                 class: 'form-control',
                 style: {
-                    width: '8em'
+                    width: '12em'
                 }
             }),
             // enable the clear button
@@ -236,7 +236,7 @@ define([
             '<!-- /ko -->',
             // disable the clear button
             // '<!-- ko ifnot: seqProjectFilter -->',
-            // span({                
+            // span({
             //     class: 'kb-btn-mini -danger -hidden'
             // }, span({
             //     class: 'fa fa-times'
@@ -265,7 +265,7 @@ define([
                 placeholder: 'Filter by proposal id',
                 class: 'form-control',
                 style: {
-                    width: '8em'
+                    width: '12em'
                 }
             }),
             // enable the clear button
@@ -281,7 +281,7 @@ define([
             '<!-- /ko -->',
             // disable the clear button
             // '<!-- ko ifnot: proposalFilter -->',
-            // span({                
+            // span({
             //     class: 'kb-btn-mini -danger -hidden'
             // }, span({
             //     class: 'fa fa-times'
@@ -310,7 +310,7 @@ define([
                 placeholder: 'Filter by PI last name',
                 class: 'form-control',
                 style: {
-                    width: '8em'
+                    width: '12em'
                 }
             }),
             // enable the clear button
@@ -326,7 +326,7 @@ define([
             '<!-- /ko -->',
             // disable the clear button
             // '<!-- ko ifnot: piFilter -->',
-            // span({                
+            // span({
             //     class: 'kb-btn-mini -hidden'
             // }, span({
             //     class: 'fa fa-times'
@@ -338,7 +338,7 @@ define([
     function buildFilterArea() {
         return div({
             class: 'form-inline',
-            style: {                
+            style: {
             }
         }, [
             span({
