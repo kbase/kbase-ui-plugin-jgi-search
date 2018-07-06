@@ -6,7 +6,7 @@ define([
     'use strict';
 
     var t = html.tag,
-        button = t('button'),    
+        button = t('button'),
         span = t('span'),
         div = t('div');
 
@@ -37,7 +37,7 @@ define([
             titleColor = '#2e618d';
             break;
         case 'default':
-        default: 
+        default:
             titleColor = '#000';
         }
 
@@ -69,7 +69,6 @@ define([
                 }
             }, btn.label);
         }).join(' ');
-
 
         return div({
         }, [
@@ -136,7 +135,7 @@ define([
             color = '#777';
             break;
         case 'default':
-        default: 
+        default:
             color = '#000';
         }
         return color;
@@ -169,7 +168,7 @@ define([
             titleColor = '#2e618d';
             break;
         case 'default':
-        default: 
+        default:
             titleColor = '#000';
         }
 

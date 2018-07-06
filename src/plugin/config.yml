@@ -14,8 +14,7 @@ install:
     -
       module: panel
       id: jgi-search_panel
-      type: factory
-      css: true
+      type: es6
     -
       module: adminPanel
       id: jgi-search_admin

@@ -1,76 +1,114 @@
 define([
-    'kb_ko/KO',
+    'knockout',
+    'kb_knockout/lib/generators',
+    'kb_knockout/lib/viewModelBase',
     'kb_common/httpUtils',
     'kb_common/html',
-    './components/main'
+    'kb_knockout/components/overlayPanel',
+    './components/main',
+    './help/components/searchHelp'
 ], function (
-    KO,
+    ko,
+    gen,
+    ViewModelBase,
     httpUtils,
     html,
-    MainComponent
+    OverlayPanelComponent,
+    MainComponent,
+    SearchHelpComponent
 ) {
     'use strict';
 
-    let ko = KO.ko;
-    let t = html.tag,
+    const t = html.tag,
         div = t('div');
+
+    class RootViewModel extends ViewModelBase {
+        constructor(params) {
+            super(params);
+
+            this.runtime = params.runtime;
+
+            this.running = ko.observable(false);
+            this.initialParams = ko.observable();
+            this.overlayComponent = ko.observable();
+            this.showOverlay = ko.observable();
+
+            this.subscribe(this.showOverlay, (newValue) => {
+                this.overlayComponent(newValue);
+            });
+        }
+    }
 
     // creates a top level component which has good integration
     // with a panel widget.
-    function createRootComponent(runtime, name) {
-        var vm = {
-            runtime: runtime,
-            running: ko.observable(false),
-            initialParams: ko.observable()
-        };
-        var temp = document.createElement('div');
-        temp.innerHTML = div({
-            style: {
-                flex: '1 1 0px',
-                display: 'flex',
-                flexDirection: 'column'
-            }
-        }, [
-            '<!-- ko if: running -->',
-            KO.komponent({
-                name: name,
-                params: {
-                    runtime: 'runtime',
-                    initialParams: 'initialParams'
+    class RootComponent {
+        constructor(runtime, name) {
+            this.runtime = runtime;
+            this.name = name;
+
+            this.vm = new RootViewModel({
+                runtime: runtime
+            });
+            this.running = ko.observable(false);
+            this.initialParams = ko.observable();
+            this.node = null;
+            this.render();
+        }
+
+        render() {
+            const temp = document.createElement('div');
+            temp.innerHTML = div({
+                style: {
+                    flex: '1 1 0px',
+                    display: 'flex',
+                    flexDirection: 'column'
                 }
-            }),
-            '<!-- /ko -->'
-        ]);
-        var node = temp.firstChild;
-        ko.applyBindings(vm, node, function (context) {
-            context.runtime = runtime;
-        });
-
-        function start(params) {
-            vm.initialParams(params);
-            vm.running(true);
+            }, [
+                gen.if('running',
+                    gen.component({
+                        name: this.name,
+                        params: {
+                            runtime: 'runtime',
+                            initialParams: 'initialParams'
+                        }
+                    })),
+                gen.component({
+                    name: OverlayPanelComponent.name(),
+                    params: {
+                        component: 'overlayComponent',
+                        hostVm: '$data'
+                    }
+                })
+            ]);
+            this.node = temp.firstChild;
         }
 
-        function stop() {
-            vm.running(false);
+        start(params) {
+            // this.render();
+
+            ko.applyBindings(this.vm, this.node, (context) => {
+                context.runtime = this.runtime;
+            });
+            this.vm.initialParams(params);
+            this.vm.running(true);
         }
-       
-        return {
-            vm: vm,
-            node: node,
-            start: start,
-            stop: stop
-        };
+
+        stop() {
+            this.vm.running(false);
+        }
     }
 
-    function factory(config) {
-        var runtime = config.runtime;
-        var hostNode, container;
-        var rootComponent;
+    class Widget {
+        constructor(config) {
+            this.runtime = config.runtime;
+            this.hostNode = null;
+            this.container = null;
+            this.rootComponent = null;
+        }
 
-        function googleFormLink(arg) {
-            var baseUrl = 'https://docs.google.com/forms/d/e/1FAIpQLScfZEQlO2Zq1ZgYQkn0pEIlXJapEOxrdeZmHY4PqvIyy7sugw/viewform';
-            var query = {
+        googleFormLink(arg) {
+            const baseUrl = 'https://docs.google.com/forms/d/e/1FAIpQLScfZEQlO2Zq1ZgYQkn0pEIlXJapEOxrdeZmHY4PqvIyy7sugw/viewform';
+            const query = {
                 usp: 'pp_url',
                 'entry.45112532': arg.username,
                 'entry.1257375807': arg.realname,
@@ -79,27 +117,35 @@ define([
             };
             return baseUrl + '?' + httpUtils.encodeQuery(query);
         }
-       
-        function showFeedback() {
-            var fields = {
-                username: runtime.service('session').getUsername(),
-                realname: runtime.service('session').getRealname() || '',
-                email: runtime.service('session').getEmail(),
+
+        showFeedback() {
+            const fields = {
+                username: this.runtime.service('session').getUsername(),
+                realname: this.runtime.service('session').getRealname() || '',
+                email: this.runtime.service('session').getEmail(),
                 subject: 'JGI Search'
             };
-            window.open(googleFormLink(fields), '_blank');
+            window.open(this.googleFormLink(fields), '_blank');
         }
 
-        function attach(node) {
-            hostNode = node;
-            rootComponent = createRootComponent(runtime, MainComponent.name());
-            container = hostNode.appendChild(rootComponent.node);
+        showHelp() {
+            this.rootComponent.vm.showOverlay({
+                name: SearchHelpComponent.name(),
+                params: {},
+                viewModel: {}
+            });
         }
 
-        function start(params) {
-            runtime.send('ui', 'setTitle', 'JGI Search (BETA)');
+        attach(node) {
+            this.hostNode = node;
+            this.rootComponent = new RootComponent(this.runtime, MainComponent.name());
+            this.container = this.hostNode.appendChild(this.rootComponent.node);
+        }
 
-            runtime.send('ui', 'addButton', {
+        start(params) {
+            this.runtime.send('ui', 'setTitle', 'JGI Search (BETA)');
+
+            this.runtime.send('ui', 'addButton', {
                 name: 'feedback',
                 label: 'Feedback',
                 style: 'default',
@@ -108,38 +154,39 @@ define([
                 params: {
                     // ref: objectInfo.ref
                 },
-                callback: function() {
-                    // runtime.send('copyWidget', 'toggle');
-                    showFeedback();
+                callback: () => {
+                    this.showFeedback();
                 }
             });
 
-            rootComponent.start(params);
+            this.runtime.send('ui', 'addButton', {
+                name: 'help',
+                label: 'Help',
+                style: 'default',
+                icon: 'question-circle',
+                toggle: false,
+                params: {
+                    // ref: objectInfo.ref
+                },
+                callback: () => {
+                    this.showHelp();
+                }
+            });
+
+            this.rootComponent.start(params);
         }
 
-        function stop() {
-            rootComponent.stop();
+        stop() {
+            this.rootComponent.stop();
         }
 
-        function detach() {
-            // container.innerHTML = '';
-            if (hostNode && container) {
-                hostNode.removeChild(container);
-                container.innerHTML = '';
+        detach() {
+            if (this.hostNode && this.container) {
+                this.hostNode.removeChild(this.container);
+                this.container.innerHTML = '';
             }
         }
-
-        return {
-            attach: attach,
-            start: start,
-            stop: stop,
-            detach: detach
-        };
     }
 
-    return {
-        make: function (config) {
-            return factory(config);
-        }
-    };
+    return {Widget};
 });
