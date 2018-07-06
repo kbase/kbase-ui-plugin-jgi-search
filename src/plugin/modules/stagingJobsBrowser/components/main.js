@@ -9,7 +9,7 @@ define([
     './searchBar',
     './filterBar',
     './browser'
-], function(
+], function (
     ko,
     moment,
     html,
@@ -34,7 +34,7 @@ define([
         // OVERLAY
 
         // The overlayComponent is passed directly to the overlay panel.
-        // Updating this overvable will cause the overlay panel to show the 
+        // Updating this observable will cause the overlay panel to show the
         // specified component.
         var overlayComponent = ko.observable();
         var showOverlay = ko.observable();
@@ -102,7 +102,7 @@ define([
             }
 
             // In the staging browser, we use filter logic.
-            // I.e., always showing something, filtered, 
+            // I.e., always showing something, filtered,
             // so 'none' state does not exist.
             if (!pageSize()) {
                 return 'pending';
@@ -198,7 +198,7 @@ define([
                     actualSearchTotal(result.totalMatched);
                     // TODO: smart updating of the result rows!
                     searchResults.removeAll();
-                    result.rows.forEach(function (row) {                       
+                    result.rows.forEach(function (row) {
                         searchResults.push(row);
                     });
                 })
@@ -235,7 +235,7 @@ define([
 
         refreshLoop();
 
-       
+
         // Subscriptions
 
         subscriptions.add(searchParams.subscribe(function () {
@@ -252,7 +252,7 @@ define([
             }
         }));
 
-        // The job here is to reset the page, if necessary, due to 
+        // The job here is to reset the page, if necessary, due to
         // a change in page size.
         subscriptions.add(pageSize.subscribeChanged(function (newValue, oldValue) {
             var currentPage = page();
@@ -278,7 +278,7 @@ define([
                     field: column.sort.keyName,
                     descending: column.sort.direction() === 'descending'
                 };
-            });            
+            });
         });
 
         subscriptions.add(sortSpec.subscribe(function () {
@@ -308,13 +308,13 @@ define([
                 return;
             }
 
-            // for now just single column sort.            
+            // for now just single column sort.
             if (sortColumns().length === 1) {
                 var currentSortColumn = sortColumns()[0];
                 if (currentSortColumn !== column) {
                     currentSortColumn.sort.active(false);
                 }
-                sortColumns.removeAll();                
+                sortColumns.removeAll();
             }
 
             if (column.sort.active()) {
@@ -385,7 +385,7 @@ define([
             .catch(function (err) {
                 console.error('ERROR retrieving search history', err);
             });
- 
+
         // CLOCK
         // I know...
         var clock = ko.observable();
@@ -419,7 +419,7 @@ define([
 
         return {
             overlayComponent: overlayComponent,
-            
+
             search: {
                 // INPUTS
                 searchInput: searchInput,
@@ -510,7 +510,7 @@ define([
     //         }
     //     });
     // }
-    
+
     function buildFilterArea() {
         return ko.kb.komponent({
             name: FilterBarComponent.name(),

@@ -35,10 +35,10 @@ define([
 
     var t = html.tag,
         div = t('div');
-   
+
     function viewModel(params) {
         var runtime = params.runtime;
-        var subscriptions = ko.kb.SubscriptionManager.make();        
+        var subscriptions = ko.kb.SubscriptionManager.make();
 
         var data = Data.make({
             runtime: runtime
@@ -104,10 +104,10 @@ define([
                 }
             });
         }
-        
+
 
         // TERMS AND AGREEMENT
- 
+
         var jgiTermsAgreed = ko.observable(false);
 
         subscriptions.add(jgiTermsAgreed.subscribe(function (newValue) {
@@ -146,7 +146,7 @@ define([
         // OVERLAY integration
 
         var overlayComponent = ko.observable();
-    
+
         var showOverlay = ko.observable();
 
         subscriptions.add(showOverlay.subscribe(function (newValue) {
@@ -205,11 +205,11 @@ define([
             // not agreed
             // error
 
-            '<!-- ko case: "none" -->', 
+            '<!-- ko case: "none" -->',
             // 'loading...',
             '<!-- /ko -->',
 
-            '<!-- ko case: "needagreement" -->', 
+            '<!-- ko case: "needagreement" -->',
             // '<!-- ko ifnot: $component.search.jgiTermsAgreed() -->',
             ko.kb.komponent({
                 name: TermsComponent.name(),
@@ -219,7 +219,7 @@ define([
             }),
             '<!-- /ko -->',
 
-            '<!-- ko case: "agreed" -->', 
+            '<!-- ko case: "agreed" -->',
             // '<!-- ko if: $component.search.jgiTermsAgreed() -->',
             ko.kb.komponent({
                 name: SearchComponent.name(),

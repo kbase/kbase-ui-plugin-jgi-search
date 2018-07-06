@@ -66,7 +66,7 @@ define([
 
 
 
-        var pageSizeInput = ko.pureComputed(function() {
+        var pageSizeInput = ko.pureComputed(function () {
             return String(pageSize());
         });
         // pageSizeInput.subscribe(function (newValue) {
@@ -160,7 +160,7 @@ define([
                 pageInput(1);
                 return;
             }
-            
+
             if (value !== page()) {
                 page(value);
             }
@@ -241,7 +241,7 @@ define([
         function doShowStagingStatus() {
             params.search.showOverlay({
                 name: StagingStatusViewerComponent.name(),
-                // TODO: short this out ... I don't think we need all this                
+                // TODO: short this out ... I don't think we need all this
                 viewModel: {
                     // id: params.row.id,
                     // doStage: params.env.search.doStage,
@@ -326,14 +326,14 @@ define([
             //     dataBind: {
             //         text: 'search.stagingJobsState().completed'
             //     }
-            // }), 
-            // ' file',  
+            // }),
+            // ' file',
             // '<!-- ko if: search.stagingJobsState().completed > 1 -->',
             // 's',
-            // '<!-- /ko -->',            
+            // '<!-- /ko -->',
             // ' copied',
             // '<!-- /ko -->',
-            
+
             // '<!-- /ko -->',
 
             // '<!-- ko if: search.stagingJobsState().some -->',
@@ -358,7 +358,7 @@ define([
             ]),
             // '<!-- /ko -->'
         ];
-        
+
     }
 
     // function buildStagingStatusx() {

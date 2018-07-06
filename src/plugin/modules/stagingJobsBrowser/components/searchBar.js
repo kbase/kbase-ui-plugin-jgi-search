@@ -9,27 +9,30 @@ define([
 ) {
     'use strict';
 
-    var t = html.tag,
+    const t = html.tag,
         p = t('p'),
         img = t('img'),
         div = t('div'),
         span = t('span'),
         input = t('input');
 
-    function viewModel(params) {
+    function viewModel(params, componentInfo) {
+        var context = ko.contextFor(componentInfo.element);
+        var showOverlay = context['$root'].showOverlay;
+
         // Params
         var logo = params.logo;
 
         // Own VM
 
         function doHelp() {
-            params.search.showOverlay({
+            showOverlay({
                 name: HelpComponent.name(),
                 params: {},
                 viewModel: {}
             });
         }
-       
+
         var showHistory = ko.observable(false);
 
         var searchHistory = params.search.searchHistory;
@@ -38,7 +41,7 @@ define([
             if (searchHistory.indexOf(value) !== -1) {
                 return;
             }
-            
+
             searchHistory.unshift(value);
 
             if (searchHistory().length > 10) {
@@ -52,19 +55,19 @@ define([
 
         // This is the search value the user has commited by clicking
         // the search button or pressing the Enter key.
-       
+
         // var searchInput = ko.observable().syncWith(params.search.searchInput);
-        
+
         // searchInput.subscribe(function (newValue) {
         //     addToSearchHistory(newValue);
         // });
 
         ko.subscribable.fn.syncFrom = function (targetObservable, callbackTarget, event) {
-            var sourceObservable = this; 
-            targetObservable.subscribe(function (v) { 
-                sourceObservable(v); 
-            }, callbackTarget, event); 
-            return sourceObservable; 
+            var sourceObservable = this;
+            targetObservable.subscribe(function (v) {
+                sourceObservable(v);
+            }, callbackTarget, event);
+            return sourceObservable;
         };
 
         // This is the obervable in the actual search input.
@@ -112,9 +115,9 @@ define([
         // hack to ensure that clicking in side the history control does not close it!
         var historyContainerId = html.genId();
 
-        function clickListener (ev) {
+        function clickListener(ev) {
             // We don't want to handle clicks for the history control itself -- either
-            // an item in the list or the button. The handlers for these things will do 
+            // an item in the list or the button. The handlers for these things will do
             // the right thing.
             var elementType = ev.target.getAttribute('data-type');
             if (['history-toggle-button', 'history-toggle-button-icon', 'history-item'].indexOf(elementType) == -1) {
@@ -293,7 +296,7 @@ define([
                 }
             }, [
                 input({
-                    class: 'form-control',                   
+                    class: 'form-control',
                     dataBind: {
                         textInput: 'searchControlValue',
                         // value: 'searchInput',
@@ -316,7 +319,7 @@ define([
                     }
                 }, [
                     '<!-- ko if: searchHistory().length > 0 -->',
-                    '<!-- ko foreach: searchHistory -->',                    
+                    '<!-- ko foreach: searchHistory -->',
                     div({
                         dataBind: {
                             text: '$data',
@@ -390,7 +393,9 @@ define([
 
     function component() {
         return {
-            viewModel: viewModel,
+            viewModel: {
+                createViewModel: viewModel
+            },
             template: template(),
             stylesheet: styles.sheet
         };
