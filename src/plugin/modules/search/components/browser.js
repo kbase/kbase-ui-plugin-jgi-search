@@ -64,8 +64,6 @@ define([
             return Math.min(page() * pageSize(), totalCount());
         });
 
-
-
         var pageSizeInput = ko.pureComputed(function () {
             return String(pageSize());
         });
@@ -545,7 +543,7 @@ define([
             div({
                 style: {
                     display: 'inline-block',
-                    width: '34%',
+                    width: '66%',
                     verticalAlign: 'middle',
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
@@ -588,74 +586,61 @@ define([
                             class: 'btn btn-default'
                         }, buildIcon('step-forward')),
 
-                        span({
+                        div({
                             style: {
                                 display: 'inline-block',
+                                // width: '33%',
                                 verticalAlign: 'middle',
                                 textAlign: 'center',
-                                margin: '6px 0 0 4px',
-                                float: 'none',
-                                height: '20px'
-                            },
-                            dataBind: {
-                                style: {
-                                    color: 'searching() ? "gray" : "black"'
-                                },
-                                ifnot: 'isSearchState(["none", "notfound"])'
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis'
                             }
                         }, [
+                            '<!-- ko if: totalPages() && totalPages() > 1 -->',
                             span({
-                                dataBind: {
-                                    typedText: {
-                                        value: 'pageFrom()',
-                                        type: '"number"',
-                                        format: '"0,0"'
-                                    }
+                                style: {
+                                    marginLeft: '6px'
                                 }
-                            }),
-                            ' to ',
-                            span({
+                            }, 'page '),
+                            '<!-- ko if: totalPages() <= 100 -->',
+                            select({
                                 dataBind: {
-                                    typedText: {
-                                        value: 'pageTo()',
-                                        type: '"number"',
-                                        format: '"0,0"'
-                                    }
-                                }
-                            }),
-                            ' of ',
-                            span({
-                                dataBind: {
-                                    typedText: {
-                                        value: 'totalCount',
-                                        type: '"number"',
-                                        format: '"0,0"'
-                                    }
+                                    value: 'pageInput',
+                                    options: 'pageValues',
+                                    optionsValue: '"value"',
+                                    optionsText: '"label"'
                                 },
+                                class: 'form-control',
                                 style: {
-                                    verticalAlign: 'middle'
+                                    display: 'inline-block',
+                                    width: '5em'
                                 }
                             }),
-                            '<!-- ko if: actualTotalCount() > totalCount() -->',
+                            '<!-- /ko -->',
+                            '<!-- ko if: totalPages() > 100 -->',
+                            input({
+                                dataBind: {
+                                    textInput: 'pageInput'
+                                },
+                                class: 'form-control',
+                                style: {
+                                    display: 'inline-block',
+                                    width: '5em'
+                                }
+                            }),
+                            '<!-- /ko -->',
                             span({
                                 style: {
-                                    fontStyle: 'italic'
+                                    marginLeft: '6px'
                                 }
-                            }, [
-                                ' (truncated from ',
-                                span({
-                                    dataBind: {
-                                        typedText: {
-                                            value: 'actualTotalCount',
-                                            type: '"number"',
-                                            format: '"0,0"'
-                                        }
-                                    }
-                                }),
-                                ')'
-                            ]),
-                            '<!-- /ko -->',
-                            // '<!-- /ko -->'
+                            }, ' of '),
+                            span({
+                                dataBind: {
+                                    text: 'totalPages()'
+                                }
+                            }),
+                            '<!-- /ko -->'
                         ])
                     ])
                 ]),
@@ -665,64 +650,7 @@ define([
             div({
                 style: {
                     display: 'inline-block',
-                    width: '33%',
-                    verticalAlign: 'middle',
-                    textAlign: 'center',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis'
-                }
-            }, [
-                '<!-- ko if: totalPages() && totalPages() > 1 -->',
-                span({
-                    style: {
-                        marginLeft: '6px'
-                    }
-                }, 'page '),
-                '<!-- ko if: totalPages() <= 100 -->',
-                select({
-                    dataBind: {
-                        value: 'pageInput',
-                        options: 'pageValues',
-                        optionsValue: '"value"',
-                        optionsText: '"label"'
-                    },
-                    class: 'form-control',
-                    style: {
-                        display: 'inline-block',
-                        width: '5em'
-                    }
-                }),
-                '<!-- /ko -->',
-                '<!-- ko if: totalPages() > 100 -->',
-                input({
-                    dataBind: {
-                        textInput: 'pageInput'
-                    },
-                    class: 'form-control',
-                    style: {
-                        display: 'inline-block',
-                        width: '5em'
-                    }
-                }),
-                '<!-- /ko -->',
-                span({
-                    style: {
-                        marginLeft: '6px'
-                    }
-                }, ' of '),
-                span({
-                    dataBind: {
-                        text: 'totalPages()'
-                    }
-                }),
-                '<!-- /ko -->',
-            ]),
-
-            div({
-                style: {
-                    display: 'inline-block',
-                    width: '33%',
+                    width: '34%',
                     verticalAlign: 'middle',
                     textAlign: 'right',
                     paddingRight: '10px',
@@ -733,7 +661,6 @@ define([
             }, buildStagingStatus())
         ]);
     }
-
 
     var styles = html.makeStyles({
         component: {
