@@ -6,12 +6,12 @@ define([
     html
 ) {
     'use strict';
-    let ko = KO.ko;
+    const ko = KO.ko;
     let t = html.tag,
         div = t('div'),
         span = t('span'),
         a = t('a');
-        
+
 
     /*
     params are:
@@ -19,7 +19,7 @@ define([
         searchHistory
     */
     function viewModel(params) {
-        let searchInputQueryValue = ko.pureComputed(function () {
+        const searchInputQueryValue = ko.pureComputed(function () {
             return encodeURIComponent(params.searchInput() || '');
         });
         return {
@@ -137,9 +137,6 @@ define([
             span({
                 class: styles.classes.label
             }, 'Search:'),
-            span({
-                class: [styles.classes.navLink, styles.scopes.active].join(' ')
-            }, 'JGI'), 
             a({
                 class: styles.classes.navLink,
                 dataBind: {
@@ -147,12 +144,10 @@ define([
                         href: '"#search?q=" + searchInputQueryValue()'
                     }
                 },
-            }, 'KBase - User Data, Reference Data, Features'),
-            // ' ',
-            // a({
-            //     class: styles.classes.navLink,
-            //     href: '#search?tab=reference-data'
-            // }, 'Reference Data')
+            }, 'KBase - User Data, Genome Features, Reference Data'),
+            span({
+                class: [styles.classes.navLink, styles.scopes.active].join(' ')
+            }, 'JGI')
         ]);
     }
 
