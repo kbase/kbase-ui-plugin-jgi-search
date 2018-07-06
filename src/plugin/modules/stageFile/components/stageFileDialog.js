@@ -1,6 +1,6 @@
 /*
 stageFileDialog
-    
+
 */
 define([
     'knockout-plus',
@@ -42,7 +42,7 @@ define([
             return destinationFileBaseName() + '.' + destinationFileExtension();
         });
         // var destinationFileName = ko.observable();
-        
+
 
         var filenameStatus = {
             exists: ko.observable(),
@@ -98,7 +98,7 @@ define([
                         // destinationFileName(actualFilename);
                         filenameStatus.exists(null);
                         filenameStatus.error(null);
-                    }                    
+                    }
                 })
                 .catch(function (err) {
                     // todo trigger error panel
@@ -116,14 +116,14 @@ define([
         var stageButtonEnabled = ko.pureComputed(function () {
             if (filenameStatus.error()) {
                 return false;
-            } 
+            }
             if (filenameStatus.loading()) {
                 return false;
             }
             return true;
         });
 
-       
+
         params.getDetail(params.id)
             .then(function (result) {
                 item(result);
@@ -150,7 +150,7 @@ define([
             }
             return styles.classes.textout;
         });
-        
+
         function doOpenJobsMonitor() {
             params.showStageJobViewer();
         }
@@ -168,7 +168,7 @@ define([
                 .spread(function (result, error) {
                     if (result) {
                         transferJobMonitor.jobId(result.job_id);
-                        transferJobMonitor.status('submitted');                        
+                        transferJobMonitor.status('submitted');
 
                         // TODO: start the monitor!
                     } else {
@@ -301,7 +301,7 @@ define([
                 colgroup([
                     col({
                         style: {
-                            width: '30%'                            
+                            width: '30%'
                         }
                     }),
                     col({
@@ -421,11 +421,11 @@ define([
                 dataBind: {
                     with: 'filenameStatus'
                 }
-            }, [   
+            }, [
                 p({style: {
                     fontWeight: 'bold'
                 }}, 'A filename with this name already exists in your staging area.'),
-                             
+
                 table({
                     dataBind: {
                         with: 'exists'
@@ -466,13 +466,13 @@ define([
                 p([
                     'It is ',
                     b('identical'),
-                    ' to the file you are copying, so copying is unnecceary.'
+                    ' to the file you are copying, so copying is unnecessary.'
                 ]),
                 '<!-- /ko -->',
                 '<!-- ko ifnot: identical -->',
                 p([
                     'It is ',
-                    b('different'), 
+                    b('different'),
                     ' than the one you are copying.'
                 ]),
                 '<!-- /ko -->',
@@ -515,14 +515,14 @@ define([
                     }
                 }),
                 '<!-- /ko -->'
-               
+
             ]),
             '<!-- /ko -->',
 
             '<!-- /ko -->',
 
             '<!-- ko if: filenameStatus.loading -->',
-            span({ 
+            span({
                 class: 'fa fa-spinner fa-pulse'
             }),
             '<!-- /ko -->'
@@ -550,7 +550,7 @@ define([
                 colgroup([
                     col({
                         style: {
-                            width: '30%'                            
+                            width: '30%'
                         }
                     }),
                     col({
@@ -573,7 +573,7 @@ define([
                         }
                     })
                 ]),
-               
+
                 tr([
                     th({
                         scope: 'row'
@@ -635,8 +635,8 @@ define([
                             }, 'n/a'),
                             '<!-- /ko -->'
                         ]),
-                       
-                        
+
+
                     ])
                 ]),
                 tr([
@@ -656,7 +656,7 @@ define([
                         div({
                         }, [
                             buildFilenameStatusIndicator()
-                            // buildProposedilename()                            
+                            // buildProposedilename()
                         ])
                     ])
                 ]),
@@ -716,7 +716,7 @@ define([
             //     with: 'item'
             // }
         }, [
-           
+
             div({
                 class: 'row'
             }, [
@@ -754,7 +754,7 @@ define([
                 }, [
                     p({
                         dataBind: {
-                            css: 'showDetailClass'                            
+                            css: 'showDetailClass'
                         },
                         style: {
                             overflowY: 'hidden'
@@ -769,7 +769,7 @@ define([
                 }, [
                     p({
                         dataBind: {
-                            css: 'showDetailClass' 
+                            css: 'showDetailClass'
                         }
                     }, [
                         'The JGI JAMO file will be copied into your KBase Staging Area ',
@@ -800,7 +800,7 @@ define([
                 }, [
                     div({
                         dataBind: {
-                            component: { 
+                            component: {
                                 name: StageFileControlComponent.quotedName(),
                                 params: {
                                     id: 'id',
@@ -828,7 +828,7 @@ define([
             //         buildDestImportInfo()
             //     ])
             // ]),
-           
+
 
         ]);
     }
@@ -837,11 +837,11 @@ define([
         return div([
             p([
                 'Copy a file from JGI JAMO to your KBase Staging Area.',
-                
+
             ]),
             p({
                 dataBind: {
-                    css: 'showDetailClass' 
+                    css: 'showDetailClass'
                 }
             }, [
                 'Copying a file from JGI JAMO into your Staging area may take anywhere from a few seconds to ',
@@ -854,7 +854,7 @@ define([
         ]);
     }
 
-   
+
 
     function buildTitle() {
         return div([

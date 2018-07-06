@@ -7,7 +7,7 @@ define([
 ) {
     'use strict';
     const ko = KO.ko;
-    let t = html.tag,
+    const t = html.tag,
         div = t('div'),
         span = t('span'),
         a = t('a');
