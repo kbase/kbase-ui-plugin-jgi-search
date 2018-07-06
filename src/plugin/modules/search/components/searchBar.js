@@ -1,8 +1,10 @@
 define([
+    'uuid',
     'knockout-plus',
     'kb_common/html',
     '../../help/components/searchHelp'
 ], function (
+    Uuid,
     ko,
     html,
     HelpComponent
@@ -49,7 +51,7 @@ define([
         function useFromHistory(data) {
             showHistory(false);
             searchControlValue(data);
-            doRunSearch();
+            doSearch();
         }
 
         function doToggleHistory() {
@@ -72,7 +74,7 @@ define([
             params.search.searchInput('');
         }
 
-        function doRunSearch() {
+        function doSearch() {
             // filter out nonsensical searches
             var query = searchControlValue();
             var emptyRe = /^\s*$/;
@@ -80,17 +82,19 @@ define([
                 return;
             }
 
+            params.search.searchInstanceID(new Uuid(4).format());
+
             params.search.searchInput(query);
         }
 
         function doKeyUp(data, ev) {
             if (ev.key) {
                 if (ev.key === 'Enter') {
-                    doRunSearch();
+                    doSearch();
                 }
             } else if (ev.keyCode) {
                 if (ev.keyCode === 13) {
-                    doRunSearch();
+                    doSearch();
                 }
             }
         }
@@ -137,7 +141,7 @@ define([
 
             // ACTIONS
             doHelp: doHelp,
-            doRunSearch: doRunSearch,
+            doSearch: doSearch,
             doKeyUp: doKeyUp,
             doClearInput: doClearInput,
 
@@ -296,15 +300,8 @@ define([
             ]),
             div({
                 class: 'input-group-addon ' + styles.classes.addonButton,
-                // style: {
-                //     borderRadius: '4px',
-                //     borderTopRightRadius: '0',
-                //     borderBottomRightRadius: '0',
-                //     paddingLeft: '8px',
-                //     paddingRight: '8px'
-                // },
                 dataBind: {
-                    click: 'doRunSearch'
+                    click: 'doSearch'
                 }
             }, span({
                 class: 'fa',

@@ -49,6 +49,9 @@ define([
         var actualSearchTotal = ko.observable();
         var searchElapsed = ko.observable();
 
+        var searchInstanceID = ko.observable();
+
+
         var page = ko.observable();
 
         function clearQuery() {
@@ -87,6 +90,8 @@ define([
                 }
             }
 
+            const id = searchInstanceID();
+
             // Default file type filter, now enabled by "show supported file types" checkbox.
             if (!query.query.file_type) {
                 query.query.file_type = typeFilterOptions.map(function (option) {
@@ -122,7 +127,7 @@ define([
                     // actual file suffix.
 
                     var fileParts = utils.grokFileParts(hit.source.file_name);
-                
+
                     var fileType = utils.grokFileType(hit.source.file_type, fileParts);
 
                     // Title
@@ -291,7 +296,7 @@ define([
         subscriptions.add(seqProjectFilter.subscribe(function (newValue) {
             var filter = searchFilter();
             if (!newValue) {
-                delete filter.project_id;                
+                delete filter.project_id;
             } else {
                 filter.project_id = [newValue];
             }
@@ -302,7 +307,7 @@ define([
         subscriptions.add(proposalFilter.subscribe(function (newValue) {
             var filter = searchFilter();
             if (!newValue) {
-                delete filter.proposal_id;                
+                delete filter.proposal_id;
             } else {
                 filter.proposal_id = [newValue];
             }
@@ -313,10 +318,10 @@ define([
         subscriptions.add(piFilter.subscribe(function (newValue) {
             var filter = searchFilter();
             if (!newValue) {
-                delete filter.pi_name;                
+                delete filter.pi_name;
             } else {
                 filter.pi_name = newValue;
-            }            
+            }
             searchFilter(filter);
         }));
         // SEARCH FLAGS
@@ -469,12 +474,12 @@ define([
                 return;
             }
 
-            // TODO: compare previous to current query ... if same, do not do another search, just 
-            //   return. The problem is stuttering -- duplicate updates to the search query 
+            // TODO: compare previous to current query ... if same, do not do another search, just
+            //   return. The problem is stuttering -- duplicate updates to the search query
             //   via observables.
 
             // TODO: eliminate stuttering!
-            // Sometimes observables cause duplicate updates to the search query ... 
+            // Sometimes observables cause duplicate updates to the search query ...
             // stop that.
 
             if (!pageSize()) {
@@ -512,7 +517,7 @@ define([
                         } catch (ex) {
                             console.error('huh?', ex);
                         }
-                        
+
                         showError(new utils.JGISearchError(
                             'dynamic_service:jgi_search_gateway',
                             error.code,
@@ -528,7 +533,7 @@ define([
                     if (result.total > maxSearchResults) {
                         actualSearchTotal(result.total);
                         var actualMax = pageSize() * Math.floor(maxSearchResults/pageSize());
-                        searchTotal(actualMax);                        
+                        searchTotal(actualMax);
                     } else {
                         actualSearchTotal(result.total);
                         searchTotal(result.total);
@@ -543,10 +548,10 @@ define([
                     // });
 
                     var rows = schema.hitsToRows(result.hits, doStage);
-                    
+
                     searchResults(rows);
-                    // schema.hitsToRows(result.hits, doStage).forEach(function (row) {                     
-                    //     searchResults.push(row);                        
+                    // schema.hitsToRows(result.hits, doStage).forEach(function (row) {
+                    //     searchResults.push(row);
                     // });
                     return true;
                 })
@@ -573,7 +578,7 @@ define([
             doSearch();
         }));
 
-        subscriptions.add(pageSize.subscribe(function() {
+        subscriptions.add(pageSize.subscribe(function () {
             doSearch();
         }));
 
@@ -632,8 +637,8 @@ define([
                 });
         }));
 
-        
-       
+
+
 
         // SORTING support
 
@@ -650,7 +655,7 @@ define([
                     field: column.sort.keyName,
                     descending: column.sort.direction() === 'descending'
                 };
-            });            
+            });
         });
 
         subscriptions.add(sortSpec.subscribe(function () {
@@ -678,13 +683,13 @@ define([
                 return;
             }
 
-            // for now just single column sort.            
+            // for now just single column sort.
             if (sortColumns().length === 1) {
                 var currentSortColumn = sortColumns()[0];
                 if (currentSortColumn !== column) {
                     currentSortColumn.sort.active(false);
                 }
-                sortColumns.removeAll();                
+                sortColumns.removeAll();
             }
 
             if (column.sort.active()) {
@@ -729,7 +734,7 @@ define([
                 if (error) {
                     showError(error);
                 } else {
-                    searchHistory(result);                    
+                    searchHistory(result);
                 }
             })
             .then(function () {
@@ -747,6 +752,8 @@ define([
             // typeFilterInput: typeFilterInput,
             typeFilter: typeFilter,
             typeFilterOptions: typeFilterOptions,
+
+            searchInstanceID: searchInstanceID,
 
             seqProjectFilter: seqProjectFilter,
             proposalFilter: proposalFilter,
@@ -769,7 +776,7 @@ define([
             searching: searching,
             userSearch: userSearch,
             availableRowHeight: availableRowHeight,
-            
+
             // showResults: showResults,
             // noSearch: noSearch,
             doAddToSearch: doAddToSearch,
@@ -796,7 +803,7 @@ define([
             showStageJobViewer: showStageJobViewer,
 
             sortBy: sortBy,
-            
+
             start: start,
             stop: stop,
             dispose: dispose
