@@ -64,7 +64,7 @@ define([
 
 
 
-        var pageSizeInput = ko.pureComputed(function() {
+        var pageSizeInput = ko.pureComputed(function () {
             return String(pageSize());
         });
 
@@ -221,7 +221,7 @@ define([
         return div({
             style: {
                 display: 'inline-block',
-                width: '50%',
+                // width: '50%',
                 verticalAlign: 'middle',
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
@@ -269,9 +269,9 @@ define([
                             display: 'inline-block',
                             verticalAlign: 'middle',
                             textAlign: 'center',
-                            margin: '6px 0 0 4px',
+                            // margin: '6px 0 0 4px',
                             float: 'none',
-                            height: '20px'
+                            // height: '20px'
                         },
                         dataBind: {
                             style: {
@@ -280,50 +280,27 @@ define([
                             ifnot: 'isSearchState(["none", "notfound"])'
                         }
                     }, [
-                        span({
-                            dataBind: {
-                                text: 'pageFrom()'
-                            }
-                        }),
-                        ' to ',
-                        span({
-                            dataBind: {
-                                text: 'pageTo()'
-                            }
-                        }),
-                        ' of ',
-                        span({
-                            dataBind: {
-                                typedText: {
-                                    value: 'totalCount()',
-                                    type: '"number"',
-                                    format: '"0,0"'
-                                }
-                            },
-                            style: {
-                                verticalAlign: 'middle'
-                            }
-                        }),
-                        '<!-- ko if: actualTotalCount() > totalCount() -->',
-                        span({
-                            style: {
-                                fontStyle: 'italic',
-                                color: 'brown'
-                            }
-                        }, [
-                            ' (truncated from ',
-                            span({
-                                dataBind: {
-                                    typedText: {
-                                        value: 'actualTotalCount',
-                                        type: '"number"',
-                                        format: '"0,0"'
-                                    }
-                                }
-                            }),
-                            ')'
-                        ]),
-                        '<!-- /ko -->',
+                        buildPageSelector(),
+                        // '<!-- ko if: actualTotalCount() > totalCount() -->',
+                        // span({
+                        //     style: {
+                        //         fontStyle: 'italic',
+                        //         color: 'brown'
+                        //     }
+                        // }, [
+                        //     ' (truncated from ',
+                        //     span({
+                        //         dataBind: {
+                        //             typedText: {
+                        //                 value: 'actualTotalCount',
+                        //                 type: '"number"',
+                        //                 format: '"0,0"'
+                        //             }
+                        //         }
+                        //     }),
+                        //     ')'
+                        // ]),
+                        // '<!-- /ko -->',
                         // '<!-- /ko -->'
                     ])
                 ])
@@ -335,7 +312,7 @@ define([
         return  div({
             style: {
                 display: 'inline-block',
-                width: '50%',
+                // width: '50%',
                 verticalAlign: 'middle',
                 textAlign: 'center',
                 whiteSpace: 'nowrap',
@@ -395,7 +372,7 @@ define([
             class: 'btn-toolbar ' + styles.classes.toolbar
         }, [
             buildPagingButtons(),
-            buildPageSelector()
+            // buildPageSelector()
         ]);
     }
 

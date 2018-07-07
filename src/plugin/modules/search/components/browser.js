@@ -1,295 +1,231 @@
 define([
-    'knockout-plus',
+    'knockout',
+    'kb_knockout/registry',
+    'kb_knockout/lib/generators',
+    'kb_knockout/lib/viewModelBase',
     'kb_common/html',
     './result',
     '../../components/stagingStatusViewer'
 ], function (
     ko,
+    reg,
+    gen,
+    ViewModelBase,
     html,
     SearchResultComponent,
     StagingStatusViewerComponent
 ) {
     'use strict';
 
-    var t = html.tag,
+    const t = html.tag,
         span = t('span'),
         div = t('div'),
         button = t('button'),
         input = t('input'),
         select = t('select');
 
-    ko.extenders.parsed = function (target, parseFun) {
-        target.parsed = ko.observable();
-        target.parseError = ko.observable();
+    // ko.extenders.parsed = function (target, parseFun) {
+    //     target.parsed = ko.observable();
+    //     target.parseError = ko.observable();
 
-        function parseit(newValue) {
-            try {
-                target.parsed(parseFun(newValue));
-            } catch (ex) {
-                target.parseError(ex.message);
-                console.error('Error parsing : ' + ex.message);
-            }
-        }
-        target.subscribe(function (newValue) {
-            parseit(newValue);
-        });
-        parseit(target());
-        return target;
-    };
+    //     function parseit(newValue) {
+    //         try {
+    //             target.parsed(parseFun(newValue));
+    //         } catch (ex) {
+    //             target.parseError(ex.message);
+    //             console.error('Error parsing : ' + ex.message);
+    //         }
+    //     }
+    //     target.subscribe(function (newValue) {
+    //         parseit(newValue);
+    //     });
+    //     parseit(target());
+    //     return target;
+    // };
 
     // NB: hmm, it looks like the params are those active in the tab which spawned
     // this component...
-    function viewModel(params) {
-        var subscriptions = ko.kb.SubscriptionManager.make();
-        // From parent search component.
-        var search = params.search;
-        var totalCount = search.searchTotal;
-        var actualTotalCount = search.actualSearchTotal;
-        var searching = search.searching;
-        var pageSize = search.pageSize;
-        var page = search.page;
+    class ViewModel extends ViewModelBase {
+        constructor(params, componentInfo) {
+            super(params);
 
-        var pageFrom = ko.pureComputed(function () {
-            if (!page()) {
-                return '';
-            }
+            const context = ko.contextFor(componentInfo.element);
 
-            return (page() - 1) * pageSize() + 1;
-        });
+            this.runtime = context.$root.runtime;
 
-        var pageTo = ko.pureComputed(function () {
-            if (!page()) {
-                return '';
-            }
-            return Math.min(page() * pageSize(), totalCount());
-        });
+            // From parent search component.
+            this.search = params.search;
+            this.totalCount = this.search.searchTotal;
+            this.actualTotalCount = this.search.actualSearchTotal;
+            this.searching = this.search.searching;
+            this.pageSize = this.search.pageSize;
+            this.page = this.search.page;
 
-        var pageSizeInput = ko.pureComputed(function () {
-            return String(pageSize());
-        });
-        // pageSizeInput.subscribe(function (newValue) {
-        //     pageSize(parseInt(newValue));
-        // });
+            this.pageFrom = ko.pureComputed(() => {
+                if (!this.page()) {
+                    return '';
+                }
 
-        // Our own, for now. Since these are overall properties of the
-        // search capabilities, they should be foisted up to the search as well.
+                return (this.page() - 1) * this.pageSize() + 1;
+            });
 
-        // SORTING
-        var sortBy = ko.observable();
+            this.pageTo = ko.pureComputed(() => {
+                if (!this.page()) {
+                    return '';
+                }
+                return Math.min(this.page() * this.pageSize(), this.totalCount());
+            });
 
-        // TODO: these need to come from the type
-        // var sortFields = typeDef.searchKeys;
-        var sortFields = [];
-        var sortFieldsMap = {};
-        sortFields.forEach(function (sortField) {
-            sortFieldsMap[sortField.key] = sortField;
-        });
-        var currentSortField = ko.pureComputed(function () {
-            // The "natural" sort order is simply an empty string which we translate
-            // into a null.
-            var sortKey = sortBy();
-            if (!sortKey || sortKey.length === 0) {
-                return null;
-            }
-            return sortFieldsMap[sortBy()];
-        });
-        subscriptions.add(currentSortField.subscribe(function () {
-            params.search.doSearch();
-        }));
+            this.pageSizeInput = ko.pureComputed(() => {
+                return String(this.pageSize());
+            });
 
-        var sortDirection = ko.observable('ascending');
-        var sortDirections = [{
-            value: 'ascending',
-            label: 'Ascending'
-        }, {
-            value: 'descending',
-            label: 'Descending'
-        }];
-        var sortDescending = ko.pureComputed(function () {
-            return (sortDirection() === 'descending');
-        });
-        subscriptions.add(sortDescending.subscribe(function () {
-            params.search.doSearch();
-        }));
+            // Our own, for now. Since these are overall properties of the
+            // search capabilities, they should be foisted up to the search as well.
 
-        // PAGING
-        // var pageSize = ko.observable(search.pageSize || 10).extend({
-        //     parsed: function(value) {
-        //         return parseInt(value);
-        //     }
-        // });
-        // var pageStart = ko.pureComputed(function() {
-        //     return (page() - 1) * pageSize();
-        // });
-        // var pageEnd = ko.pureComputed(function() {
-        //     return Math.min(pageStart() + pageSize(), totalCount()) - 1;
-        // });
+            // SORTING
+            this.sortBy = ko.observable();
 
-        var totalPages = ko.pureComputed(function () {
-            if (!search.searchTotal()) {
-                return 0;
-            }
-            var size = search.searchTotal() / pageSize();
-            return Math.ceil(size);
-        });
+            // TODO: these need to come from the type
+            this.sortFields = [];
+            this.sortFieldsMap = {};
+            this.sortFields.forEach((sortField) => {
+                this.sortFieldsMap[sortField.key] = sortField;
+            });
+            this.currentSortField = ko.pureComputed(() => {
+                // The "natural" sort order is simply an empty string which we translate
+                // into a null.
+                const sortKey = this.sortBy();
+                if (!sortKey || sortKey.length === 0) {
+                    return null;
+                }
+                return this.sortFieldsMap[this.sortBy()];
+            });
 
-        var pageInput = ko.observable(String(page()));
-        pageInput.extend({
-            rateLimit: {
-                timeout: 500,
-                method: 'notifyWhenChangesStop'
-            }
-        });
-        subscriptions.add(pageInput.subscribe(function (newValue) {
-            // If bad input, don't do anything.
-            if (newValue === '' || newValue === undefined || newValue === null) {
-                return;
-                // newValue = '1';
-            } else if (isNaN(newValue)) {
-                return;
-                // newValue = '1';
-            }
-            var value = parseInt(newValue);
-            if (value > totalPages()) {
-                pageInput(totalPages());
-                return;
-            }
-            if (value < 1) {
-                pageInput(1);
-                return;
-            }
+            this.subscribe(this.currentSortField, () => {
+                params.search.doSearch();
+            });
 
-            if (value !== page()) {
-                page(value);
-            }
-        }));
-        subscriptions.add(page.subscribe(function (newValue) {
-            if (newValue !== parseInt(pageInput())) {
-                pageInput(String(newValue));
-            }
-        }));
-        var pageValues = ko.pureComputed(function () {
-            var values = [];
-            if (totalPages() > 100) {
+            this.sortDirection = ko.observable('ascending');
+            this.sortDirections = [{
+                value: 'ascending',
+                label: 'Ascending'
+            }, {
+                value: 'descending',
+                label: 'Descending'
+            }];
+
+            this.sortDescending = ko.pureComputed(() => {
+                return (this.sortDirection() === 'descending');
+            });
+
+            this.subscribe(this.sortDescending, () => {
+                params.search.doSearch();
+            });
+
+            this.totalPages = ko.pureComputed(() => {
+                if (!this.search.searchTotal()) {
+                    return 0;
+                }
+                const size = this.search.searchTotal() / this.pageSize();
+                return Math.ceil(size);
+            });
+
+            // TODO: huh? shouldn't that be a pureComputed?
+            this.pageInput = ko.observable(String(this.page()));
+            this.pageInput.extend({
+                rateLimit: {
+                    timeout: 500,
+                    method: 'notifyWhenChangesStop'
+                }
+            });
+
+            this.subscribe(this.pageInput, (newValue) => {
+                // If bad input, don't do anything.
+                if (newValue === '' || newValue === undefined || newValue === null) {
+                    return;
+                } else if (isNaN(newValue)) {
+                    return;
+                }
+                const value = parseInt(newValue);
+                if (value > this.totalPages()) {
+                    this.pageInput(this.totalPages());
+                    return;
+                }
+                if (value < 1) {
+                    this.pageInput(1);
+                    return;
+                }
+
+                if (value !== this.page()) {
+                    this.page(value);
+                }
+            });
+
+            this.subscribe(this.page, (newValue) => {
+                if (newValue !== parseInt(this.pageInput())) {
+                    this.pageInput(String(newValue));
+                }
+            });
+
+            this.pageValues = ko.pureComputed(() => {
+                const values = [];
+                if (this.totalPages() > 100) {
+                    return values;
+                }
+                for (let i = 0; i < this.totalPages(); i += 1) {
+                    values.push({
+                        value: String(i + 1),
+                        label: String(i + 1)
+                    });
+                }
                 return values;
-            }
-            for (var i = 0; i < totalPages(); i += 1) {
-                values.push({
-                    value: String(i + 1),
-                    label: String(i + 1)
-                });
-            }
-            return values;
-        });
+            });
 
-        function doFirst() {
-            page(1);
+            this.pageSizes = [5, 10, 20, 50, 100].map((value) => {
+                return {
+                    label: String(value),
+                    value: String(value)
+                };
+            });
         }
 
-        function doLast() {
-            page(totalPages());
+        doFirst() {
+            this.page(1);
         }
 
-        function doPrevPage() {
-            if (page() > 1) {
-                page(page() - 1);
-            }
+        doLast() {
+            this.page(this.totalPages());
         }
 
-        function doNextPage() {
-            if (page() < totalPages()) {
-                page(page() + 1);
+        doPrevPage() {
+            if (this.page() > 1) {
+                this.page(this.page() - 1);
             }
         }
 
-        var pageSizes = [5, 10, 20, 50, 100].map(function (value) {
-            return {
-                label: String(value),
-                value: String(value)
-            };
-        });
-
-        // todo: yeah, this should be in the top level...
-        // pageSizeInput.subscribe(function () {
-        //     if (params.search.searchTotal() > 0) {
-        //         params.search.doSearch();
-        //     }
-        // });
-
-        // pageStart.subscribe(function() {
-        //     if (params.search.searchResults().length > 0) {
-        //         params.search.doSearch();
-        //     }
-        // });
-
-        function dispose() {
-            // subscriptions.forEach(function(subscription) {
-            //     subscription.dispose();
-            // });
-            subscriptions.dispose();
+        doNextPage() {
+            if (this.page() < this.totalPages()) {
+                this.page(this.page() + 1);
+            }
         }
 
-        function isSearchState(states) {
-            var s = search.searchState();
-            return states.some(function (state) {
+        isSearchState(states) {
+            const s = this.search.searchState();
+            return states.some((state) => {
                 return (state === s);
             });
         }
 
-        function doShowStagingStatus() {
-            params.search.showOverlay({
+        doShowStagingStatus() {
+            this.search.showOverlay({
                 name: StagingStatusViewerComponent.name(),
-                // TODO: short this out ... I don't think we need all this
                 viewModel: {
-                    // id: params.row.id,
-                    // doStage: params.env.search.doStage,
-                    // transferJob: params.row.transferJob,
-                    // getDetail: params.env.search.getDetail
-                    stagingJobs: params.search.stagingJobs,
-                    runtime: params.runtime
+                    stagingJobs: this.search.stagingJobs,
+                    runtime: this.runtime
                 }
             });
         }
-        return {
-            search: params.search,
-            // Search (shared)
-            totalCount: totalCount,
-            searching: searching,
-            actualTotalCount: actualTotalCount,
-
-            // Paging
-            page: page,
-            totalPages: totalPages,
-            pageInput: pageInput,
-            pageValues: pageValues,
-            pageSize: pageSize,
-            pageSizeInput: pageSizeInput,
-            pageSizes: pageSizes,
-
-            pageFrom: pageFrom,
-            pageTo: pageTo,
-
-            doFirst: doFirst,
-            doLast: doLast,
-            doPrevPage: doPrevPage,
-            doNextPage: doNextPage,
-
-            // Sorting
-            sortBy: sortBy,
-            sortFields: sortFields,
-            sortDirection: sortDirection,
-            sortDirections: sortDirections,
-
-            // Queries
-            isSearchState: isSearchState,
-
-            // Actions
-            doSearch: params.search.doSearch,
-            doShowStagingStatus: doShowStagingStatus,
-
-            // Knockout lifecycle
-            dispose: dispose
-        };
     }
 
     function buildIcon(type) {
@@ -298,243 +234,76 @@ define([
         });
     }
 
-    function buildStagingStatus() {
-        return [
-            // NB stagingJobsState is computed based on the counts of current jobs in
-            // various states, which in turn is updated by the job state monitor.
-            // '<!-- ko if: search.stagingJobsState().pending -->',
-
-            // '<!-- ko foreach: search.stagingJobs -->',
-
-            // utils.komponent({
-            //     name: 'jgi-search/staging-status-indicator',
-            //     params: {
-            //         status: 'status'
-            //     }
-            // }),
-
-            // '<!-- /ko -->',
-
-
-            // '<!-- /ko -->',
-            // '<!-- ko ifnot: search.stagingJobsState().pending -->',
-
-            // '<!-- ko if: search.stagingJobsState().completed -->',
-            // span({
-            //     dataBind: {
-            //         text: 'search.stagingJobsState().completed'
-            //     }
-            // }),
-            // ' file',
-            // '<!-- ko if: search.stagingJobsState().completed > 1 -->',
-            // 's',
-            // '<!-- /ko -->',
-            // ' copied',
-            // '<!-- /ko -->',
-
-            // '<!-- /ko -->',
-
-            // '<!-- ko if: search.stagingJobsState().some -->',
-            button({
-                dataBind: {
-                    click: 'doShowStagingStatus',
-                },
-                class: 'btn btn-default',
+    function buildResultsStatus() {
+        return span({
+            style: {
+                display: 'inline-block',
+                verticalAlign: 'middle',
+                textAlign: 'center',
+                margin: '6px 0 0 4px',
+                float: 'none',
+                height: '20px'
+            },
+            dataBind: {
                 style: {
-                    float: 'none'
-                }
-            }, [
-                '<!-- ko if: search.stagingJobsState().pending -->',
-                span({
-                    class: 'fa fa-spinner fa-pulse',
-                    style: {
-                        marginRight: '4px'
+                    color: 'searching() ? "gray" : "black"'
+                },
+                ifnot: 'isSearchState(["none", "notfound"])'
+            }
+        }, [
+            'Found ',
+            span({
+                dataBind: {
+                    typedText: {
+                        value: 'totalCount',
+                        type: '"number"',
+                        format: '"0,0"'
                     }
-                }),
-                '<!-- /ko -->',
-                'View Staging Jobs'
-            ]),
-            // '<!-- /ko -->'
-        ];
-
+                },
+                style: {
+                    verticalAlign: 'middle'
+                }
+            }),
+            gen.if('actualTotalCount() > totalCount()',
+                span({
+                    style: {
+                        fontStyle: 'italic'
+                    }
+                }, [
+                    ' (truncated from ',
+                    span({
+                        dataBind: {
+                            typedText: {
+                                value: 'actualTotalCount',
+                                type: '"number"',
+                                format: '"0,0"'
+                            }
+                        }
+                    }),
+                    ')'
+                ])),
+            ', showing ',
+            span({
+                dataBind: {
+                    typedText: {
+                        value: 'pageFrom()',
+                        type: '"number"',
+                        format: '"0,0"'
+                    }
+                }
+            }),
+            ' to ',
+            span({
+                dataBind: {
+                    typedText: {
+                        value: 'pageTo()',
+                        type: '"number"',
+                        format: '"0,0"'
+                    }
+                }
+            })
+        ]);
     }
-
-    // function buildStagingStatusx() {
-    //     return [
-    //         '<!-- ko if: search.stagingJobs().length === 0 -->',
-    //         div({
-    //             style: {
-    //                 display: 'inline-block',
-    //                 height: '25px'
-    //             }
-    //         }, [
-    //             'No current transfers'
-    //         ]),
-    //         '<!-- /ko -->',
-
-    //         '<!-- ko if: search.stagingJobs().length > 0 -->',
-
-    //         '<!-- ko ifnot: search.monitoringJobs() -->',
-    //         div({
-    //             style: {
-    //                 display: 'inline-block',
-    //                 height: '25px'
-    //             }
-    //         }, [
-    //             'Transferred ',
-    //             span({
-    //                 dataBind: {
-    //                     text: 'search.stagingJobStates.completed'
-    //                 },
-    //                 style: {
-    //                     fontWeight: 'bold'
-    //                 }
-    //             }),
-    //             ' file',
-    //             '<!-- ko if: search.stagingJobs().length > 1 -->',
-    //             's',
-    //             '<!-- /ko -->',
-    //             ' to your staging area'
-    //         ]),
-    //         '<!-- /ko -->',
-
-    //         '<!-- ko if: search.monitoringJobs() -->',
-    //         div({
-    //             style: {
-    //                 display: 'inline-block',
-    //                 height: '25px'
-    //             }
-    //         }, [
-    //             'Transferring ',
-    //             span({
-    //                 style: {
-    //                     fontSize: '80%'
-    //                 }
-    //             }, html.loading())
-    //         ]),
-    //         div({
-    //             style: {
-    //                 display: 'inline-block'
-    //             }
-    //         }, 'sending'),
-    //         div({
-    //             dataBind: {
-    //                 text: 'search.stagingJobStates.sent',
-    //                 style: {
-    //                     'font-weight': 'search.stagingJobStates.sent() > 0 ? "bold" : "normal"',
-    //                     color: 'search.stagingJobStates.sent() > 0 ? "green" : "black"',
-    //                     border: 'search.stagingJobStates.sent() > 0 ? "1px green solid" : "1px silver dashed"'
-    //                 }
-    //             },
-    //             style: {
-    //                 display: 'inline-block',
-    //                 width: '25px',
-    //                 height: '25px',
-    //                 border: '1px silver solid',
-    //                 fontFamily: 'monospace',
-    //                 textAlign: 'center'
-    //             }
-    //         }),
-    //         div({
-    //             style: {
-    //                 display: 'inline-block',
-    //                 marginLeft: '4px'
-    //             }
-    //         }, 'queued'),
-    //         div({
-    //             dataBind: {
-    //                 text: 'search.stagingJobStates.queued',
-    //                 style: {
-    //                     'font-weight': 'search.stagingJobStates.queued() > 0 ? "bold" : "normal"',
-    //                     color: 'search.stagingJobStates.queued() > 0 ? "green" : "black"',
-    //                     border: 'search.stagingJobStates.queued() > 0 ? "1px green solid" : "1px silver dashed"'
-    //                 }
-    //             },
-    //             style: {
-    //                 display: 'inline-block',
-    //                 width: '25px',
-    //                 height: '25px',
-    //                 border: '1px silver solid',
-    //                 fontFamily: 'monospace',
-    //                 textAlign: 'center'
-    //             }
-    //         }),
-    //         div({
-    //             style: {
-    //                 display: 'inline-block',
-    //                 marginLeft: '4px'
-    //             }
-    //         }, 'restoring'),
-    //         div({
-    //             dataBind: {
-    //                 text: 'search.stagingJobStates.restoring',
-    //                 style: {
-    //                     'font-weight': 'search.stagingJobStates.restoring() > 0 ? "bold" : "normal"',
-    //                     color: 'search.stagingJobStates.restoring() > 0 ? "green" : "black"',
-    //                     border: 'search.stagingJobStates.restoring() > 0 ? "1px green solid" : "1px silver dashed"'
-    //                 }
-    //             },
-    //             style: {
-    //                 display: 'inline-block',
-    //                 width: '25px',
-    //                 height: '25px',
-    //                 border: '1px silver solid',
-    //                 fontFamily: 'monospace',
-    //                 textAlign: 'center'
-    //             }
-    //         }),
-    //         div({
-    //             style: {
-    //                 display: 'inline-block',
-    //                 marginLeft: '4px'
-    //             }
-    //         }, 'copying'),
-    //         div({
-    //             dataBind: {
-    //                 text: 'search.stagingJobStates.copying',
-    //                 style: {
-    //                     'font-weight': 'search.stagingJobStates.copying() > 0 ? "bold" : "normal"',
-    //                     color: 'search.stagingJobStates.copying() > 0 ? "green" : "black"',
-    //                     border: 'search.stagingJobStates.copying() > 0 ? "1px green solid" : "1px silver dashed"'
-    //                 }
-    //             },
-    //             style: {
-    //                 display: 'inline-block',
-    //                 width: '25px',
-    //                 height: '25px',
-    //                 border: '1px silver solid',
-    //                 fontFamily: 'monospace',
-    //                 textAlign: 'center'
-    //             }
-    //         }),
-    //         div({
-    //             style: {
-    //                 display: 'inline-block'
-    //             }
-    //         }, 'completed'),
-    //         div({
-    //             dataBind: {
-    //                 text: 'search.stagingJobStates.completed',
-    //                 style: {
-    //                     'font-weight': 'search.stagingJobStates.completed() > 0 ? "bold" : "normal"',
-    //                     color: 'search.stagingJobStates.completed() > 0 ? "green" : "black"',
-    //                     border: 'search.stagingJobStates.completed() > 0 ? "1px green solid" : "1px silver dashed"'
-    //                 }
-    //             },
-    //             style: {
-    //                 display: 'inline-block',
-    //                 width: '25px',
-    //                 height: '25px',
-    //                 border: '1px silver solid',
-    //                 fontFamily: 'monospace',
-    //                 textAlign: 'center'
-    //             }
-    //         }),
-    //         '<!-- /ko -->',
-
-    //         '<!-- /ko -->'
-    //     ];
-    // }
 
     function buildPagingControls() {
         return div({
@@ -589,47 +358,42 @@ define([
                         div({
                             style: {
                                 display: 'inline-block',
-                                // width: '33%',
                                 verticalAlign: 'middle',
                                 textAlign: 'center',
                                 whiteSpace: 'nowrap',
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis'
                             }
-                        }, [
-                            '<!-- ko if: totalPages() && totalPages() > 1 -->',
+                        }, gen.if('totalPages() && totalPages() > 1', [
                             span({
                                 style: {
                                     marginLeft: '6px'
                                 }
                             }, 'page '),
-                            '<!-- ko if: totalPages() <= 100 -->',
-                            select({
-                                dataBind: {
-                                    value: 'pageInput',
-                                    options: 'pageValues',
-                                    optionsValue: '"value"',
-                                    optionsText: '"label"'
-                                },
-                                class: 'form-control',
-                                style: {
-                                    display: 'inline-block',
-                                    width: '5em'
-                                }
-                            }),
-                            '<!-- /ko -->',
-                            '<!-- ko if: totalPages() > 100 -->',
-                            input({
-                                dataBind: {
-                                    textInput: 'pageInput'
-                                },
-                                class: 'form-control',
-                                style: {
-                                    display: 'inline-block',
-                                    width: '5em'
-                                }
-                            }),
-                            '<!-- /ko -->',
+                            gen.if('totalPages() <= 100',
+                                select({
+                                    dataBind: {
+                                        value: 'pageInput',
+                                        options: 'pageValues',
+                                        optionsValue: '"value"',
+                                        optionsText: '"label"'
+                                    },
+                                    class: 'form-control',
+                                    style: {
+                                        display: 'inline-block',
+                                        width: '5em'
+                                    }
+                                }),
+                                input({
+                                    dataBind: {
+                                        textInput: 'pageInput'
+                                    },
+                                    class: 'form-control',
+                                    style: {
+                                        display: 'inline-block',
+                                        width: '5em'
+                                    }
+                                })),
                             span({
                                 style: {
                                     marginLeft: '6px'
@@ -639,12 +403,10 @@ define([
                                 dataBind: {
                                     text: 'totalPages()'
                                 }
-                            }),
-                            '<!-- /ko -->'
-                        ])
+                            })
+                        ]))
                     ])
-                ]),
-
+                ])
             ]),
 
             div({
@@ -658,11 +420,13 @@ define([
                     overflow: 'hidden',
                     textOverflow: 'ellipsis'
                 }
-            }, buildStagingStatus())
+            }, [
+                buildResultsStatus()
+            ])
         ]);
     }
 
-    var styles = html.makeStyles({
+    const styles = html.makeStyles({
         component: {
             css: {
                 flex: '1 1 0px',
@@ -677,9 +441,7 @@ define([
         },
         toolbar: {
             css: {
-                // borderBottom: '1px silver solid',
                 margin: '0',
-                // paddingBottom: '4px'
             }
         },
         items: {
@@ -714,11 +476,15 @@ define([
 
     function component() {
         return {
-            viewModel: viewModel,
+            viewModel: {
+                createViewModel: (params, componentInfo) => {
+                    return new ViewModel(params, componentInfo);
+                }
+            },
             template: template(),
             stylesheet: styles.sheet
         };
     }
 
-    return ko.kb.registerComponent(component);
+    return reg.registerComponent(component);
 });

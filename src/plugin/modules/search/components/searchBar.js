@@ -1,156 +1,152 @@
 define([
     'uuid',
-    'knockout-plus',
+    'knockout',
+    'kb_knockout/registry',
+    'kb_knockout/lib/generators',
     'kb_common/html',
-    '../../help/components/searchHelp'
+    '../../help/components/searchHelp',
+    '../../components/stagingStatusViewer'
 ], function (
     Uuid,
     ko,
+    reg,
+    gen,
     html,
-    HelpComponent
+    HelpComponent,
+    StagingStatusViewerComponent
 ) {
     'use strict';
 
-    var t = html.tag,
+    const t = html.tag,
         p = t('p'),
         img = t('img'),
         div = t('div'),
         span = t('span'),
-        input = t('input');
+        input = t('input'),
+        button = t('button');
 
-    function viewModel(params, componentInfo) {
-        var context = ko.contextFor(componentInfo.element);
-        var showOverlay = context['$root'].showOverlay;
-        // Params
-        var logo = params.logo;
+    class ViewModel {
+        constructor(params, componentInfo) {
+            this.context = ko.contextFor(componentInfo.element);
+            this.showOverlay = this.context['$root'].showOverlay;
+            this.runtime = this.context['$root'].runtime;
 
-        // Own VM
+            this.logo = params.logo;
 
-        function doHelp() {
-            showOverlay({
+            this.showHistory = ko.observable(false);
+
+            this.searchHistory = params.search.searchHistory;
+
+            this.search = params.search;
+
+            // When it is updated by either of those methods, we save
+            // it in the search history, and also forward the value to
+            // the search query.
+
+            // This is the search value the user has committed by clicking
+            // the search button or pressing the Enter key.
+
+            // This is the observable in the actual search input.
+            this.searchControlValue = ko.observable().syncFrom(params.search.searchInput);
+
+            this.searchInputClass = ko.pureComputed(() => {
+                if (this.searchControlValue() !== this.search.searchInput()) {
+                    return styles.classes.modifiedFilterInput;
+                }
+
+                if (params.search.searchInput()) {
+                    return styles.classes.activeFilterInput;
+                }
+
+                return null;
+            });
+
+            // hack to ensure that clicking in side the history control does not close it!
+            this.historyContainerId = html.genId();
+
+            // TODO: fold better dom event listening (and removal) into base class.
+            this.documentClickListener = (e) => {
+                this.clickListener(e);
+            };
+
+            document.addEventListener('click', this.documentClickListener, true);
+        }
+
+        doShowStagingStatus() {
+            this.search.showOverlay({
+                name: StagingStatusViewerComponent.name(),
+                viewModel: {
+                    stagingJobs: this.search.stagingJobs,
+                    runtime: this.runtime
+                }
+            });
+        }
+
+        doHelp() {
+            this.showOverlay({
                 name: HelpComponent.name(),
                 params: {},
                 viewModel: {}
             });
         }
 
-        var showHistory = ko.observable(false);
-
-        var searchHistory = params.search.searchHistory;
-
-        // When it is updated by either of those methods, we save
-        // it in the search history, and also forward the value to
-        // the search query.
-
-        // This is the search value the user has commited by clicking
-        // the search button or pressing the Enter key.
-
-        // This is the obervable in the actual search input.
-        var searchControlValue = ko.observable().syncFrom(params.search.searchInput);
-
-        function useFromHistory(data) {
-            showHistory(false);
-            searchControlValue(data);
-            doSearch();
+        useFromHistory(data) {
+            this.showHistory(false);
+            this.searchControlValue(data);
+            this.doSearch();
         }
 
-        function doToggleHistory() {
-            showHistory(!showHistory());
+        doToggleHistory() {
+            this.showHistory(!this.showHistory());
         }
 
-        var searchInputClass = ko.pureComputed(function () {
-            if (searchControlValue() !== params.search.searchInput()) {
-                return styles.classes.modifiedFilterInput;
-            }
-
-            if (params.search.searchInput()) {
-                return styles.classes.activeFilterInput;
-            }
-
-            return null;
-        });
-
-        function doClearInput() {
-            params.search.searchInput('');
+        doClearInput() {
+            this.search.searchInput('');
         }
 
-        function doSearch() {
+        doSearch() {
             // filter out nonsensical searches
-            var query = searchControlValue();
-            var emptyRe = /^\s*$/;
+            const query = this.searchControlValue();
+            const emptyRe = /^\s*$/;
             if (emptyRe.test(query)) {
                 return;
             }
 
-            params.search.searchInstanceID(new Uuid(4).format());
-
-            params.search.searchInput(query);
+            this.search.searchInstanceID(new Uuid(4).format());
+            this.search.searchInput(query);
         }
 
-        function doKeyUp(data, ev) {
+        doKeyUp(data, ev) {
             if (ev.key) {
                 if (ev.key === 'Enter') {
-                    doSearch();
+                    this.doSearch();
                 }
             } else if (ev.keyCode) {
                 if (ev.keyCode === 13) {
-                    doSearch();
+                    this.doSearch();
                 }
             }
         }
 
-        // hack to ensure that clicking in side the history control does not close it!
-        var historyContainerId = html.genId();
-
-        function clickListener(ev) {
+        clickListener(ev) {
             // We don't want to handle clicks for the history control itself -- either
             // an item in the list or the button. The handlers for these things will do
             // the right thing.
-            var elementType = ev.target.getAttribute('data-type');
+            const elementType = ev.target.getAttribute('data-type');
             if (['history-toggle-button', 'history-toggle-button-icon', 'history-item'].indexOf(elementType) == -1) {
-                showHistory(false);
+                this.showHistory(false);
             }
             return true;
         }
 
-        document.addEventListener('click', clickListener, true);
-
-        function dispose() {
-            if (clickListener) {
-                document.removeEventListener('click', clickListener, true);
+        dispose() {
+            if (this.clickListener) {
+                document.removeEventListener('click', this.clickListener, true);
             }
         }
-
-        return {
-            logo: logo,
-            // The top level search is included so that it can be
-            // propagated.
-            search: params.search,
-            // And we break out fields here for more natural usage (or not??)
-            searchControlValue: searchControlValue,
-            searching: params.search.searching,
-
-            showHistory: showHistory,
-            doToggleHistory: doToggleHistory,
-
-            useFromHistory: useFromHistory,
-            searchHistory: searchHistory,
-            searchInputClass: searchInputClass,
-
-            historyContainerId: historyContainerId,
-
-            // ACTIONS
-            doHelp: doHelp,
-            doSearch: doSearch,
-            doKeyUp: doKeyUp,
-            doClearInput: doClearInput,
-
-            // LIFECYCLE
-            dispose: dispose
-        };
     }
 
-    var styles = html.makeStyles({
+    const styles = html.makeStyles({
         component: {
             flex: '1 1 0px',
             display: 'flex',
@@ -220,27 +216,26 @@ define([
         }, div({
             class: 'input-group'
         }, [
-            '<!-- ko if: logo -->',
-            div({
-                class: 'input-group-addon ',
-                style: {
-                    padding: '0',
-                    border: 'none',
-                    backgroundColor: 'transparent'
-                }
-            }, img({
-                dataBind: {
-                    attr: {
-                        src: 'logo'
+            gen.if('logo',
+                div({
+                    class: 'input-group-addon ',
+                    style: {
+                        padding: '0',
+                        border: 'none',
+                        backgroundColor: 'transparent'
                     }
-                },
-                style: {
-                    display: 'inline',
-                    height: '30px',
-                    marginRight: '6px'
-                }
-            })),
-            '<!-- /ko -->',
+                }, img({
+                    dataBind: {
+                        attr: {
+                            src: 'logo'
+                        }
+                    },
+                    style: {
+                        display: 'inline',
+                        height: '30px',
+                        marginRight: '6px'
+                    }
+                }))),
             div({
                 class: 'form-control',
                 style: {
@@ -255,9 +250,7 @@ define([
                     class: 'form-control',
                     dataBind: {
                         textInput: 'searchControlValue',
-                        // value: 'searchInput',
                         hasFocus: true,
-                        // css: 'searchInput() ? "' + styles.classes.activeFilterInput + '" : null',
                         css: 'searchInputClass',
                         event: {
                             keyup: 'doKeyUp'
@@ -265,38 +258,31 @@ define([
                     },
                     placeholder: 'Search JGI Data'
                 }),
-                '<!-- ko if: showHistory -->',
-                div({
-                    class: styles.classes.historyContainer,
-                    dataBind: {
-                        attr: {
-                            id: 'historyContainerId'
-                        }
-                    }
-                }, [
-                    '<!-- ko if: searchHistory().length > 0 -->',
-                    '<!-- ko foreach: searchHistory -->',
+                gen.if('showHistory',
                     div({
+                        class: styles.classes.historyContainer,
                         dataBind: {
-                            text: '$data',
-                            click: '$component.useFromHistory'
-                        },
-                        class: styles.classes.historyItem,
-                        dataType: 'history-item'
-                    }),
-                    '<!-- /ko -->',
-                    '<!-- /ko -->',
-                    '<!-- ko ifnot: searchHistory().length > 0 -->',
-                    p({
-                        style: {
-                            fontStyle: 'italic',
-                            padding: '8px',
-                            margin: '0px'
+                            attr: {
+                                id: 'historyContainerId'
+                            }
                         }
-                    }, 'no items in history yet - Search!'),
-                    '<!-- /ko -->',
-                ]),
-                '<!-- /ko -->'
+                    }, gen.if('searchHistory().length > 0',
+                        gen.foreach('searchHistory',
+                            div({
+                                dataBind: {
+                                    text: '$data',
+                                    click: 'function(d,e){$component.useFromHistory.call($component,d,e)}'
+                                },
+                                class: styles.classes.historyItem,
+                                dataType: 'history-item'
+                            })),
+                        p({
+                            style: {
+                                fontStyle: 'italic',
+                                padding: '8px',
+                                margin: '0px'
+                            }
+                        }, 'no items in history yet - Search!')))),
             ]),
             div({
                 class: 'input-group-addon ' + styles.classes.addonButton,
@@ -310,8 +296,8 @@ define([
                 },
                 dataBind: {
                     css: {
-                        'fa-search': '!searching()',
-                        'fa-spinner fa-pulse': 'searching()'
+                        'fa-search': '!$component.search.searching()',
+                        'fa-spinner fa-pulse': '$component.search.searching()'
                     }
                 }
             })),
@@ -336,33 +322,73 @@ define([
             }, span({
                 dataType: 'history-toggle-button-icon',
                 class: 'fa fa-history'
-            })),
-            // div({
-            //     class: 'input-group-addon '  + styles.classes.addonButton,
-            //     dataBind: {
-            //         click: 'doHelp'
-            //     }
-            // }, span({
-            //     class: 'fa fa-question'
-            // }))
+            }))
         ]));
     }
 
+    function buildViewStagingButton() {
+        return button({
+            dataBind: {
+                click: 'doShowStagingStatus',
+            },
+            class: 'btn btn-default',
+            style: {
+                float: 'none'
+            }
+        }, [
+            gen.if('search.stagingJobsState().pending',
+                span({
+                    class: 'fa fa-spinner fa-pulse',
+                    style: {
+                        marginRight: '4px'
+                    }
+                })),
+            'View Staging Jobs'
+        ]);
+    }
+
+    function buildButtonBar() {
+        return div({
+            class: 'btn-toolbar pull-right'
+        }, [
+            buildViewStagingButton()
+        ]);
+    }
+
     function template() {
-        return div({}, [
-            buildSearchBar()
+        return div({
+            style: {
+                display: 'flex',
+                flexDirection: 'row'
+            }
+        }, [
+            div({
+                style: {
+                    flex: '2 1 0px'
+                }
+            }, buildSearchBar()),
+            div({
+                style: {
+                    flex: '1 1 0px',
+                    // display: 'flex',
+                    // flexDirection: 'row',
+                    // justifyContent: 'right'
+                }
+            }, buildButtonBar())
         ]);
     }
 
     function component() {
         return {
             viewModel: {
-                createViewModel: viewModel
+                createViewModel: (params, componentInfo) => {
+                    return new ViewModel(params, componentInfo);
+                }
             },
             template: template(),
             stylesheet: styles.sheet
         };
     }
 
-    return ko.kb.registerComponent(component);
+    return reg.registerComponent(component);
 });
