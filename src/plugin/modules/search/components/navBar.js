@@ -22,7 +22,6 @@ define([
         const searchInputQueryValue = ko.pureComputed(function () {
             return encodeURIComponent(params.searchInput() || '');
         });
-        console.log('styles?', styles.sheet);
         return {
             searchInputQueryValue
         };
