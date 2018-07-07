@@ -886,7 +886,7 @@ define([
                 body: buildBody(),
                 buttons: [
                     {
-                        label: 'Close & Monitor Jobs',
+                        label: 'Close and View Jobs',
                         onClick: 'doOpenJobsMonitor'
                     },
                     {

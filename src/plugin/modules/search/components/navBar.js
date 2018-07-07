@@ -99,25 +99,38 @@ define([
         },
         navBar: {
             css: {
-                marginLeft: '20px'
+                // marginLeft: '20px',
+                borderBottom: '1px rgba(200, 200, 200, 1) solid'
+            }
+        },
+        selectedNavLink: {
+            css: {
+                display: 'inline-block',
+                padding: '4px 8px',
+                margin: '0 8px 0 8px',
+                cursor: 'pointer',
+                verticalAlign: 'center',
+                border: '1px rgba(200, 200, 200, 1) solid',
+                marginBottom: '-1px',
+                borderBottom: '1px white solid'
             }
         },
         navLink: {
             css: {
                 display: 'inline-block',
-                padding: '6px',
-                margin: '4px',
+                padding: '4px 8px',
+                margin: '0 8px 0 8px',
                 cursor: 'pointer',
                 verticalAlign: 'center',
+                border: '1px rgba(200, 200, 200, 0.5) solid',
+                borderBottom: 'none',
+                backgroundColor: '#DDD',
+                opacity: '0.8'
             },
             pseudo: {
                 hover: {
-                    backgroundColor: '#DDD'
-                }
-            },
-            modifiers: {
-                active: {
-                    backgroundColor: '#DDD'
+                    backgroundColor: '#FFF',
+                    opacity: '1'
                 }
             }
         },
@@ -146,7 +159,7 @@ define([
                 },
             }, 'KBase - User Data, Genome Features, Reference Data'),
             span({
-                class: [styles.classes.navLink, styles.scopes.active].join(' ')
+                class: styles.classes.selectedNavLink
             }, 'JGI')
         ]);
     }
