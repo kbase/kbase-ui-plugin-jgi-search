@@ -1,52 +1,53 @@
 define([
-    'knockout-plus',
+    'knockout',
+    'kb_knockout/registry',
+    'kb_knockout/lib/generators',
     'kb_common/html',
-    '../lib/utils',
     '../lib/ui',
     '../stagingJobsBrowser/components/main'
 ], function (
     ko,
+    reg,
+    gen,
     html,
-    utils,
     ui,
     StagingJobsBrowserComponent
 ) {
     'use strict';
 
-    var t = html.tag, 
+    var t = html.tag,
         div = t('div');
 
-    function viewModel(params) {
-        var clock = ko.observable();
+    class ViewModel {
+        constructor(params, context) {
+            this.parent = context.$parent;
 
-        // generate a clock ...
-        var clockInterval = window.setInterval(function () {
-            var time = new Date().getTime();
-            clock(time);
-        }, 1000);
-        
-        function dispose() {
-            if (clockInterval) {
-                window.clearInterval(clockInterval);
-            }
+            this.clock = ko.observable();
+
+            // generate a clock ...
+            this.clockInterval = window.setInterval(() => {
+                var time = new Date().getTime();
+                this.clock(time);
+            }, 1000);
+
+            this.onClose = () => {
+                this.parent.bus.send('close');
+            };
         }
 
-        return {
-            runtime: params.runtime,
-            onClose: params.onClose,
-            clock: clock,
-            dispose: dispose
-        };
+        dispose() {
+            if (this.clockInterval) {
+                window.clearInterval(this.clockInterval);
+            }
+        }
     }
 
-   
+
 
     function buildJobsBrowser() {
-        return ko.kb.komponent({
+        return gen.component({
             name: StagingJobsBrowserComponent.name(),
-            params: {
-                runtime: 'runtime'
-            }
+            params: {}
         });
     }
 
@@ -59,7 +60,7 @@ define([
             }
         }, [
             ui.buildFullHeightDialog({
-                title: 'Staging Jobs', 
+                title: 'Staging Jobs',
                 body: buildJobsBrowser()
             })
         ]);
@@ -67,10 +68,10 @@ define([
 
     function component() {
         return {
-            viewModel: viewModel,
+            viewModelWithContext: ViewModel,
             template: template()
         };
     }
 
-    return ko.kb.registerComponent(component);
+    return reg.registerComponent(component);
 });

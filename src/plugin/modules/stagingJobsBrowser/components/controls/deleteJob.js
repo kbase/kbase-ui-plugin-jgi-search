@@ -1,30 +1,35 @@
 define([
-    'knockout-plus',
+    'knockout',
+    'kb_knockout/registry',
+    'kb_knockout/lib/generators',
     'kb_common/html',
     '../../../lib/ui'
 ], function (
     ko,
+    reg,
+    gen,
     html,
     ui
 ) {
     'use strict';
-    var t = html.tag,
+
+    const t = html.tag,
         div = t('div'),
         button = t('button'),
         span = t('span');
 
-    function viewModel(params) {
-        function doDelete(data) {
-            params.env.removeJob(data.jobMonitoringId);
+    class ViewModel {
+        constructor(params) {
+            this.removeJob = params.env.removeJob;
+            this.jobMonitoringId = params.row.jobId.jobMonitoringId;
+            this.status = params.row.status.value;
         }
-        return {
-            doDelete: doDelete,
-            status: params.row.status.value,
-            jobMonitoringId: params.row.jobId.jobMonitoringId
-        };
+        doDelete(data) {
+            this.removeJob(data.jobMonitoringId);
+        }
     }
 
-    var styles = html.makeStyles({
+    const styles = html.makeStyles({
         dangerButton: {
             css: {
                 padding: '4px',
@@ -48,27 +53,24 @@ define([
     function template() {
         return div({
             class: 'btn-group pull-right'
-        }, [
-            '<!-- ko if: status() === "completed" || status() === "error" || status() === "notfound" -->',
+        }, gen.if('status() === "completed" || status() === "error" || status() === "notfound"',
             button({
-                class: 'btn pull-right ' + styles.classes.dangerButton,                
+                class: 'btn pull-right ' + styles.classes.dangerButton,
                 dataBind: {
                     click: 'doDelete'
                 }
             }, span({
                 class: 'fa fa-times'
-            })),
-            '<!-- /ko -->'
-        ]);
+            }))));
     }
 
     function component() {
         return {
-            viewModel: viewModel,
+            viewModel: ViewModel,
             template: template(),
             stylesheet: styles.sheet
         };
     }
 
-    return ko.kb.registerComponent(component);
+    return reg.registerComponent(component);
 });

@@ -1,17 +1,25 @@
 define([
-    'knockout-plus',
+    'knockout',
+    'kb_knockout/registry',
+    'kb_knockout/lib/generators',
+    'kb_knockout/lib/viewModelBase',
     'kb_common/html',
     'kb_common/bootstrapUtils',
-    '../lib/ui'
+    '../lib/ui',
+    '../lib/appViewModel'
 ], function (
     ko,
+    reg,
+    gen,
+    ViewModelBase,
     html,
     BS,
-    ui
+    ui,
+    AppViewModel
 ) {
     'use strict';
 
-    var t = html.tag,
+    const t = html.tag,
         div = t('div'),
         table = t('table'),
         tbody = t('tbody'),
@@ -20,17 +28,26 @@ define([
         td = t('td'),
         h3 = t('h3');
 
-    function viewModel(params) {
-        var details = ko.observable();
+    class ViewModel extends ViewModelBase {
+        constructor(params, context) {
+            super(params);
+            this.details = ko.observable();
 
-        params.getDetail(params.item.id)
-            .then(function (resultItem) {
-                details(resultItem);
+            const runtime = context.$root.runtime;
+            const appViewModel = new AppViewModel({
+                runtime: runtime
             });
-        return {
-            details: details,
-            onClose: params.onClose
-        };
+
+            appViewModel.getDetail(params.item.id)
+                .then((resultItem) => {
+                    this.details(resultItem);
+                });
+
+            this.parent = context.$parent;
+            this.onClose = () => {
+                this.parent.bus.send('close');
+            };
+        }
     }
 
     var styles = html.makeStyles({
@@ -136,15 +153,7 @@ define([
                         text: 'comments'
                     }
                 })
-            ]),
-            // tr([
-            //     th('Year'),
-            //     td({
-            //         dataBind: {
-            //             text: 'year'
-            //         }
-            //     })
-            // ])
+            ])
         ]);
     }
 
@@ -220,32 +229,26 @@ define([
                     class: 'col-md-6'
                 }, [
                     h3('Proposal'),
-                    '<!-- ko if: proposal -->',
-                    buildProposalInfo(),
-                    '<!-- /ko -->',
-                    '<!-- ko ifnot: proposal -->',
-                    div({
-                        style: {
-                            fontStyle: 'italic',
-                            textAlign: 'center'
-                        }
-                    }, 'No proposal details available'),
-                    '<!-- /ko -->'
+                    gen.if('proposal',
+                        buildProposalInfo(),
+                        div({
+                            style: {
+                                fontStyle: 'italic',
+                                textAlign: 'center'
+                            }
+                        }, 'No proposal details available'))
                 ]), div({
                     class: 'col-md-6'
                 }, [
                     h3('Sequencing Project'),
-                    '<!-- ko if: sequencingProject -->',
-                    buildSequencingdProjectInfo(),
-                    '<!-- /ko -->',
-                    '<!-- ko ifnot: sequencingProject -->',
-                    div({
-                        style: {
-                            fontStyle: 'italic',
-                            textAlign: 'center'
-                        }
-                    }, 'No sequencing project details available'),
-                    '<!-- /ko -->'
+                    gen.if('sequencingProject',
+                        buildSequencingdProjectInfo(),
+                        div({
+                            style: {
+                                fontStyle: 'italic',
+                                textAlign: 'center'
+                            }
+                        }, 'No sequencing project details available'))
                 ])
             ]),
             div({
@@ -254,22 +257,19 @@ define([
                 div({
                     class: 'col-md-6'
                 }, [
-                    
+
                 ]), div({
                     class: 'col-md-6'
                 }, [
                     h3('Analysis Project'),
-                    '<!-- ko if: analysisProject -->',
-                    buildAnalysisProjectInfo(),
-                    '<!-- /ko -->',
-                    '<!-- ko ifnot: analysisProject -->',
-                    div({
-                        style: {
-                            fontStyle: 'italic',
-                            textAlign: 'center'
-                        }
-                    }, 'No analysis project details available'),
-                    '<!-- /ko -->'
+                    gen.if('analysisProject',
+                        buildAnalysisProjectInfo(),
+                        div({
+                            style: {
+                                fontStyle: 'italic',
+                                textAlign: 'center'
+                            }
+                        }, 'No analysis project details available'))
                 ])
             ])
         ]);
@@ -294,42 +294,43 @@ define([
     }
 
     function buildInspector() {
-        return div([
-            '<!-- ko ifnot: details() -->',
-            html.loading(),
-            '<!-- /ko -->',
-
-            '<!-- ko if: details() -->',
-            BS.buildTabs({
-                tabs: [{
-                    id: 'project',
-                    title: 'Project',
-                    body: buildProjectView()
-                },  {
-                    id: 'metadata',
-                    title: 'Metadata',
-                    body: buildMetadataView()
-                }]
-            }).content,
-            '<!-- /ko -->'
-        ]);
+        return div(
+            gen.if('details()',
+                BS.buildTabs({
+                    tabs: [{
+                        id: 'project',
+                        title: 'Project',
+                        body: buildProjectView()
+                    },  {
+                        id: 'metadata',
+                        title: 'Metadata',
+                        body: buildMetadataView()
+                    }]
+                }).content,
+                html.loading()));
     }
 
-    function template() {        
+    function template() {
         return ui.buildDialog({
             type: 'default',
-            title: 'Inspector', 
-            body: buildInspector()
+            title: 'Inspector',
+            body: buildInspector(),
+            buttons: [
+                {
+                    label: 'Close',
+                    onClick: 'onClose'
+                }
+            ]
         });
     }
 
     function component() {
         return {
-            viewModel: viewModel,
+            viewModelWithContext: ViewModel,
             template: template(),
             stylesheet: styles.sheet
         };
     }
 
-    return ko.kb.registerComponent(component);
+    return reg.registerComponent(component);
 });

@@ -23,7 +23,7 @@ define([
         span = t('span');
 
     class ViewModel extends ViewModelBase {
-        constructor(params, componentInfo) {
+        constructor(params, context) {
             super(params);
             this.onClose = params.onClose;
             this.helpDb = helpDb;
@@ -35,7 +35,7 @@ define([
             ];
             this.title = 'Search Help';
 
-            this.parent = componentInfo.$parent;
+            this.parent = context.$parent;
         }
 
         doClose() {

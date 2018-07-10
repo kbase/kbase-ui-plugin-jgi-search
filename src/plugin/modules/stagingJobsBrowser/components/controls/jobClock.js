@@ -1,45 +1,42 @@
 define([
-    'knockout-plus',
+    'knockout',
+    'kb_knockout/registry',
+    'kb_knockout/lib/generators',
     'kb_common/html'
 ], function (
     ko,
+    reg,
+    gen,
     html
 ) {
     'use strict';
-    var t = html.tag,
+    const t = html.tag,
         span = t('span'),
         div = t('div');
-    var unwrap = ko.utils.unwrapObservable;
 
-    function viewModel(params) {
-        var startTime = unwrap(params.row.started.value);
-        // var statusTime = unwrap(params.row.updated.value);
-        var status = params.row.status.value;
-        // var statusElapsed = statusTime - startTime;
-        var elapsed = unwrap(params.row.elapsed.value);
+    const unwrap = ko.utils.unwrapObservable;
 
-        var showCurrentElapsed = ko.pureComputed(function () {
-            switch (unwrap(status)) {
-            case 'completed':
-            case 'error':
-            case 'notfound':
-                return false;
-            default:
-                return true;
-            }
-        });
+    class ViewModel {
+        constructor(params) {
+            this.startTime = unwrap(params.row.started.value);
+            this.status = params.row.status.value;
+            this.elapsed = unwrap(params.row.elapsed.value);
 
-        return {
-            startTime: startTime,
-            showCurrentElapsed: showCurrentElapsed,
-            status: status,
-            elapsed: elapsed
-        };
+            this.showCurrentElapsed = ko.pureComputed(() => {
+                switch (unwrap(status)) {
+                case 'completed':
+                case 'error':
+                case 'notfound':
+                    return false;
+                default:
+                    return true;
+                }
+            });
+        }
     }
 
     function template() {
-        return div([
-            '<!-- ko if: showCurrentElapsed -->',
+        return div(gen.if('showCurrentElapsed',
             span({
                 dataBind: {
                     component: {
@@ -50,8 +47,6 @@ define([
                     }
                 }
             }),
-            '<!-- /ko -->',
-            '<!-- ko ifnot: showCurrentElapsed -->',
             span({
                 dataBind: {
                     typedText: {
@@ -60,17 +55,15 @@ define([
                         value: 'elapsed'
                     }
                 }
-            }),
-            '<!-- /ko -->'
-        ]);
+            })));
     }
 
     function component() {
         return {
-            viewModel: viewModel,
+            viewModel: ViewModel,
             template: template()
         };
     }
 
-    return ko.kb.registerComponent(component);
+    return reg.registerComponent(component);
 });

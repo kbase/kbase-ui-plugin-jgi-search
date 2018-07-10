@@ -1,11 +1,11 @@
 // a wrapper for the help component, loads the search help.
 define([
-    'knockout-plus',
+    'kb_knockout/registry',
     'kb_common/html',
     '../../lib/ui',
     'yaml!../helpData.yml'
 ], function (
-    ko,
+    reg,
     html,
     ui,
     helpDb
@@ -16,22 +16,23 @@ define([
         div = t('div'),
         span = t('span');
 
-    function viewModel(params) {
-        function doClose() {
-            params.onClose();
-        }
-
-        return {
-            title: 'Search Help',
-            buttons: [
+    class ViewModel {
+        constructor(params) {
+            this.title = 'Search Help';
+            this.buttons = [
                 {
                     title: 'Close',
-                    action: doClose
+                    action: () => {
+                        this.doClose;
+                    }
                 }
-            ],
-            helpDb: helpDb,
-            onClose: params.onClose
-        };
+            ];
+            this.helpDb = helpDb;
+            this.onClose = params.onClose;
+        }
+        doClose() {
+            this.onClose();
+        }
     }
 
     function buildHelpViewer() {
@@ -50,7 +51,7 @@ define([
 
     function template() {
         return ui.buildDialog({
-            title: span({dataBind: {text: 'title'}}), 
+            title: span({dataBind: {text: 'title'}}),
             icon: 'question-circle',
             body: buildHelpViewer()
         });
@@ -58,10 +59,10 @@ define([
 
     function component() {
         return {
-            viewModel: viewModel,
+            viewModel: ViewModel,
             template: template()
         };
     }
 
-    return ko.kb.registerComponent(component);
+    return reg.registerComponent(component);
 });

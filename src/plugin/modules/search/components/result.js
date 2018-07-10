@@ -1,11 +1,13 @@
 define([
-    'knockout-plus',
+    'knockout',
+    'kb_knockout/registry',
     'kb_common/html',
     '../../lib/utils',
     '../schema',
     '../../components/table'
 ], function (
     ko,
+    reg,
     html,
     utils,
     schema,
@@ -102,25 +104,59 @@ define([
         }
     });
 
-    function viewModel(params) {
-        var search = params.search;
-        var searchResults = search.searchResults;
-        var searching = search.searching;
+    class ViewModel {
+        constructor(params) {
+            this.search = params.search;
+            this.searchResults = this.search.searchResults;
+            this.searching = this.search.searching;
 
-        var infoTopics = {
-            fromFile: {
-                tip: 'The information below identifies the file you will be copying into your Staging Area.',
-            },
-            toStaging: {
-                tip: 'Your Staging Area is your personal file folder into which you may copy files, and from which you may import files to database objects.'
-            }
-        };
+            this.infoTopics = {
+                fromFile: {
+                    tip: 'The information below identifies the file you will be copying into your Staging Area.',
+                },
+                toStaging: {
+                    tip: 'Your Staging Area is your personal file folder into which you may copy files, and from which you may import files to database objects.'
+                }
+            };
 
+            this.messages = {
+                none: div([
+                    p('No active search.'),
+                    hr({style: {width: '50%'}}),
+                    p('Enter one or more terms above to search for reads and assemblies contained in the Joint Genome Institute (JGI) Genomes Online Database (GOLD) to use in KBase.'),
+                    p('Multiple search terms are treated as “AND”  statements. The search will find objects or text that include all of the terms you submit. Terms are matched against whole words; no partial matches will be listed. Wildcards are supported--use an asterisk (*) as a wildcard (for example, “lacto*” would match “lactobacillus” and “lactococcus”). Other search operators are not currently supported.')
+                ]),
+                notfound: div([
+                    p('Sorry, nothing was found with this search.'),
+                    hr({style: {width: '50%'}}),
+                    p('Try reducing the number of search terms and/or filters.'),
+                    p('tip: You can use a wildcard search to find more stuff. E.g. rhodo*'),
+                ])
+            };
 
-        // end auto sizing
+            this.table = {
+                rows: this.searchResults,
+                columns: schema.columns,
+                isLoading: this.search.searching,
+                pageSize: this.search.pageSize,
+                state: this.search.searchState,
+                env: {
+                    search: this.search
+                },
+                actions: {
+                    doAddProject: (data) => {this.doAddProject(data);},
+                    doAddPi: (data) => {this.doAddPi(data);},
+                    doStage: (data) => {this.doStage(data);},
+                    doAddProposal: (data) => {this.doAddProposal(data);}
+                },
+                sortBy: (...args) => {
+                    return this.search.sortBy.apply(this.search, args);
+                }
+            };
+        }
 
-        function doShowTip(id) {
-            var tipNode = document.getElementById(id);
+        doShowTip(id) {
+            const tipNode = document.getElementById(id);
             if (!tipNode) {
                 return;
             }
@@ -129,43 +165,33 @@ define([
             }
 
             tipNode.classList.remove('-hidden');
-            var skip = true;
-            var fun = function () {
+            let skip = true;
+            const clickHandler = function () {
                 if (skip) {
                     skip = false;
                     return;
                 }
                 tipNode.classList.add('-hidden');
-                document.body.removeEventListener('click', fun);
+                document.body.removeEventListener('click', clickHandler);
             };
-            document.body.addEventListener('click', fun);
+            document.body.addEventListener('click', clickHandler);
         }
 
-        function doAddProject(data) {
-            // console.log('filtering on ', data);
-            params.search.seqProjectFilter(data.col.value);
+        doAddProject(data) {
+            this.search.seqProjectFilter(data.col.value);
         }
 
-        function doAddProposal(data) {
-            // console.log('adding proposal...', row, col);
-            params.search.proposalFilter(data.col.value);
+        doAddProposal(data) {
+            this.search.proposalFilter(data.col.value);
         }
 
-        function doAddPi(data) {
-            params.search.piFilter(data.col.last);
+        doAddPi(data) {
+            this.search.piFilter(data.col.last);
         }
 
-        function doStage(item) {
-            // spawn the staging request
-            // the search vm takes care of the rest...
-
-            // stagingStatus('requesting');
-
-            // TODO: need to work on the detail item structure!
-            //console.log('going to stage ...', data);
-
-            return params.search.doStage(item.id)
-                .then(function (result) {
+        doStage(item) {
+            return this.search.doStage(item.id)
+                .then((result) => {
                     if ('jobId' in result) {
                         // we need to do this manually since main.js just
                         // sets it in the results not the detail.
@@ -183,54 +209,6 @@ define([
                     }
                 });
         }
-
-        var messages = {
-            none: div([
-                p('No active search.'),
-                hr({style: {width: '50%'}}),
-                p('Enter one or more terms above to search for reads and assemblies contained in the Joint Genome Institute (JGI) Genomes Online Database (GOLD) to use in KBase.'),
-                p('Multiple search terms are treated as “AND”  statements. The search will find objects or text that include all of the terms you submit. Terms are matched against whole words; no partial matches will be listed. Wildcards are supported--use an asterisk (*) as a wildcard (for example, “lacto*” would match “lactobacillus” and “lactococcus”). Other search operators are not currently supported.')
-            ]),
-            notfound: div([
-                p('Sorry, nothing was found with this search.'),
-                hr({style: {width: '50%'}}),
-                p('Try reducing the number of search terms and/or filters.'),
-                p('tip: You can use a wildcard search to find more stuff. E.g. rhodo*'),
-            ])
-        };
-
-        return {
-            search: params.search,
-            searchResults: searchResults,
-            table: {
-                rows: searchResults,
-                columns: schema.columns,
-                isLoading: search.searching,
-                pageSize: search.pageSize,
-                state: search.searchState,
-                // rowAction: doShowInfo,
-                // try this: thread an environment through, like
-                // runtime...
-                env: {
-                    search: params.search
-                },
-                actions: {
-                    doAddProject: doAddProject,
-                    doAddPi: doAddPi,
-                    doStage: doStage,
-                    doAddProposal: doAddProposal
-                },
-                sortBy: search.sortBy
-            },
-            messages: messages,
-            searching: searching,
-            infoTopics: infoTopics,
-            doShowTip: doShowTip,
-            doAddProject: doAddProject,
-            doAddPi: doAddPi,
-            doStage: doStage,
-            doAddProposal: doAddProposal
-        };
     }
 
     function template() {
@@ -258,11 +236,11 @@ define([
 
     function component() {
         return {
-            viewModel: viewModel,
+            viewModel: ViewModel,
             template: template(),
             stylesheet: styles.sheet
         };
     }
 
-    return ko.kb.registerComponent(component);
+    return reg.registerComponent(component);
 });

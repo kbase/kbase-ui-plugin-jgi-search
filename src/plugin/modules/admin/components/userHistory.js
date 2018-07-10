@@ -24,7 +24,6 @@ define([
 
     function getAllProfilesWithAgreement(runtime) {
         var url =  runtime.config('services.user_profile.url');
-        // var url = 'https://' + host + '.kbase.us/services/user_profile/rpc';
         var userProfileService = new GenericClient({
             module: 'UserProfile',
             url: url,
@@ -46,7 +45,7 @@ define([
                         if (profile.hasItem('profile.plugins.jgi-search.settings.jgiDataTerms.agreed')) {
 
                             var agreedAt = profile.getItem('profile.plugins.jgi-search.settings.jgiDataTerms.time');
-                        
+
                             var history;
                             var savedAt;
                             var source;
@@ -58,7 +57,7 @@ define([
                             } else if (profile.hasItem('profile.plugins.jgi-search.settings.searchInputHistory')) {
                                 source = 'ver1';
                                 history = profile.getItem('profile.plugins.jgi-search.settings.searchInputHistory.history');
-                                savedAt =  profile.getItem('profile.plugins.jgi-search.settings.searchInputHistory.time');                           
+                                savedAt =  profile.getItem('profile.plugins.jgi-search.settings.searchInputHistory.time');
                             } else {
                                 source = 'missing';
                                 history = [];
@@ -101,7 +100,7 @@ define([
         // var selectedHost = ko.observable('ci');
         // var hosts = [
         //     'ci',
-        //     'next', 
+        //     'next',
         //     'appdev',
         //     'prod'
         // ];
@@ -138,7 +137,7 @@ define([
                     return (userFilterRegex().test(a.username) || userFilterRegex().test(a.realname));
                 });
         });
-        
+
         function fetchData() {
             // if (status() === 'fetched' || status() === 'fetching') {
             //     return;
@@ -146,7 +145,7 @@ define([
 
             status('fetching');
             getAllProfilesWithAgreement(runtime)
-                .then(function (foundProfiles) { 
+                .then(function (foundProfiles) {
                     profiles(foundProfiles);
                     // foundProfiles.forEach(function(profile) {
                     //     profiles.push(profile);
@@ -286,7 +285,7 @@ define([
                             }
                         }
                     }),
-                    td( buildTable({
+                    td(buildTable({
                         field: 'history',
                         columns: [{
                             label: '#',
@@ -376,7 +375,7 @@ define([
         return buildLayout();
     }
 
-    function component () {
+    function component() {
         return {
             viewModel: {
                 createViewModel: viewModel

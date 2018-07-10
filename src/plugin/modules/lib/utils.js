@@ -197,7 +197,7 @@ define([
             org.info = 'No scientific name available';
             org.value = '-';
             return org;
-        } 
+        }
 
         // for gold_data (and perhaps others) the species is actually Genus species.
         // handle the general case of the genus being a prefix of the species and fix
@@ -213,7 +213,7 @@ define([
                 org.species = org.species.substr(0, strainPos);
             }
         }
-       
+
         var scientificName = (org.genus || '-') + ' ' + (org.species || '-') + (org.strain ? ' ' + org.strain : '');
         org.value = scientificName;
         org.info = scientificName + '\n(' + org.info + ')';
@@ -224,9 +224,9 @@ define([
         var lastName = getProp(hit.source.metadata, 'proposal.pi.last_name');
         var firstName = getProp(hit.source.metadata, 'proposal.pi.first_name');
         if (lastName) {
-            return {                
+            return {
                 value: lastName + ', ' + firstName,
-                info: 'The PI name as provided in the proposal',            
+                info: 'The PI name as provided in the proposal',
                 first: firstName,
                 last: lastName
             };
@@ -238,7 +238,7 @@ define([
             if (names) {
                 return {
                     value: names[1] + ', ' + names[0],
-                    info: 'The PI name as provided in the proposal',            
+                    info: 'The PI name as provided in the proposal',
                     first: names[0],
                     last: names[1]
                 };
@@ -250,7 +250,7 @@ define([
             if (names) {
                 return {
                     value: names[1] + ', ' + names[0],
-                    info: 'The PI name as provided in the analysis project',            
+                    info: 'The PI name as provided in the analysis project',
                     first: names[0],
                     last: names[1]
                 };
@@ -424,9 +424,9 @@ define([
         var encoding = supportedEncodings[key];
         encoding.extensions.forEach(function (ext) {
             extToEncoding[ext] = encoding;
-        });        
+        });
     });
-    
+
     /*
         grokFileParts has the job of taking a file name and determing the type extension,
         the encoding extension, the full extension, and the basename.
@@ -439,8 +439,8 @@ define([
         non-supported ones.
     */
     function grokFileParts(filename) {
-        var base = null, 
-            type = null, 
+        var base = null,
+            type = null,
             blacklisted = false,
             unsupported = false,
             typeExt = null,
@@ -473,7 +473,7 @@ define([
                     unsupported = true;
                     base = parts.slice(0, pos + 1).join('.');
                 }
-            // Just type, possibly.            
+            // Just type, possibly.
             } else if (extToType[ext]) {
                 typeExt = ext;
                 type = extToType[ext].name;
@@ -482,7 +482,7 @@ define([
                 blacklisted = true;
                 typeExt = ext;
                 type = blacklistExtToType[ext].name;
-                base = parts.slice(0, pos).join('.');                
+                base = parts.slice(0, pos).join('.');
             } else {
                 unsupported = true;
                 base = filename;
@@ -497,7 +497,7 @@ define([
                 blacklisted = true;
                 typeExt = ext;
                 type = parts[1];
-                base = parts[0];                
+                base = parts[0];
             } else {
                 unsupported = true;
                 base = filename;
@@ -533,7 +533,6 @@ define([
         // var encodings = {
         //     'fastq.gz': 'gz',
         // }
-        
 
         // Should be a list, but you never know...
         if (typeof fileTypes === 'string') {
@@ -543,7 +542,7 @@ define([
         var fileType, encoding;
 
         // is file type in supported types?
-        // may be more than one item in file type, if so the non-matching 
+        // may be more than one item in file type, if so the non-matching
         // should be an encoding (compression)
         var matchingTypes = fileTypes
             .map(function (type) {
@@ -573,7 +572,7 @@ define([
                 // var matchingEncodings = encodings.filter(function (enc) {
                 //     return enc === encoding;
                 // });
-                if (matchingEncodings) {                    
+                if (matchingEncodings) {
                     encoding = matchingEncodings.name;
                 } else {
                     encoding = null;
@@ -581,7 +580,7 @@ define([
             } else if (fileTypeEncodings.length > 1) {
                 console.error('too many file type encodings!', fileTypeEncodings);
                 error = {
-                    code: 'too-many-encodings', 
+                    code: 'too-many-encodings',
                     message: 'Too many file type encodings: ' + fileTypeEncodings.join(','),
                     info: {
                         encodings: encodings,
@@ -664,7 +663,7 @@ define([
         }
     */
 
-    function grokStageStats(message) {
+    function grokStageStatus(message) {
         // NOTE: yes the strings are quoted!
         var queuedRe = /^In_Queue$/;
         var progressRe = /^In Progress\. Total files = ([\d]+)\. Copy complete = ([\d]+)\. Restore in progress = ([\d]+)\. Copy in progress = ([\d]+)$/;
@@ -691,11 +690,13 @@ define([
             if (!em) {
                 console.warn('unknown1...', message);
                 return {
+                    message: message,
                     status: 'unknown1'
                 };
             }
 
             return {
+                message: message,
                 status: 'error'
             };
         }
@@ -727,7 +728,6 @@ define([
         return {
             status: 'unknown2'
         };
-
     }
 
 
@@ -1056,7 +1056,7 @@ define([
         grokField: grokField,
         grokFileType: grokFileType,
         grokFileParts: grokFileParts,
-        grokStageStats: grokStageStats,
+        grokStageStatus: grokStageStatus,
         normalizeFileType: normalizeFileType,
         usDate: usDate,
         getProp: getProp,

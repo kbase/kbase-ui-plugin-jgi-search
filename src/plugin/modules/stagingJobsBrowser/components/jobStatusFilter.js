@@ -1,115 +1,111 @@
 define([
-    'knockout-plus',
+    'knockout',
+    'kb_knockout/registry',
+    'kb_knockout/lib/generators',
+    'kb_knockout/lib/viewModelBase',
     'kb_common/html'
-], function(
+], function (
     ko,
+    reg,
+    gen,
+    ViewModelBase,
     html
 ) {
     'use strict';
 
-    var t = html.tag,
+    const t = html.tag,
         span = t('span'),
         label = t('label'),
         select = t('select'),
         option = t('option'),
         div = t('div');
 
-    function viewModel(params) {  
-        var jobStatusInput = ko.observable('_select_');
-        var subscriptions = ko.kb.SubscriptionManager.make();
+    class ViewModel extends ViewModelBase {
+        constructor(params) {
+            super(params);
 
-        var selectedJobStatuses = ko.observableArray();
+            this.jobStatusInput = ko.observable('_select_');
+            this.selectedJobStatuses = ko.observableArray();
+            this.jobStatusFilter = params.jobStatusFilter;
 
-        subscriptions.add(selectedJobStatuses.subscribe(function (newValue) {
-            params.jobStatusFilter(newValue.map(function (option) {
-                return option.value;
-            }));
-        }));
+            this.subscribe(this.selectedJobStatuses, (newValue) => {
+                this.jobStatusFilter(newValue.map((option) => {
+                    return option.value;
+                }));
+            });
 
-        var jobStatusOptions = ko.observableArray();
+            this.jobStatusOptions = ko.observableArray();
 
-        var jobStatuses = [
-            {
-                value: 'sent',
-                label: 'Sent'
-            },
-            {
-                value: 'submitted',
-                label: 'Submitted'
-            },
-            {
-                value: 'queued',
-                label: 'Queued'
-            },
-            {
-                value: 'restoring',
-                label: 'Restoring'
-            },
-            {
-                value: 'copying',
-                label: 'Copying'
-            },
-            {
-                value: 'completed',
-                label: 'Completed'
-            },
-            {
-                value: 'error',
-                label: 'Error'
-            },
-            {
-                value: 'notfound',
-                label: 'Not Found'
-            }
-        ];
-        jobStatuses.forEach(function (status) {
-            status = JSON.parse(JSON.stringify(status));
-            status.selected = ko.observable(false);
-            jobStatusOptions.push(status); 
-        });
+            this.jobStatuses = [
+                {
+                    value: 'sent',
+                    label: 'Sent'
+                },
+                {
+                    value: 'submitted',
+                    label: 'Submitted'
+                },
+                {
+                    value: 'queued',
+                    label: 'Queued'
+                },
+                {
+                    value: 'restoring',
+                    label: 'Restoring'
+                },
+                {
+                    value: 'copying',
+                    label: 'Copying'
+                },
+                {
+                    value: 'completed',
+                    label: 'Completed'
+                },
+                {
+                    value: 'error',
+                    label: 'Error'
+                },
+                {
+                    value: 'notfound',
+                    label: 'Not Found'
+                }
+            ];
+            this.jobStatuses.forEach((status) => {
+                status = JSON.parse(JSON.stringify(status));
+                status.selected = ko.observable(false);
+                this.jobStatusOptions.push(status);
+            });
 
-        
-        jobStatusOptions.unshift({
-            label: 'Select one or more job statuses',
-            value: '_select_',
-            selected: ko.observable(false)
-        });
 
-       
-        function doRemoveJobStatus(option) {
-            // This _is_ the option object.
-            option.selected(false);
-            selectedJobStatuses.remove(option);
+            this.jobStatusOptions.unshift({
+                label: 'Select one or more job statuses',
+                value: '_select_',
+                selected: ko.observable(false)
+            });
         }
 
-        function doSelectJobStatus(data) {
-            var value = data.jobStatusInput();
+
+        doRemoveJobStatus(option) {
+            // This _is_ the option object.
+            option.selected(false);
+            this.selectedJobStatuses.remove(option);
+        }
+
+        doSelectJobStatus(data) {
+            const value = data.jobStatusInput();
             if (value === '_select_') {
                 return;
             }
-            var option = jobStatusOptions().filter(function (option) {
+            const option = this.jobStatusOptions().filter((option) => {
                 return (option.value === value);
             })[0];
-            selectedJobStatuses.push(option);
+            this.selectedJobStatuses.push(option);
             option.selected(true);
             data.jobStatusInput('_select_');
         }
-
-        function dispose() {
-            subscriptions.dispose();
-        }
-
-        return { 
-            jobStatusInput: jobStatusInput,
-            jobStatusOptions: jobStatusOptions,
-            selectedJobStatuses: selectedJobStatuses,
-            doSelectJobStatus: doSelectJobStatus,
-            doRemoveJobStatus: doRemoveJobStatus,
-            dispose: dispose
-        };
     }
 
-    var styles = html.makeStyles({
+    const styles = html.makeStyles({
         component: {
             flex: '1 1 0px',
             display: 'flex',
@@ -153,14 +149,13 @@ define([
                     margin: '0 4px'
                 }
             }, [
-                '<!-- ko ifnot: selected() -->',
-                option({
-                    dataBind: {
-                        value: 'value',
-                        text: 'label'
-                    }
-                }),
-                '<!-- /ko -->'
+                gen.if('!selected()',
+                    option({
+                        dataBind: {
+                            value: 'value',
+                            text: 'label'
+                        }
+                    })),
             ]),
 
             // selected types
@@ -181,7 +176,7 @@ define([
                     })),
                     span({
                         dataBind: {
-                            click: '$component.doRemoveJobStatus'
+                            click: '(d, e) => {$component.doRemoveJobStatus.call($component, d, e)}'
                         },
                         class: 'kb-btn-mini'
                     }, 'x')
@@ -196,11 +191,11 @@ define([
 
     function component() {
         return {
-            viewModel: viewModel,
+            viewModel: ViewModel,
             template: template(),
             stylesheet: styles.sheet
         };
     }
 
-    return ko.kb.registerComponent(component);
+    return reg.registerComponent(component);
 });

@@ -7,21 +7,44 @@ define([
 ) {
     'use strict';
 
-    function factory(config) {
-        var runtime = config.runtime;
+    function firstSuccess(array, fun) {
+        for (var i = 0; i < array.length; i += 1) {
+            var result = fun(array[i]);
+            if (result) {
+                return result;
+            }
+        }
+    }
 
-        var profileService = new GenericClient({
-            url: runtime.config('services.UserProfile.url'),
-            token: runtime.service('session').getAuthToken(),
-            module: 'UserProfile'
-        });
+    function sameArray(a1, a2) {
+        if (a1.length !== a2.length) {
+            return false;
+        }
+        for (var i = 0; i < a1.length; i += 1) {
+            if (a1[i] !== a2[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
 
-        function updateUserProfile(profileUpdate) {
-            return profileService.callFunc('update_user_profile', [profileUpdate])
-                .then(function () {
+    class Profile {
+        constructor({runtime}) {
+            this.runtime = runtime;
+
+            this.profileService = new GenericClient({
+                url: this.runtime.config('services.UserProfile.url'),
+                token: this.runtime.service('session').getAuthToken(),
+                module: 'UserProfile'
+            });
+        }
+
+        updateUserProfile(profileUpdate) {
+            return this.profileService.callFunc('update_user_profile', [profileUpdate])
+                .then(() => {
                     return [true, null];
                 })
-                .catch(function (err) {
+                .catch((err) => {
                     return [null, {
                         source: 'ProfileService:update_user_profile',
                         code: 'error-in-call',
@@ -36,17 +59,19 @@ define([
                 });
         }
 
-        function saveJgiAgreement(agreed) {
-            var username = runtime.service('session').getUsername();
-            return profileService.callFunc('get_user_profile', [[username]])
-                .spread(function (profiles) {
-                    var profile = Props.make({
+        saveJgiAgreement(agreed) {
+            const username = this.runtime.service('session').getUsername();
+            return this.profileService.callFunc('get_user_profile', [[username]])
+                .spread((profiles) => {
+                    const profile = Props.make({
                         data: profiles[0]
                     });
 
-                    // NB we can only update a top level profile property, so we need to 
+                    // NB we can only update a top level profile property, so we need to
                     // get all the plugin prefs.
-                    var prefs = Props.make({ data: profile.getItem('profile.plugins', {}) });
+                    const prefs = Props.make({
+                        data: profile.getItem('profile.plugins', {})
+                    });
 
                     prefs.setItem('jgi-search.settings.jgiDataTerms', {
                         agreed: agreed,
@@ -62,10 +87,10 @@ define([
                         }
                     };
 
-                    // Don't want to really replace, but update_user_profile only 
-                    return updateUserProfile(profileUpdate);
+                    // Don't want to really replace, but update_user_profile only
+                    return this.updateUserProfile(profileUpdate);
                 })
-                .catch(function (err) {
+                .catch((err) => {
                     return [null, {
                         source: 'ProfileService:get_user_profile',
                         code: 'error-getting-user-profile',
@@ -80,10 +105,10 @@ define([
                 });
         }
 
-        function getJgiAgreement() {
-            var username = runtime.service('session').getUsername();
-            return profileService.callFunc('get_user_profile', [[username]])
-                .spread(function (profiles) {
+        getJgiAgreement() {
+            var username = this.runtime.service('session').getUsername();
+            return this.profileService.callFunc('get_user_profile', [[username]])
+                .spread((profiles) => {
                     var profile = Props.make({
                         data: profiles[0]
                     });
@@ -108,30 +133,19 @@ define([
                 });
         }
 
-        function sameArray(a1, a2) {
-            if (a1.length !== a2.length) {
-                return false;
-            }
-            for (var i = 0; i < a1.length; i += 1) {
-                if (a1[i] !== a2[i]) {
-                    return false;
-                }
-            }
-            return true;
-        }
+        saveHistory(name, history) {
+            const username = this.runtime.service('session').getUsername();
+            const key = ['jgi-search', 'settings', 'history', name];
 
-        function saveHistory(name, history) {
-            var username = runtime.service('session').getUsername();
-
-            var key = ['jgi-search', 'settings', 'history', name];
-
-            return profileService.callFunc('get_user_profile', [[username]])
-                .spread(function (profiles) {
+            return this.profileService.callFunc('get_user_profile', [[username]])
+                .spread((profiles) => {
                     var profile = Props.make({
                         data: profiles[0]
                     });
 
-                    var prefs = Props.make({ data: profile.getItem('profile.plugins', {}) });
+                    var prefs = Props.make({
+                        data: profile.getItem('profile.plugins', {})
+                    });
 
                     if (prefs.hasItem(key)) {
                         if (sameArray(prefs.getItem(key).history, history)) {
@@ -156,10 +170,10 @@ define([
                         }
                     };
 
-                    // Don't want to really replace, but update_user_profile only 
-                    return updateUserProfile(profileUpdate);
+                    // Don't want to really replace, but update_user_profile only
+                    return this.updateUserProfile(profileUpdate);
                 })
-                .catch(function (err) {
+                .catch((err) => {
                     return [null, {
                         source: 'ProfileService:get_user_profile',
                         code: 'error-getting-user-profile',
@@ -174,27 +188,17 @@ define([
                 });
         }
 
-        function firstSuccess(array, fun) {
-            for (var i = 0; i < array.length; i += 1) {
-                var result = fun(array[i]);
-                if (result) {
-                    return result;
-                }
-            }
-        }
+        getHistory(name) {
+            const username = this.runtime.service('session').getUsername();
+            const key = ['profile', 'plugins', 'jgi-search', 'settings', 'history', name];
 
-        function getHistory(name) {
-            var username = runtime.service('session').getUsername();
-
-            var key = ['profile', 'plugins', 'jgi-search', 'settings', 'history', name];
-
-            return profileService.callFunc('get_user_profile', [[username]])
-                .spread(function (profiles) {
-                    var profile = Props.make({
+            return this.profileService.callFunc('get_user_profile', [[username]])
+                .spread((profiles) => {
+                    const profile = Props.make({
                         data: profiles[0]
                     });
 
-                    var keys;
+                    let keys;
                     if (name === 'search') {
                         keys = [
                             key,
@@ -204,7 +208,7 @@ define([
                         keys = [key];
                     }
 
-                    var history= firstSuccess(keys, function (key) {
+                    let history= firstSuccess(keys, function (key) {
                         return profile.getItem(key);
                     });
 
@@ -221,7 +225,7 @@ define([
                     }
                     return [history.history, null];
                 })
-                .catch(function (err) {
+                .catch((err) => {
                     return [null, {
                         source: 'ProfileService:get_user_profile',
                         code: 'error-getting-user-profile',
@@ -235,16 +239,6 @@ define([
                     }];
                 });
         }
-
-        return Object.freeze({
-            saveJgiAgreement: saveJgiAgreement,
-            getJgiAgreement: getJgiAgreement,
-            getHistory: getHistory,
-            saveHistory: saveHistory
-        });
     }
-
-    return Object.freeze({
-        make: factory
-    });
+    return Profile;
 });

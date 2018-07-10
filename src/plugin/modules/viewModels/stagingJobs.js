@@ -1,46 +1,62 @@
 define([
-    'knockout-plus',
-    '../search/data'
+    'knockout',
+    'kb_knockout/lib/viewModelBase',
+    '../lib/model'
 ], function (
     ko,
-    Data
+    ViewModelBase,
+    Model
 ) {
     'use strict';
-    function factory(config) {
-        var runtime = config.runtime;
-        var subscriptions = ko.kb.SubscriptionManager.make();
-        var data = Data.make({
-            runtime: runtime
-        });
 
-        var stagingJobs = ko.observableArray();
+    class StagingJobsViewModel extends ViewModelBase {
+        constructor(params) {
+            super(params);
 
+            this.runtime = params.runtime;
+            this.model = new Model({
+                runtime: this.runtime
+            });
 
-        var stagingJobStates = {
-            sent: ko.observable(0),
-            submitted: ko.observable(0),
-            queued: ko.observable(0),
-            restoring: ko.observable(0),
-            copying: ko.observable(0),
-            completed: ko.observable(0),
-            error: ko.observable(0)
-        };
+            this.stagingJobs = ko.observableArray();
 
-        var stagingJobsState = ko.pureComputed(function () {
-            var pending = stagingJobStates.sent() +
-                stagingJobStates.submitted() +
-                stagingJobStates.queued() +
-                stagingJobStates.restoring() +
-                stagingJobStates.copying();
-        
-            return {
-                pending: pending,
-                completed: stagingJobStates.completed(),
-                some: pending + stagingJobStates.completed() + stagingJobStates.error()
+            this.stagingJobStates = {
+                sent: ko.observable(0),
+                submitted: ko.observable(0),
+                queued: ko.observable(0),
+                restoring: ko.observable(0),
+                copying: ko.observable(0),
+                completed: ko.observable(0),
+                error: ko.observable(0)
             };
-        });
 
-        function updateStagingJobStates() {
+            this.stagingJobsState = ko.pureComputed(() => {
+                var pending = this.stagingJobStates.sent() +
+                    this.stagingJobStates.submitted() +
+                    this.stagingJobStates.queued() +
+                    this.stagingJobStates.restoring() +
+                    this.stagingJobStates.copying();
+
+                return {
+                    pending: pending,
+                    completed: this.stagingJobStates.completed(),
+                    some: pending + this.stagingJobStates.completed() + this.stagingJobStates.error()
+                };
+            });
+
+            this.subscribe(this.stagingJobs, () => {
+                this.updateStagingJobStates();
+            });
+
+            this.jobStatusLooper = {
+                timerId: null,
+                looping: false
+            };
+
+            this.jobStatusLoop();
+        }
+
+        updateStagingJobStates() {
             var states = {
                 sent: 0,
                 submitted: 0,
@@ -50,7 +66,7 @@ define([
                 completed: 0,
                 error: 0
             };
-            stagingJobs().forEach(function (job) {
+            this.stagingJobs().forEach((job) => {
                 var newState = job.status();
                 if (newState in states) {
                     states[newState] += 1;
@@ -60,79 +76,36 @@ define([
                     console.warn('Staging job state unrecognized: ', newState);
                 }
             });
-            Object.keys(states).forEach(function (state) {
-                stagingJobStates[state](states[state]);
+            Object.keys(states).forEach((state) => {
+                this.stagingJobStates[state](states[state]);
             });
         }
 
-        subscriptions.add(stagingJobs.subscribe(function () {
-            updateStagingJobStates();
-        }));
-
-        var disposables = [];
-
-        function jobStatusLoop(state) {
-            data.getStagingJobStatus()
-                // TODO: handle error!
-                // .spread(function (result, error) {
-                .spread(function (result) {
-                    ['sent', 'submitted', 'queued', 'restoring', 'copying', 'completed', 'error'].forEach(function (state) {
-                        stagingJobStates[state](result.states[state]);
+        jobStatusLoop() {
+            this.model.getStagingJobStatus()
+                .spread((result) => {
+                    ['sent', 'submitted', 'queued', 'restoring', 'copying', 'completed', 'error'].forEach((state) => {
+                        this.stagingJobStates[state](result.states[state]);
                     });
-                    
+
                 })
-                .finally(function () {
-                    if (state.looping) {
-                        state.timeoutId = window.setTimeout(function () {
-                            state.timeoutId = null;
-                            jobStatusLoop(state);
+                .finally(() => {
+                    if (this.jobStatusLooper.looping) {
+                        this.jobStatusLooper.timeoutId = window.setTimeout(() => {
+                            this.jobStatusLooper.timeoutId = null;
+                            this.jobStatusLoop();
                         }, 10000);
                     }
                 });
         }
 
-        function start() {
-            var disposable = {
-                name: 'Job Status Loop',
-                disposer: function () {
-                    if (this.timeoutId) {
-                        this.looping = false;
-                        window.clearTimeout(this.timeoutId);
-                        this.timeoutId = null;
-                    }
-                },
-                looping: true,
-                timoutId: null
-            };
-            disposables.push(disposable);
-            jobStatusLoop(disposable);
+        dispose() {
+            super.dispose();
+            if (this.jobStatusLooper.timerId) {
+                window.clearTimeout(this.jobStatusLooper.timerId);
+            }
         }
-
-        function stop () {
-            disposables.forEach(function (disposable) {
-                try {
-                    disposable.disposer.call(disposable);
-                } catch (ex) {
-                    console.error('ERROR running disposer "' + disposable.name + '"', ex);
-                }
-            });
-        }
-
-        function dispose() {
-            subscriptions.dispose();
-        }
-
-        return {
-            stagingJobs: stagingJobs,
-            stagingJobsState: stagingJobsState,
-            stagingJobStates: stagingJobStates,
-            start: start,
-            stop: stop,
-            dispose: dispose
-        };
     }
 
-    return {
-        make: factory
-    };
+    return StagingJobsViewModel;
 });

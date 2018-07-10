@@ -1,9 +1,13 @@
 define([
-    'knockout-plus',
+    'knockout',
+    'kb_knockout/registry',
+    'kb_knockout/lib/generators',
     'kb_common/html',
     './help'
 ], function (
     ko,
+    reg,
+    gen,
     html,
     HelpComponent
 ) {
@@ -16,36 +20,62 @@ define([
         span = t('span'),
         input = t('input');
 
-    function viewModel(params, componentInfo) {
-        var context = ko.contextFor(componentInfo.element);
-        var showOverlay = context['$root'].showOverlay;
+    class ViewModel {
+        constructor(params, context) {
+            this.showOverlay = context['$root'].showOverlay;
 
-        // Params
-        var logo = params.logo;
+            this.search = params.search;
+            this.searching = params.searching;
+
+            // Params
+            this.logo = params.logo;
+
+            this.showHistory = ko.observable(false);
+
+            this.searchHistory = params.search.searchHistory;
+
+            this.searchControlValue = ko.observable().syncFrom(params.search.searchInput);
+
+            this.searchInputClass = ko.pureComputed(() => {
+                if (this.searchControlValue() !== this.search.searchInput()) {
+                    return styles.classes.modifiedFilterInput;
+                }
+
+                if (this.search.searchInput()) {
+                    return styles.classes.activeFilterInput;
+                }
+
+                return null;
+            });
+
+            this.historyContainerId = html.genId();
+
+            this.clickEventListener = (ev) => {
+                this.clickListener(ev);
+            };
+
+            document.addEventListener('click', this.clickEventListener, true);
+        }
 
         // Own VM
 
-        function doHelp() {
-            showOverlay({
+        doHelp() {
+            this.showOverlay({
                 name: HelpComponent.name(),
                 params: {},
                 viewModel: {}
             });
         }
 
-        var showHistory = ko.observable(false);
-
-        var searchHistory = params.search.searchHistory;
-
-        function addToSearchHistory(value) {
-            if (searchHistory.indexOf(value) !== -1) {
+        addToSearchHistory(value) {
+            if (this.searchHistory.indexOf(value) !== -1) {
                 return;
             }
 
-            searchHistory.unshift(value);
+            this.searchHistory.unshift(value);
 
-            if (searchHistory().length > 10) {
-                searchHistory.pop();
+            if (this.searchHistory().length > 10) {
+                this.searchHistory.pop();
             }
         }
 
@@ -62,111 +92,60 @@ define([
         //     addToSearchHistory(newValue);
         // });
 
-        ko.subscribable.fn.syncFrom = function (targetObservable, callbackTarget, event) {
-            var sourceObservable = this;
-            targetObservable.subscribe(function (v) {
-                sourceObservable(v);
-            }, callbackTarget, event);
-            return sourceObservable;
-        };
-
         // This is the obervable in the actual search input.
-        var searchControlValue = ko.observable().syncFrom(params.search.searchInput);
 
-        function useFromHistory(data) {
-            showHistory(false);
-            searchControlValue(data);
-            doRunSearch();
+
+        useFromHistory(data) {
+            this.showHistory(false);
+            this.searchControlValue(data);
+            this.doRunSearch();
         }
 
-        function doToggleHistory() {
-            showHistory(!showHistory());
+        doToggleHistory() {
+            this.showHistory(!this.showHistory());
         }
 
-        var searchInputClass = ko.pureComputed(function () {
-            if (searchControlValue() !== params.search.searchInput()) {
-                return styles.classes.modifiedFilterInput;
-            }
-
-            if (params.search.searchInput()) {
-                return styles.classes.activeFilterInput;
-            }
-
-            return null;
-        });
-
-        function doRunSearch() {
-            addToSearchHistory(searchControlValue());
-            params.search.searchInput(searchControlValue());
+        doRunSearch() {
+            this.addToSearchHistory(this.searchControlValue());
+            this.search.searchInput(this.searchControlValue());
         }
 
-        function doKeyUp(data, ev) {
+        doKeyUp(data, ev) {
             if (ev.key) {
                 if (ev.key === 'Enter') {
-                    doRunSearch();
+                    this.doRunSearch();
                 }
             } else if (ev.keyCode) {
                 if (ev.keyCode === 13) {
-                    doRunSearch();
+                    this.doRunSearch();
                 }
             }
         }
 
         // hack to ensure that clicking in side the history control does not close it!
-        var historyContainerId = html.genId();
-
-        function clickListener(ev) {
+        clickListener(ev) {
             // We don't want to handle clicks for the history control itself -- either
             // an item in the list or the button. The handlers for these things will do
             // the right thing.
             var elementType = ev.target.getAttribute('data-type');
             if (['history-toggle-button', 'history-toggle-button-icon', 'history-item'].indexOf(elementType) == -1) {
-                showHistory(false);
+                this.showHistory(false);
             }
             return true;
         }
 
-        document.addEventListener('click', clickListener, true);
-
-        function doRefreshSearch() {
-            params.search.refreshSearch();
+        doRefreshSearch() {
+            this.search.refreshSearch();
         }
 
         // LIFECYCLE
 
-        function dispose() {
-            if (clickListener) {
-                document.removeEventListener('click', clickListener, true);
+        dispose() {
+            super.dispose();
+            if (this.clickEventListener) {
+                document.removeEventListener('click', this.clickEventListener, true);
             }
         }
-
-        return {
-            logo: logo,
-            // The top level search is included so that it can be
-            // propagated.
-            search: params.search,
-            // And we break out fields here for more natural usage (or not??)
-            searchControlValue: searchControlValue,
-            searching: params.search.searching,
-
-            showHistory: showHistory,
-            doToggleHistory: doToggleHistory,
-
-            useFromHistory: useFromHistory,
-            searchHistory: searchHistory,
-            searchInputClass: searchInputClass,
-
-            historyContainerId: historyContainerId,
-
-            // ACTIONS
-            doHelp: doHelp,
-            doRunSearch: doRunSearch,
-            doKeyUp: doKeyUp,
-            doRefreshSearch: doRefreshSearch,
-
-            // LIFECYCLE
-            dispose: dispose
-        };
     }
 
     var styles = html.makeStyles({
@@ -393,9 +372,7 @@ define([
 
     function component() {
         return {
-            viewModel: {
-                createViewModel: viewModel
-            },
+            viewModelWithContext: ViewModel,
             template: template(),
             stylesheet: styles.sheet
         };

@@ -1,9 +1,9 @@
 define([
-    'knockout-plus',
+    'kb_knockout/registry',
     'kb_common/html',
     '../../components/table'
 ], function (
-    ko,
+    reg,
     html,
     TableComponent
 ) {
@@ -38,54 +38,31 @@ define([
         }
     });
 
-    function viewModel(params) {
-        var search = params.search;
-
-        // console.log('in result?', params);
-
-        // function sortBy(column) {
-        //     // fake for now...
-        //     if (!column.sort) {
-        //         return;
-        //     }
-        //     if (!column.sort.active()) {
-        //         column.sort.active(true);
-        //     }
-
-        //     if (column.sort.direction() === 'ascending') {
-        //         column.sort.direction('descending');
-        //     } else {
-        //         column.sort.direction('ascending');
-        //     }
-           
-        //     search.sortBy(column.sort);
-        // }
-
-        // search.searchResults.subscribe(function (newValue) {
-        //     console.log('got the change...', newValue);
-        // });
-
-        return {
-            table: {
-                rows: search.searchResults,
-                columns: search.columns,
-                isLoading: search.searching,
-                pageSize: search.pageSize,
-                state: search.searchState,
-                sortBy: search.sortBy,
+    class ViewModel {
+        constructor(params) {
+            this.search = params.search;
+            this.table = {
+                rows: this.search.searchResults,
+                columns: this.search.columns,
+                isLoading: this.search.searching,
+                pageSize: this.search.pageSize,
+                state: this.search.searchState,
+                sortBy: this.search.sortBy,
                 env: {
-                    removeJob: search.removeJob
+                    removeJob: (...args) => {
+                        return this.search.removeJob.apply(this.search, args);
+                    }
                 }
-            },
-            messages: {
+            };
+            this.messages = {
                 none: div([
                     p('No jobs to display')
                 ]),
                 notfound: div([
                     p('No jobs to display')
                 ])
-            }
-        };
+            };
+        }
     }
 
     function template() {
@@ -114,12 +91,14 @@ define([
     function component() {
         return {
             viewModel: {
-                createViewModel: viewModel
+                createViewModel: (params, componentInfo) => {
+                    return new ViewModel(params, componentInfo);
+                }
             },
             template: template(),
             stylesheet: styles.sheet
         };
     }
 
-    return ko.kb.registerComponent(component);
+    return reg.registerComponent(component);
 });
