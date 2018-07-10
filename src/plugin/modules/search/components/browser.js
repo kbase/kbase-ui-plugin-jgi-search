@@ -24,32 +24,13 @@ define([
         input = t('input'),
         select = t('select');
 
-    // ko.extenders.parsed = function (target, parseFun) {
-    //     target.parsed = ko.observable();
-    //     target.parseError = ko.observable();
-
-    //     function parseit(newValue) {
-    //         try {
-    //             target.parsed(parseFun(newValue));
-    //         } catch (ex) {
-    //             target.parseError(ex.message);
-    //             console.error('Error parsing : ' + ex.message);
-    //         }
-    //     }
-    //     target.subscribe(function (newValue) {
-    //         parseit(newValue);
-    //     });
-    //     parseit(target());
-    //     return target;
-    // };
-
     // NB: hmm, it looks like the params are those active in the tab which spawned
     // this component...
     class ViewModel extends ViewModelBase {
-        constructor(params, componentInfo) {
+        constructor(params, context) {
             super(params);
 
-            const context = ko.contextFor(componentInfo.element);
+            this.showOverlay = context.$root.showOverlay;
 
             this.runtime = context.$root.runtime;
 
@@ -218,7 +199,7 @@ define([
         }
 
         doShowStagingStatus() {
-            this.search.showOverlay({
+            this.showOverlay({
                 name: StagingStatusViewerComponent.name(),
                 viewModel: {
                     stagingJobs: this.search.stagingJobs,
@@ -476,11 +457,7 @@ define([
 
     function component() {
         return {
-            viewModel: {
-                createViewModel: (params, componentInfo) => {
-                    return new ViewModel(params, componentInfo);
-                }
-            },
+            viewModelWithContext: ViewModel,
             template: template(),
             stylesheet: styles.sheet
         };

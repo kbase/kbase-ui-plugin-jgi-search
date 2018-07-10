@@ -10,15 +10,16 @@ define([
     utils
 ) {
     'use strict';
-    function factory(config) {
-        var runtime = config.runtime;
+    class RPC {
+        constructor({runtime}) {
+            this.runtime = runtime;
+        }
 
         // TODO: this should go in to the ui services
-        function call(moduleName, functionName, params) {
-            var override = runtime.config(['services', moduleName, 'url'].join('.'));
-            // console.log('overriding?', moduleName, override);
-            var token = runtime.service('session').getAuthToken();
-            var client;
+        call(moduleName, functionName, params) {
+            const override = this.runtime.config(['services', moduleName, 'url'].join('.'));
+            const token = this.runtime.service('session').getAuthToken();
+            let client;
             if (override) {
                 client = new GenericClient({
                     module: moduleName,
@@ -27,7 +28,7 @@ define([
                 });
             } else {
                 client = new DynamicService({
-                    url: runtime.config('services.service_wizard.url'),
+                    url: this.runtime.config('services.service_wizard.url'),
                     token: token,
                     module: moduleName
                 });
@@ -35,7 +36,7 @@ define([
             return client.callFunc(functionName, [
                 params
             ])
-                .catch(function (err) {
+                .catch((err) => {
                     console.error('err', err instanceof Error, err instanceof exceptions.CustomError, err instanceof exceptions.AjaxError, err instanceof exceptions.ServerError);
                     if (err instanceof exceptions.AjaxError) {
                         console.error('AJAX Error', err);
@@ -54,13 +55,7 @@ define([
                     }
                 });
         }
-
-        return {
-            call: call
-        };
     }
 
-    return {
-        make: factory
-    };
+    return RPC;
 });

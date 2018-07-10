@@ -56,7 +56,7 @@ define([
             label: 'Project ID',
             type: 'number',
             format: '#',
-            width: 8,                
+            width: 8,
             rowStyle: {
                 fontFamily: 'monospace'
             },
@@ -151,18 +151,6 @@ define([
                 textAlign: 'center'
             }
         }
-        // {
-        //     name: 'status',
-        //     label: 'Status',
-        //     width: 5,
-        //     component: StageStatus.name(),
-        //     rowStyle: {
-        //         textAlign: 'center'
-        //     },
-        //     headerStyle: {
-        //         textAlign: 'center'
-        //     }
-        // }
     ];
 
     var columnsMap = columns.reduce(function (acc, col) {
@@ -170,35 +158,8 @@ define([
         return acc;
     }, {});
 
-    function validateFilename(filename) {
-        if (!filename || filename.length === 0) {
-            return 'A filename may not be blank';
-        } 
-        if (!filename.trim(' ').length === 0) {
-            return 'A filename not consist entirely of spaces';
-        }
-        if (/^\..*$/.test(filename)) {
-            return 'Dot files not allowed';
-        }
-        if (/^[\s]+\..*$/.test(filename)) {
-            return 'A filename with only spaces before the first dot not allowed';
-        }
-        if (/\//.test(filename)) {
-            return 'Invalid character in filename: /';
-        }
-        if (/[\\/:*?"<>|]/.test(filename)) {
-            return 'Invalid character in filename: \\ / : * ? " < > | ';
-        }
-        if (/[[\\u0000-\\u001F\\u007F\\u0080-\\u009F]]/.test(filename)) {
-            return 'File contains non-printable characters';
-        }
-        return null;
-    }
-
     function hitsToRows(hits) {
-    // function hitsToRows(hits, doStage, jobMap) {
         return hits.map(function (hit) {
-            // var rowNumber = (page() - 1) * pageSize() + 1 + index;
 
             var sequencingProjectId = (function (id) {
                 return {
@@ -221,7 +182,7 @@ define([
             };
 
             var fileParts = utils.grokFileParts(hit.source.file_name);
-            
+
             var fileType = utils.grokFileType(hit.source.file_type, fileParts);
 
             var title = utils.grokTitle(hit, fileType);
@@ -325,13 +286,13 @@ define([
                             info: 'Link to gold record',
                             url: goldUrl
                         };
-                    } 
-                }                           
-                break;                        
+                    }
+                }
+                break;
             }
 
             var stagingInfo;
-        
+
             if (fileType.error) {
                 stagingInfo = fileType.error.message;
             } else {
@@ -365,13 +326,6 @@ define([
                 // view stuff
                 selected: ko.observable(false),
                 isPublic: utils.getProp(hit, 'source._es_public_data', false),
-                // doTransfer: function () {
-                //     try {
-                //         doStage(hit.id, hit.source.file_name);
-                //     } catch (ex) {
-                //         console.error('ERROR staging', ex);
-                //     }
-                // },
                 stage: {
                     value: hit.source.file_name,
                     info: stagingInfo,
@@ -389,7 +343,6 @@ define([
     return {
         columns: columns,
         columnsMap: columnsMap,
-        validateFilename: validateFilename,
         hitsToRows: hitsToRows
     };
 });

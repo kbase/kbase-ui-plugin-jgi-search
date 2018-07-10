@@ -26,17 +26,13 @@ define([
         button = t('button');
 
     class ViewModel {
-        constructor(params, componentInfo) {
-            this.context = ko.contextFor(componentInfo.element);
-            this.showOverlay = this.context['$root'].showOverlay;
-            this.runtime = this.context['$root'].runtime;
+        constructor(params, context) {
+            this.showOverlay = context.$root.showOverlay;
+            this.runtime = context.$root.runtime;
 
             this.logo = params.logo;
-
             this.showHistory = ko.observable(false);
-
             this.searchHistory = params.search.searchHistory;
-
             this.search = params.search;
 
             // When it is updated by either of those methods, we save
@@ -73,7 +69,7 @@ define([
         }
 
         doShowStagingStatus() {
-            this.search.showOverlay({
+            this.showOverlay({
                 name: StagingStatusViewerComponent.name(),
                 viewModel: {
                     stagingJobs: this.search.stagingJobs,
@@ -380,11 +376,7 @@ define([
 
     function component() {
         return {
-            viewModel: {
-                createViewModel: (params, componentInfo) => {
-                    return new ViewModel(params, componentInfo);
-                }
-            },
+            viewModelWithContext: ViewModel,
             template: template(),
             stylesheet: styles.sheet
         };

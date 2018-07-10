@@ -1,42 +1,24 @@
 define([
-    'uuid',
-    'knockout-plus',
+    'knockout',
+    'kb_knockout/registry',
     'kb_common/html'
 ], function (
-    Uuid,
     ko,
+    reg,
     html
 ) {
     'use strict';
-    var t = html.tag,
+
+    const t = html.tag,
         span = t('span'),
         div = t('div');
-    var unwrap = ko.utils.unwrapObservable;
 
-    function viewModel(params) {
-        var startTime = unwrap(params.row.started.value);
-        // var statusTime = unwrap(params.row.updated.value);
-        // var status = params.row.status.value;
-        // var statusElapsed = statusTime - startTime;
-        // var elapsed = unwrap(params.row.elapsed.value);
+    const unwrap = ko.utils.unwrapObservable;
 
-
-        // var showCurrentElapsed = ko.pureComputed(function () {
-        //     switch (unwrap(status)) {
-        //     case 'completed':
-        //     case 'error':
-        //         return false;
-        //     default:
-        //         return true;
-        //     }
-        // });
-
-        return {
-            startTime: startTime,
-            // showCurrentElapsed: showCurrentElapsed,
-            // status: status,
-            // elapsed: elapsed
-        };
+    class ViewModel {
+        constructor(params) {
+            this.startTime = unwrap(params.row.started.value);
+        }
     }
 
     function template() {
@@ -50,17 +32,16 @@ define([
                         }
                     }
                 }
-            }),
-           
+            })
         ]);
     }
 
     function component() {
         return {
-            viewModel: viewModel,
+            viewModel: ViewModel,
             template: template()
         };
     }
 
-    return ko.kb.registerComponent(component);
+    return reg.registerComponent(component);
 });

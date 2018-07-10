@@ -3,338 +3,454 @@ Top level panel for jgi search
 */
 define([
     // global deps
-    'bluebird',
-    'knockout-plus',
-    'numeral',
+    'knockout',
+    // kbase deps
+    'kb_knockout/lib/viewModelBase',
     // local deps
-    '../errorWidget',
     '../lib/utils',
-    './data',
+    '../lib/model',
     './schema',
     '../viewModels/stagingJobs',
     '../components/stagingStatusViewer'
 ], function (
-    Promise,
     ko,
-    numeral,
-    ErrorWidget,
+    ViewModelBase,
     utils,
-    Data,
+    Model,
     schema,
-    StagingJobsVm,
+    StagingJobsViewModel,
     StagingStatusViewerComponent
 ) {
     'use strict';
 
-    function factory(params) {
-        var runtime = params.runtime;
-        var showError = params.showError;
-        var showOverlay = params.showOverlay;
-        var error = params.error;
-        var subscriptions = ko.kb.SubscriptionManager.make();
+    class SearchViewModel extends ViewModelBase {
+        constructor(params, context) {
+            super(params);
 
-        var maxSearchResults = 10000;
-        var data = Data.make({
-            runtime: runtime
-        });
+            this.showOverlay = context.$root.showOverlay;
+            this.runtime = context.$root.runtime;
 
-        var stagingJobsVm = StagingJobsVm.make({
-            runtime: runtime
-        });
+            this.showError = params.showError;
+            this.error = params.error;
 
-
-        var searchResults = ko.observableArray();
-        var searchInput = ko.observable();
-        var searchTotal = ko.observable();
-        var actualSearchTotal = ko.observable();
-        var searchElapsed = ko.observable();
-
-        var searchInstanceID = ko.observable();
-
-
-        var page = ko.observable();
-
-        function clearQuery() {
-            seqProjectFilter(null);
-            proposalFilter(null);
-            searchInput('');
-        }
-
-        var searchQuery = ko.pureComputed(function () {
-            // Search input dependencies
-            // We make deep copies of our search inputs so we can
-            // play with them.
-            var query = JSON.parse(JSON.stringify(searchExpression()));
-
-            var autoQuery = searchAutoQuery();
-            var filter = searchFilter();
-
-            // transfer filters to the search query.
-            Object.keys(filter).forEach(function (key) {
-                query.filter[key] = filter[key];
+            this.maxSearchResults = 10000;
+            this.model = new Model({
+                runtime: this.runtime
             });
 
-            Object.keys(autoQuery).forEach(function (key) {
-                query.query[key] = autoQuery[key];
+            this.stagingJobsVm = new StagingJobsViewModel({
+                runtime: this.runtime
             });
+            this.stagingJobsState = this.stagingJobsVm.stagingJobsState;
 
-            // If we have a filter but no query, we just assume the query
-            // selects all
-            if (Object.keys(query.query).length === 0) {
-                if (Object.keys(query.filter).length > 0) {
-                    query.query._all = '*';
-                } else {
-                    // nothing to do, just reset the search
-                    clearSearch();
-                    return null;
-                }
-            }
+            this.searchResults = ko.observableArray();
+            this.searchInput = ko.observable();
+            this.searchTotal = ko.observable();
+            this.actualSearchTotal = ko.observable();
+            this.searchElapsed = ko.observable();
+            this.searchInstanceID = ko.observable();
+            this.page = ko.observable();
 
-            const id = searchInstanceID();
+            this.searchQuery = ko.pureComputed(() => {
+                // Search input dependencies
+                // We make deep copies of our search inputs so we can
+                // play with them.
+                const query = JSON.parse(JSON.stringify(this.searchExpression()));
 
-            // Default file type filter, now enabled by "show supported file types" checkbox.
-            if (!query.query.file_type) {
-                query.query.file_type = typeFilterOptions.map(function (option) {
-                    return option.value;
-                }).join(' | ');
-            }
+                const autoQuery = this.searchAutoQuery();
+                const filter = this.searchFilter();
 
-            if (Object.keys(query.query).length > 0) {
-                query.query.operator = 'AND';
-            }
-            if (Object.keys(query.filter).length > 0) {
-                query.filter.operator = 'AND';
-            }
+                // transfer filters to the search query.
+                Object.keys(filter).forEach((key) => {
+                    query.filter[key] = filter[key];
+                });
 
-            return query;
-        });
+                Object.keys(autoQuery).forEach((key) => {
+                    query.query[key] = autoQuery[key];
+                });
 
-        function getDetail(id) {
-            return data.fetchDetail(id)
-                .then(function (result) {
-                    // var project = hit.source.metadata;
-                    var hit = result.hits[0];
-                    // var rowNumber = (page() - 1) * pageSize() + 1 + index;
-                    var projectId;
-                    if (hit.source.metadata.sequencing_project_id || hit.source.metadata.pmo_project_id) {
-                        projectId = hit.source.metadata.sequencing_project_id || hit.source.metadata.pmo_project_id;
+                // If we have a filter but no query, we just assume the query
+                // selects all
+                if (Object.keys(query.query).length === 0) {
+                    if (Object.keys(query.filter).length > 0) {
+                        query.query._all = '*';
                     } else {
-                        projectId = 'n/a';
+                        // nothing to do, just reset the search
+                        this.clearSearch();
+                        return null;
                     }
+                }
 
-                    var proposalId = utils.getProp(hit.source.metadata, ['proposal_id'], '-');
+                // const id = this.searchInstanceID();
 
-                    // actual file suffix.
+                // Default file type filter, now enabled by "show supported file types" checkbox.
+                if (!query.query.file_type) {
+                    query.query.file_type = this.typeFilterOptions.map((option) => {
+                        return option.value;
+                    }).join(' | ');
+                }
 
-                    var fileParts = utils.grokFileParts(hit.source.file_name);
+                if (Object.keys(query.query).length > 0) {
+                    query.query.operator = 'AND';
+                }
+                if (Object.keys(query.filter).length > 0) {
+                    query.filter.operator = 'AND';
+                }
 
-                    var fileType = utils.grokFileType(hit.source.file_type, fileParts);
+                return query;
+            });
 
-                    // Title
-                    var title = utils.grokTitle(hit, fileType);
+            this.typeFilter = ko.observableArray();
+            this.typeFilterOptions = [{
+                label: 'FASTQ',
+                value: 'fastq'
+            }, {
+                label: 'FASTA',
+                value: 'fasta'
+            },{
+                label: 'BAM',
+                value: 'bam'
+            }].map((item) => {
+                item.enabled = ko.pureComputed(() => {
+                    return this.typeFilter().indexOf(item.value) === -1;
+                });
+                return item;
+            });
 
-                    var scientificName = utils.grokScientificName(hit, fileType);
+            // PROJECT FILTER
+            // Note that the project filter key is "project_id", even
+            // though there are underlying this at least two
+            // project id fields -- sequencing and analysis.
+            this.seqProjectFilter = ko.observable();
+            this.subscribe(this.seqProjectFilter, (newValue) => {
+                var filter = this.searchFilter();
+                if (!newValue) {
+                    delete filter.project_id;
+                } else {
+                    filter.project_id = [newValue];
+                }
+                this.searchFilter(filter);
+            });
 
-                    // scientific name may be in different places.
+            this.proposalFilter = ko.observable();
+            this.subscribe(this.proposalFilter, (newValue) => {
+                var filter = this.searchFilter();
+                if (!newValue) {
+                    delete filter.proposal_id;
+                } else {
+                    filter.proposal_id = [newValue];
+                }
+                this.searchFilter(filter);
+            });
 
-                    // By type metadata.
-                    var metadata = utils.grokMetadata(hit, fileType);
+            this.piFilter = ko.observable();
+            this.subscribe(this.piFilter, (newValue) => {
+                var filter = this.searchFilter();
+                if (!newValue) {
+                    delete filter.pi_name;
+                } else {
+                    filter.pi_name = newValue;
+                }
+                this.searchFilter(filter);
+            });
+            // SEARCH FLAGS
+            this.searching = ko.observable(false);
+            this.userSearch = ko.observable(false);
 
-                    var pi = utils.grokPI(hit, fileType);
 
-                    // have a current transfer job?
+            this.availableRowHeight = ko.observable();
+            this.pageSize = ko.observable();
 
-                    var jobs = stagingJobsVm.stagingJobs().filter(function (job) {
-                        return job.dbId === hit.id;
+            // Handling search interactions...
+
+            // This is the result of parsing from user input
+
+            // Note: this is like a computed observable, but we don't want to
+            // change the value of the search expression if there was no
+            // change bits.
+            // But a pure computed change will be triggered by the search input,
+            // even though the resulting value for the computed is the same.
+            this.searchExpression = ko.observable({
+                query: {},
+                filter: {}
+            });
+
+            this.subscribe(this.searchInput, (newSearchInput) => {
+                var newExpression = utils.parseSearchExpression(newSearchInput);
+                if (utils.isEqual(newExpression, this.searchExpression())) {
+                    return;
+                }
+                this.addToSearchHistory(newSearchInput);
+                this.searchExpression(newExpression);
+            });
+
+            // This receives query fields from specific query controls.
+            this.searchAutoQuery = ko.observable({});
+
+            // This receives filters from specific filter controls.
+            this.searchFilter = ko.observable({});
+
+            this.subscribe(this.typeFilter, (newValue) => {
+                const newQuery = JSON.parse(JSON.stringify(this.searchAutoQuery()));
+                const newTypeFilter = JSON.parse(JSON.stringify(newValue));
+
+                if (newTypeFilter && newTypeFilter.length > 0) {
+                    newQuery.file_type = newTypeFilter.join(' | ');
+                } else {
+                    delete newQuery.file_type;
+                }
+
+                if (utils.isEqual(newQuery, this.searchAutoQuery())) {
+                    return;
+                }
+                this.searchAutoQuery(newQuery);
+            });
+
+            this.currentSearch = {
+                search: null,
+                cancelled: false
+            };
+
+            // EXPLICIT LISTENERS
+            this.subscribe(this.page, () => {
+                this.doSearch();
+            });
+
+            this.subscribe(this.pageSize, () => {
+                this.doSearch();
+            });
+
+            this.subscribe(this.searchQuery, (newValue) => {
+                // reset the page back to 1 because we do not know if the
+                // new search will extend this far.
+                if (!newValue) {
+                    this.page(null);
+                    return;
+                }
+                if (!this.page()) {
+                    this.page(1);
+                } else if (this.page() > 1) {
+                    this.page(1);
+                }
+                this.doSearch();
+            });
+
+            // TRY COMPUTING UBER-STATE
+
+            this.searchState = ko.pureComputed(() => {
+                if (this.searching()) {
+                    return 'inprogress';
+                }
+
+                if (this.searchQuery()) {
+                    if (!this.pageSize()) {
+                        return 'pending';
+                    }
+                    if (this.searchResults().length === 0) {
+                        return 'notfound';
+                    } else {
+                        return 'success';
+                    }
+                } else {
+                    return 'none';
+                }
+            });
+
+            // SEARCH HISTORY
+
+            this.searchHistory = ko.observableArray();
+
+            this.subscribe(this.searchHistory, (newValue) => {
+                this.model.saveSearchHistory(newValue)
+                    .spread((result, error) => {
+                        if (error) {
+                            this.showError(error);
+                        }
                     });
-                    var transferJob = jobs[0];
-                    var analysisProject;
-                    if (utils.hasProp(hit.source.metadata, 'analysis_project')) {
-                        analysisProject = {
-                            name: utils.getProp(hit.source.metadata, 'analysis_project.analysisProjectName'),
-                            assemblyMethod: utils.getProp(hit.source.metadata, 'analysis_project.assemblyMethod'),
-                            genomeType: utils.getProp(hit.source.metadata, 'analysis_project.genomeType'),
-                            id: utils.getProp(hit.source.metadata, 'analysis_project.itsAnalysisProjectId'),
-                            modificationDate: utils.getProp(hit.source.metadata, 'analysis_project.modDate'),
-                            comments: utils.getProp(hit.source.metadata, 'analysis_project.comments')
-                        };
-                    }
-                    var sequencingProject;
-                    if (utils.hasProp(hit.source.metadata, 'sequencing_project')) {
-                        sequencingProject = {
-                            name: utils.getProp(hit.source.metadata, 'sequencing_project.sequencing_project_name'),
-                            id: utils.getProp(hit.source.metadata, 'sequencing_project.sequencing_project_id'),
-                            status: utils.getProp(hit.source.metadata, 'sequencing_project.current_status'),
-                            statusDate: utils.getProp(hit.source.metadata, 'sequencing_project.status_date'),
-                            comments: utils.getProp(hit.source.metadata, 'sequencing_project.comments')
-                        };
-                    }
+            });
+
+            // SORTING support
+
+            // sortColumns is the ordered list of all columns currently
+            // sorted. Each sort object is a reference to the actual column
+            // sort spec.
+            this.sortColumns = ko.observableArray();
+
+            // The sortSpec translates the sortColumns into a form which can be
+            // used by the search.
+            this.sortSpec = ko.pureComputed(() => {
+                return this.sortColumns().map((column) => {
                     return {
-                        // rowNumber: rowNumber,
-                        id: hit.id,
-                        score: numeral(hit.score).format('00.00'),
-                        type: hit.type,
-                        title: title,
-                        date: utils.usDate(hit.source.file_date),
-                        modified: utils.usDate(hit.source.modified),
-                        // fileExtension: fileExtension,
-                        fileType: utils.normalizeFileType(hit.source.file_type),
-                        // TODO: these should all be in just one place.
-                        dataType: fileType.dataType,
-                        proposalId: proposalId,
-                        projectId: projectId,
-                        pi: pi,
-                        metadata: metadata,
-                        scientificName: scientificName.scientificName,
-                        file: {
-                            parts: fileParts,
-                            name: hit.source.file_name,
-                            // baseName: fileBaseName,
-                            // extension: fileExtension,
-                            dataType: fileType.dataType,
-                            encoding: fileType.encoding,
-                            indexedType: utils.normalizeFileType(hit.source.file_type),
-                            size: numeral(hit.source.file_size).format('0.0 b'),
-                            added: utils.usDate(hit.source.added_date),
-                            status: hit.source.file_status,
-                            types: utils.normalizeFileType(hit.source.file_type),
-                            typing: fileType,
-                            md5sum: hit.source.md5sum
-                        },
-                        proposal: hit.source.metadata.proposal,
-                        sequencingProject: sequencingProject,
-                        analysisProject: analysisProject,
-                        // importSpec: getImportInfo(fileType.dataType, hit.id, hit.source.file_name, hit),
-                        showInfo: ko.observable(false),
-                        detailFormatted: JSON.stringify(hit.source, null, 4),
-                        source: hit.source,
-                        data: hit,
-                        // UI
-                        transferJob: ko.observable(transferJob)
+                        field: column.sort.keyName,
+                        descending: column.sort.direction() === 'descending'
                     };
+                });
+            });
+
+            this.subscribe(this.sortSpec, () => {
+                this.doSearch();
+            });
+
+            // MAIN
+
+            this.model.getSearchHistory()
+                .spread((result, error) => {
+                    if (error) {
+                        this.showError(error);
+                    } else {
+                        this.searchHistory(result);
+                    }
+                })
+                .then(() => {
+                    this.searchInput(params.initialQuery);
+                })
+                .catch((err) => {
+                    console.error('ERROR retrieving search history', err);
                 });
         }
 
-        function checkFilename(filename) {
-            return Promise.try(function () {
-                try {
-                    var error = schema.validateFilename(filename);
-
-                    if (error) {
-                        return {
-                            validationError: error
-                        };
-                    }
-                } catch (ex) {
-                    return {
-                        exception: ex.message
-                    };
-                }
-                return data.getFileMetadata(filename)
-                    .spread(function (result, error) {
-                        if (error) {
-                            console.error('ERROR checking filename.', error);
-                            return {
-                                error: error
-                            };
-                        } else {
-                            if (result) {
-                                return {
-                                    exists: result
-                                };
-                            }
-                            return false;
-                        }
-                    })
-                    .catch(function (err) {
-                        return {
-                            exception: err.message
-                        };
-                        // console.error('ERROR checking filename', err);
-                    });
-            });
+        clearQuery() {
+            this.seqProjectFilter(null);
+            this.proposalFilter(null);
+            this.searchInput('');
         }
 
-        // FILTERS
+        // getDetail(id) {
+        //     return this.model.fetchDetail(id)
+        //         .then((result) => {
+        //             const hit = result.hits[0];
+        //             let projectId;
+        //             if (hit.source.metadata.sequencing_project_id || hit.source.metadata.pmo_project_id) {
+        //                 projectId = hit.source.metadata.sequencing_project_id || hit.source.metadata.pmo_project_id;
+        //             } else {
+        //                 projectId = 'n/a';
+        //             }
 
-        // TYPE FILTER
-        // var typeFilterInput = ko.observable();
-        var typeFilter = ko.observableArray();
-        var typeFilterOptions = [{
-            label: 'FASTQ',
-            value: 'fastq'
-        }, {
-            label: 'FASTA',
-            value: 'fasta'
-        },
-        // {
-        //     label: 'SRA',
-        //     value: 'sra'
-        // }, {
-        //     label: 'genbank',
-        //     value: 'genbank'
-        // }, {
-        //     label: 'genome feature format',
-        //     value: 'gff'
-        // },
-        {
-            label: 'BAM',
-            value: 'bam'
-        }].map(function (item) {
-            item.enabled = ko.pureComputed(function () {
-                return typeFilter().indexOf(item.value) === -1;
-            });
-            return item;
-        });
+        //             const proposalId = utils.getProp(hit.source.metadata, ['proposal_id'], '-');
+        //             // actual file suffix.
+        //             const fileParts = utils.grokFileParts(hit.source.file_name);
+        //             const fileType = utils.grokFileType(hit.source.file_type, fileParts);
+        //             // Title
+        //             const title = utils.grokTitle(hit, fileType);
+        //             const scientificName = utils.grokScientificName(hit, fileType);
+        //             // By type metadata.
+        //             const metadata = utils.grokMetadata(hit, fileType);
+        //             const pi = utils.grokPI(hit, fileType);
 
-        // PROJECT FILTER
-        // Note that the project filter key is "project_id", even
-        // though there are underlying this at least two
-        // project id fields -- sequencing and analysis.
-        var seqProjectFilter = ko.observable();
+        //             // have a current transfer job?
+        //             const jobs = this.stagingJobsVm.stagingJobs().filter((job) => {
+        //                 return job.dbId === hit.id;
+        //             });
+        //             const transferJob = jobs[0];
+        //             let analysisProject;
+        //             if (utils.hasProp(hit.source.metadata, 'analysis_project')) {
+        //                 analysisProject = {
+        //                     name: utils.getProp(hit.source.metadata, 'analysis_project.analysisProjectName'),
+        //                     assemblyMethod: utils.getProp(hit.source.metadata, 'analysis_project.assemblyMethod'),
+        //                     genomeType: utils.getProp(hit.source.metadata, 'analysis_project.genomeType'),
+        //                     id: utils.getProp(hit.source.metadata, 'analysis_project.itsAnalysisProjectId'),
+        //                     modificationDate: utils.getProp(hit.source.metadata, 'analysis_project.modDate'),
+        //                     comments: utils.getProp(hit.source.metadata, 'analysis_project.comments')
+        //                 };
+        //             }
+        //             let sequencingProject;
+        //             if (utils.hasProp(hit.source.metadata, 'sequencing_project')) {
+        //                 sequencingProject = {
+        //                     name: utils.getProp(hit.source.metadata, 'sequencing_project.sequencing_project_name'),
+        //                     id: utils.getProp(hit.source.metadata, 'sequencing_project.sequencing_project_id'),
+        //                     status: utils.getProp(hit.source.metadata, 'sequencing_project.current_status'),
+        //                     statusDate: utils.getProp(hit.source.metadata, 'sequencing_project.status_date'),
+        //                     comments: utils.getProp(hit.source.metadata, 'sequencing_project.comments')
+        //                 };
+        //             }
+        //             return {
+        //                 // rowNumber: rowNumber,
+        //                 id: hit.id,
+        //                 score: numeral(hit.score).format('00.00'),
+        //                 type: hit.type,
+        //                 title: title,
+        //                 date: utils.usDate(hit.source.file_date),
+        //                 modified: utils.usDate(hit.source.modified),
+        //                 // fileExtension: fileExtension,
+        //                 fileType: utils.normalizeFileType(hit.source.file_type),
+        //                 // TODO: these should all be in just one place.
+        //                 dataType: fileType.dataType,
+        //                 proposalId: proposalId,
+        //                 projectId: projectId,
+        //                 pi: pi,
+        //                 metadata: metadata,
+        //                 scientificName: scientificName.scientificName,
+        //                 file: {
+        //                     parts: fileParts,
+        //                     name: hit.source.file_name,
+        //                     // baseName: fileBaseName,
+        //                     // extension: fileExtension,
+        //                     dataType: fileType.dataType,
+        //                     encoding: fileType.encoding,
+        //                     indexedType: utils.normalizeFileType(hit.source.file_type),
+        //                     size: numeral(hit.source.file_size).format('0.0 b'),
+        //                     added: utils.usDate(hit.source.added_date),
+        //                     status: hit.source.file_status,
+        //                     types: utils.normalizeFileType(hit.source.file_type),
+        //                     typing: fileType,
+        //                     md5sum: hit.source.md5sum
+        //                 },
+        //                 proposal: hit.source.metadata.proposal,
+        //                 sequencingProject: sequencingProject,
+        //                 analysisProject: analysisProject,
+        //                 // importSpec: getImportInfo(fileType.dataType, hit.id, hit.source.file_name, hit),
+        //                 showInfo: ko.observable(false),
+        //                 detailFormatted: JSON.stringify(hit.source, null, 4),
+        //                 source: hit.source,
+        //                 data: hit,
+        //                 // UI
+        //                 transferJob: ko.observable(transferJob)
+        //             };
+        //         });
+        // }
 
-        subscriptions.add(seqProjectFilter.subscribe(function (newValue) {
-            var filter = searchFilter();
-            if (!newValue) {
-                delete filter.project_id;
-            } else {
-                filter.project_id = [newValue];
-            }
-            searchFilter(filter);
-        }));
+        // checkFilename(filename) {
+        //     return Promise.try(() => {
+        //         try {
+        //             const error = Model.validateFilename(filename);
 
-        var proposalFilter = ko.observable();
-        subscriptions.add(proposalFilter.subscribe(function (newValue) {
-            var filter = searchFilter();
-            if (!newValue) {
-                delete filter.proposal_id;
-            } else {
-                filter.proposal_id = [newValue];
-            }
-            searchFilter(filter);
-        }));
-
-        var piFilter = ko.observable();
-        subscriptions.add(piFilter.subscribe(function (newValue) {
-            var filter = searchFilter();
-            if (!newValue) {
-                delete filter.pi_name;
-            } else {
-                filter.pi_name = newValue;
-            }
-            searchFilter(filter);
-        }));
-        // SEARCH FLAGS
-
-        var searching = ko.observable(false);
-
-        var userSearch = ko.observable(false);
-
-        // var searchState = ko.observable('none');
+        //             if (error) {
+        //                 return {
+        //                     validationError: error
+        //                 };
+        //             }
+        //         } catch (ex) {
+        //             return {
+        //                 exception: ex.message
+        //             };
+        //         }
+        //         return this.model.getFileMetadata(filename)
+        //             .spread((result, error) => {
+        //                 if (error) {
+        //                     console.error('ERROR checking filename.', error);
+        //                     return {
+        //                         error: error
+        //                     };
+        //                 } else {
+        //                     if (result) {
+        //                         return {
+        //                             exists: result
+        //                         };
+        //                     }
+        //                     return false;
+        //                 }
+        //             })
+        //             .catch((err) => {
+        //                 return {
+        //                     exception: err.message
+        //                 };
+        //             });
+        //     });
+        // }
 
         // Interactive addition of search data from search results
         // into the search input.
-        function doAddToSearch(data, field) {
+        doAddToSearch(data, field) {
             var newSearchInput = data[field];
             if (!data[field]) {
                 return;
@@ -349,126 +465,48 @@ define([
             default:
                 console.error('Search type not supported: ' + typeof newSearchInput);
             }
-            searchInput(newSearchInput);
+            this.searchInput(newSearchInput);
         }
 
-        var availableRowHeight = ko.observable();
-
-        var pageSize = ko.observable();
-
-
-        // Handling search interactions...
-
-        // This is the result of parsing from user input
-
-        // Note: this is like a computed observable, but we don't want to
-        // change the value of the search expression if there was no
-        // change bits.
-        // But a pure computed change will be triggered by the search input,
-        // even though the resulting value for the computed is the same.
-        var searchExpression = ko.observable({
-            query: {},
-            filter: {}
-        });
-
-        function addToSearchHistory(value) {
+        addToSearchHistory(value) {
             // Remove the search input if it is already in the list
-            searchHistory.remove(value);
+            this.searchHistory.remove(value);
 
             // Add the item to the top of the list.
-            searchHistory.unshift(value);
+            this.searchHistory.unshift(value);
 
             // remove the last entry if we have exceeded 10 items.
             // the last entry will be the oldest one.
-            if (searchHistory().length > 10) {
-                searchHistory.pop();
+            if (this.searchHistory().length > 10) {
+                this.searchHistory.pop();
             }
         }
 
-        subscriptions.add(searchInput.subscribe(function (newSearchInput) {
-            var newExpression = utils.parseSearchExpression(searchInput());
-            if (utils.isEqual(newExpression, searchExpression())) {
-                return;
+        clearSearch() {
+            if (this.currentSearch.search) {
+                this.currentSearch.search.cancel();
+                this.currentSearch.cancelled = true;
             }
-            addToSearchHistory(newSearchInput);
-            searchExpression(newExpression);
-        }));
-
-
-        // This receives query fields from specific query controls.
-        var searchAutoQuery = ko.observable({});
-
-        // This receives filters from specific filter controls.
-        var searchFilter = ko.observable({});
-
-        // This is now a trigger for a new type to be added to the
-        // type filter.
-        // search.typeFilterInput.subscribe(function (newValue) {
-        //     // first update the type filter list.
-        //     if (newValue === 'all') {
-        //         search.typeFilter.removeAll();
-        //         search.typeFilterInput('');
-        //     } else if (newValue === '') {
-        //         // do nothing...
-        //     } else {
-        //         search.typeFilter.push(newValue);
-        //         search.typeFilterInput('');
-        //     }
-        // });
-
-        subscriptions.add(typeFilter.subscribe(function (newValue) {
-            var newQuery = JSON.parse(JSON.stringify(searchAutoQuery()));
-
-            var newTypeFilter = JSON.parse(JSON.stringify(newValue));
-
-            if (newTypeFilter && newTypeFilter.length > 0) {
-                newQuery.file_type = newTypeFilter.join(' | ');
-            } else {
-                delete newQuery.file_type;
-            }
-
-            // TODO: do this better!
-            // if (!newQuery.file_type) {
-            //     newQuery.file_type = ['fastq', 'fasta', 'bam'].join(' | ');
-            // }
-
-            if (utils.isEqual(newQuery, searchAutoQuery())) {
-                return;
-            }
-            searchAutoQuery(newQuery);
-        }));
-        // typeFilter([]);
-
-        var currentSearch = {
-            search: null,
-            cancelled: false
-        };
-
-        function clearSearch() {
-            if (currentSearch.search) {
-                currentSearch.search.cancel();
-                currentSearch.cancelled = true;
-            }
-            searchResults.removeAll();
-            searchTotal(0);
-            actualSearchTotal(0);
-            page(null);
-            currentSearch = {
+            this.searchResults.removeAll();
+            this.searchTotal(0);
+            this.actualSearchTotal(0);
+            this.page(null);
+            this.currentSearch = {
                 search: null,
                 query: null,
                 cancelled: false
             };
         }
 
-        function doSearch() {
+        doSearch() {
             // Search cancellation
-            if (currentSearch.search) {
+            if (this.currentSearch.search) {
                 console.warn('cancelling search...');
-                currentSearch.search.cancel();
-                currentSearch.cancelled = true;
+                this.currentSearch.search.cancel();
+                this.currentSearch.cancelled = true;
             }
 
-            var query = searchQuery();
+            var query = this.searchQuery();
 
             if (!query) {
                 return;
@@ -482,22 +520,22 @@ define([
             // Sometimes observables cause duplicate updates to the search query ...
             // stop that.
 
-            if (!pageSize()) {
-                console.warn('ditching search request - no page size yet', pageSize());
+            if (!this.pageSize()) {
+                console.warn('ditching search request - no page size yet', this.pageSize());
                 return;
             }
 
-            currentSearch = {
+            this.currentSearch = {
                 search: null,
                 query: query,
                 cancelled: false
             };
-            var thisSearch = currentSearch;
+            const thisSearch = this.currentSearch;
 
-            searching(true);
+            this.searching(true);
 
-            return currentSearch.search = data.fetchQuery(query.query, query.filter, sortSpec(),  page(), pageSize())
-                .spread(function (result, error, stats) {
+            return this.currentSearch.search = this.model.fetchQuery(query.query, query.filter, this.sortSpec(),  this.page(), this.pageSize())
+                .spread((result, error, stats) => {
                     if (thisSearch.cancelled) {
                         console.warn('search cancelled, ignoring results...');
                         return false;
@@ -505,20 +543,18 @@ define([
 
                     // TODO: handle better!
                     if (error) {
-                        // thisSearch.search.cancel();
-                        // thisSearch.cancelled = true;
-                        currentSearch = {
+                        this.currentSearch = {
                             search: null,
                             cancelled: false
                         };
                         try {
-                            clearQuery();
-                            clearSearch();
+                            this.clearQuery();
+                            this.clearSearch();
                         } catch (ex) {
                             console.error('huh?', ex);
                         }
 
-                        showError(new utils.JGISearchError(
+                        this.showError(new utils.JGISearchError(
                             'dynamic_service:jgi_search_gateway',
                             error.code,
                             error.message,
@@ -530,166 +566,54 @@ define([
 
                     console.warn('jgi search elapsed', stats);
 
-                    if (result.total > maxSearchResults) {
-                        actualSearchTotal(result.total);
-                        var actualMax = pageSize() * Math.floor(maxSearchResults/pageSize());
-                        searchTotal(actualMax);
+                    if (result.total > this.maxSearchResults) {
+                        this.actualSearchTotal(result.total);
+                        var actualMax = this.pageSize() * Math.floor(this.maxSearchResults/this.pageSize());
+                        this.searchTotal(actualMax);
                     } else {
-                        actualSearchTotal(result.total);
-                        searchTotal(result.total);
+                        this.actualSearchTotal(result.total);
+                        this.searchTotal(result.total);
                     }
 
-                    searchResults([]);
-                    searchElapsed(stats.request_elapsed_time);
+                    this.searchResults([]);
+                    this.searchElapsed(stats.request_elapsed_time);
 
-                    // var jobMap = {};
-                    // stagingJobsVm.stagingJobs().forEach(function (job) {
-                    //     jobMap[job.dbId] = job;
-                    // });
+                    const rows = schema.hitsToRows(result.hits, (...arg) => {this.doStage.apply(this, arg);});
 
-                    var rows = schema.hitsToRows(result.hits, doStage);
-
-                    searchResults(rows);
-                    // schema.hitsToRows(result.hits, doStage).forEach(function (row) {
-                    //     searchResults.push(row);
-                    // });
+                    this.searchResults(rows);
                     return true;
                 })
-                .then(function (searched) {
+                .then((searched) => {
                     if (searched) {
-                        searching(false);
+                        this.searching(false);
                     }
                 })
-                .catch(function (err) {
-                    console.error('ERRORx', err);
-                    searching(false);
-                    showError(err);
+                .catch((err) => {
+                    console.error('ERROR', err);
+                    this.searching(false);
+                    this.showError(err);
                 })
-                .finally(function () {
-                    currentSearch = {
+                .finally(() => {
+                    this.currentSearch = {
                         search: null,
                         cancelled: false
                     };
                 });
         }
 
-        // EXPLICIT LISTENERS
-        subscriptions.add(page.subscribe(function () {
-            doSearch();
-        }));
-
-        subscriptions.add(pageSize.subscribe(function () {
-            doSearch();
-        }));
-
-        subscriptions.add(searchQuery.subscribe(function (newValue) {
-            // reset the page back to 1 because we do not know if the
-            // new search will extend this far.
-            if (!newValue) {
-                page(null);
-                return;
-            }
-            if (!page()) {
-                page(1);
-            } else if (page() > 1) {
-                page(1);
-            }
-            doSearch();
-        }));
-
-        // TRY COMPUTING UBER-STATE
-
-        var searchState = ko.pureComputed(function () {
-            // TODO: error
-
-            // if (health() === 'sick') {
-            //     return 'sick';
-            // }
-
-            if (searching()) {
-                return 'inprogress';
-            }
-
-            if (searchQuery()) {
-                if (!pageSize()) {
-                    return 'pending';
-                }
-                if (searchResults().length === 0) {
-                    return 'notfound';
-                } else {
-                    return 'success';
-                }
-            } else {
-                return 'none';
-            }
-        });
-
-        // SEARCH HISTORY
-
-        var searchHistory = ko.observableArray();
-
-        subscriptions.add(searchHistory.subscribe(function (newValue) {
-            data.saveSearchHistory(newValue)
-                .spread(function (result, error) {
-                    if (error) {
-                        showError(error);
-                    }
-                });
-        }));
-
-
-
-
-        // SORTING support
-
-        // sortColumns is the ordered list of all columns currently
-        // sorted. Each sort object is a reference to the actual column
-        // sort spec.
-        var sortColumns = ko.observableArray();
-
-        // The sortSpec translates the sortColumns into a form which can be
-        // used by the search.
-        var sortSpec = ko.pureComputed(function () {
-            return sortColumns().map(function (column) {
-                return {
-                    field: column.sort.keyName,
-                    descending: column.sort.direction() === 'descending'
-                };
-            });
-        });
-
-        subscriptions.add(sortSpec.subscribe(function () {
-            doSearch();
-        }));
-
-        // var health = ko.observable('healthy');
-
-        // health.subscribe(function (newValue) {
-        //     if (newValue === 'sick') {
-        //         status('sick');
-        //     }
-        // });
-
-
-        // ACTIONS
-
-        function doStage(id, fileName) {
-            return data.stageFile(id, fileName);
-        }
-
-        function sortBy(column) {
+        sortBy(column) {
             if (!column.sort) {
                 console.warn('Sort not implemented for this column, but sort by called anyway', column);
                 return;
             }
 
             // for now just single column sort.
-            if (sortColumns().length === 1) {
-                var currentSortColumn = sortColumns()[0];
+            if (this.sortColumns().length === 1) {
+                const currentSortColumn = this.sortColumns()[0];
                 if (currentSortColumn !== column) {
                     currentSortColumn.sort.active(false);
                 }
-                sortColumns.removeAll();
+                this.sortColumns.removeAll();
             }
 
             if (column.sort.active()) {
@@ -698,119 +622,18 @@ define([
                 column.sort.active(true);
             }
 
-            sortColumns.push(column);
+            this.sortColumns.push(column);
         }
 
-        function showStageJobViewer() {
-            showOverlay({
+        showStageJobViewer() {
+            this.showOverlay({
                 name: StagingStatusViewerComponent.name(),
                 viewModel: {
-                    runtime: runtime
+                    runtime: this.runtime
                 }
             });
         }
-
-        // LIFECYCLE
-
-        function start() {
-            stagingJobsVm.start();
-        }
-
-        function stop() {
-            stagingJobsVm.stop();
-        }
-
-        function dispose() {
-            subscriptions.dispose();
-            if (stagingJobsVm) {
-                stagingJobsVm.dispose();
-            }
-        }
-
-        // MAIN
-
-        data.getSearchHistory()
-            .spread(function (result, error) {
-                if (error) {
-                    showError(error);
-                } else {
-                    searchHistory(result);
-                }
-            })
-            .then(function () {
-                searchInput(params.initialQuery);
-            })
-            .catch(function (err) {
-                console.error('ERROR retrieving search history', err);
-            });
-
-
-        return {
-            // health: health,
-            // INPUTS
-            searchInput: searchInput,
-            // typeFilterInput: typeFilterInput,
-            typeFilter: typeFilter,
-            typeFilterOptions: typeFilterOptions,
-
-            searchInstanceID: searchInstanceID,
-
-            seqProjectFilter: seqProjectFilter,
-            proposalFilter: proposalFilter,
-            piFilter: piFilter,
-
-            error: error,
-
-            // SYNTHESIZED INPUTS
-            searchQuery: searchQuery,
-            searchState: searchState,
-
-            // OVERLAY
-            showOverlay: showOverlay,
-
-            // RESULTS
-            searchResults: searchResults,
-            searchTotal: searchTotal,
-            actualSearchTotal: actualSearchTotal,
-            searchElapsed: searchElapsed,
-            searching: searching,
-            userSearch: userSearch,
-            availableRowHeight: availableRowHeight,
-
-            // showResults: showResults,
-            // noSearch: noSearch,
-            doAddToSearch: doAddToSearch,
-
-            searchHistory: searchHistory,
-
-            // for fetching details of a serach result item.
-            getDetail: getDetail,
-
-            // check whether filename exists or not.
-            checkFilename: checkFilename,
-
-            // Staging
-            stagingJobStates: stagingJobsVm.stagingJobStates,
-            stagingJobsState: stagingJobsVm.stagingJobsState,
-            runtime: runtime,
-
-            pageSize: pageSize,
-            // Note, starts with 1.
-            page: page,
-            doStage: doStage,
-
-            doSearch: doSearch,
-            showStageJobViewer: showStageJobViewer,
-
-            sortBy: sortBy,
-
-            start: start,
-            stop: stop,
-            dispose: dispose
-        };
     }
 
-    return {
-        make: factory
-    };
+    return SearchViewModel;
 });

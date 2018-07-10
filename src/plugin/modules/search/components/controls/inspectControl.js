@@ -1,19 +1,19 @@
 define([
-    'knockout-plus',
+    'kb_knockout/registry',
     'kb_common/html',
     '../../../components/inspector'
 ], function (
-    ko,
+    reg,
     html,
     InspectorComponent
 ) {
     'use strict';
 
-    var t = html.tag,
+    const t = html.tag,
         span = t('span'),
         div = t('div');
 
-    var styles = html.makeStyles({
+    const styles = html.makeStyles({
         miniButton: {
             css: {
                 padding: '2px 4px',
@@ -37,23 +37,26 @@ define([
         }
     });
 
-    function viewModel(params) {
-        function doInspect() {
-            params.env.search.showOverlay({
+    class ViewModel {
+        constructor(params, context) {
+            this.search = params.env.search;
+            this.field = params.field;
+            this.row = params.row;
+            this.showOverlay = context.$root.showOverlay;
+        }
+
+        doInspect() {
+            this.showOverlay({
                 name: InspectorComponent.name(),
                 // TODO: short this out ... I don't think we need all this
                 viewModel: {
-                    item: params.row,
-                    getDetail: params.env.search.getDetail
+                    item: this.row,
+                    getDetail: (...args) => {
+                        return this.search.getDetail.apply(this.search, args);
+                    }
                 }
             });
         }
-
-        return {
-            field: params.field,
-            row: params.row,
-            doInspect: doInspect
-        };
     }
 
     function template() {
@@ -76,11 +79,11 @@ define([
 
     function component() {
         return {
-            viewModel: viewModel,
+            viewModelWithContext: ViewModel,
             template: template(),
             stylesheet: styles.sheet
         };
     }
 
-    return ko.kb.registerComponent(component);
+    return reg.registerComponent(component);
 });

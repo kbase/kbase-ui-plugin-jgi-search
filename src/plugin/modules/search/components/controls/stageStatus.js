@@ -3,16 +3,20 @@ A component to display the current status of this file vis-a-vis any existing or
 It should reflect:
 - never staged - empty
 - currently staging - amber spinner
-- has staged 
+- has staged
     - most recent one succeeded, a green checkmark
     - most recent one failure, red x
 - gosh, this requires an interesting and potentially expensive query ...
 */
 define([
-    'knockout-plus',
+    'knockout',
+    'kb_knockout/registry',
+    'kb_knockout/lib/generators',
     'kb_common/html'
 ], function (
     ko,
+    reg,
+    gen,
     html
 ) {
     'use strict';
@@ -21,14 +25,12 @@ define([
         span = t('span'),
         div = t('div');
 
-    function viewModel(params) {
-        var status = ko.observable('none');
-
-        return {
-            field: params.field,
-            row: params.row,
-            status: status
-        };
+    class ViewModel {
+        constructor(params) {
+            this.status = ko.observable('none');
+            this.field = params.field;
+            this.row = params.row;
+        }
     }
 
     var styles = html.makeStyles({
@@ -36,107 +38,92 @@ define([
 
     function template() {
         return  div({
-        }, [
-            '<!-- ko switch: status() -->', 
-
-            '<!-- ko case: "none" -->',
-            span(),
-            '<!-- /ko -->',
-
-            '<!-- ko case: "not-importable" -->',
-            span({
-                class: 'fa fa-ban'
-            }),
-            '<!-- /ko -->',
-
-            '<!-- ko case: "sent" -->',
-            div([
+        }, gen.switch('status()', [
+            [
+                '"none"',
+                span()
+            ],
+            [
+                '"not-importable"',
                 span({
-                    class: 'fa fa-spinner fa-pulse fa-fw',
-                    style: {
-                        color: 'silver'
-                    }
-                })                
-            ]),
-            '<!-- /ko -->',
-
-            '<!-- ko case: "submitted" -->',
-            div([
-                span({
-                    class: 'fa fa-spinner fa-pulse fa-fw',
-                    style: {
-                        color: 'gray'
-                    }
-                })                
-            ]),
-            '<!-- /ko -->',
-
-            '<!-- ko case: "queued" -->',
-            div([
-                span({
-                    class: 'fa fa-spinner fa-pulse fa-fw',
-                    style: {
-                        color: 'orange'
-                    }
-                })                
-            ]),
-            '<!-- /ko -->',
-
-            '<!-- ko case: "restoring" -->',
-            div([
-                span({
-                    class: 'fa fa-spinner fa-pulse fa-fw',
-                    style: {
-                        color: 'blue'
-                    }
-                })                
-            ]),
-            '<!-- /ko -->',
-
-            '<!-- ko case: "copying" -->',
-            div([
-                span({
-                    class: 'fa fa-spinner fa-pulse fa-fw',
-                    style: {
-                        color: 'green'
-                    }
-                })                
-            ]),
-            '<!-- /ko -->',
-
-            '<!-- ko case: "completed" -->',
-            div([
-                span({
-                    class: 'fa fa-check',
-                    style: {
-                        color: 'green'
-                    }
-                })                
-            ]),
-            '<!-- /ko -->',
-
-            '<!-- ko case: "error" -->',
-            div([
-                span({
-                    class: 'fa fa-ban',
-                    style: {
-                        color: 'red'
-                    }
-                })                
-            ]),
-            '<!-- /ko -->',
-
-            '<!-- /ko -->'
-        ]);
+                    class: 'fa fa-ban'
+                }),
+            ],
+            [
+                '"sent"',
+                div([
+                    span({
+                        class: 'fa fa-spinner fa-pulse fa-fw',
+                        style: {
+                            color: 'silver'
+                        }
+                    })
+                ]),
+            ],
+            [
+                '"submitted"',
+                div([
+                    span({
+                        class: 'fa fa-spinner fa-pulse fa-fw',
+                        style: {
+                            color: 'gray'
+                        }
+                    })
+                ])
+            ],
+            [
+                '"restoring"',
+                div([
+                    span({
+                        class: 'fa fa-spinner fa-pulse fa-fw',
+                        style: {
+                            color: 'blue'
+                        }
+                    })
+                ])
+            ],
+            [
+                '"completed"',
+                div([
+                    span({
+                        class: 'fa fa-check',
+                        style: {
+                            color: 'green'
+                        }
+                    })
+                ])
+            ],
+            [
+                '"copying"',
+                div([
+                    span({
+                        class: 'fa fa-spinner fa-pulse fa-fw',
+                        style: {
+                            color: 'green'
+                        }
+                    })
+                ])
+            ],
+            [
+                div([
+                    span({
+                        class: 'fa fa-ban',
+                        style: {
+                            color: 'red'
+                        }
+                    })
+                ])
+            ]
+        ]));
     }
 
     function component() {
         return {
-            viewModel: viewModel,
+            viewModel: ViewModel,
             template: template(),
             stylesheet: styles.sheet
         };
     }
 
-    return ko.kb.registerComponent(component);
+    return reg.registerComponent(component);
 });

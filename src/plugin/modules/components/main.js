@@ -3,55 +3,93 @@ Top level panel for jgi search
 */
 define([
     // global deps
-    'bluebird',
-    'knockout-plus',
-    'numeral',
-    'marked',
+    'knockout',
     // kbase deps
     'kb_common/html',
+    'kb_knockout/registry',
+    'kb_knockout/lib/generators',
+    'kb_knockout/lib/viewModelBase',
     // local deps
-    '../errorWidget',
     '../lib/utils',
-    '../search/data',
+    '../lib/model',
     '../search/viewModel',
     '../search/components/search',
     '../terms/components/terms',
     '../components/searchError'
 ], function (
-    Promise,
     ko,
-    numeral,
-    marked,
     html,
-    ErrorWidget,
+    reg,
+    gen,
+    ViewModelBase,
     utils,
-    Data,
-    SearchVm,
+    Model,
+    SearchViewModel,
     SearchComponent,
     TermsComponent,
     SearchErrorComponent
 ) {
     'use strict';
 
-    var t = html.tag,
+    const t = html.tag,
         div = t('div');
 
-    function viewModel(params) {
-        var runtime = params.runtime;
-        var subscriptions = ko.kb.SubscriptionManager.make();
+    class ViewModel extends ViewModelBase {
+        constructor(params, context) {
+            super(params);
 
-        var data = Data.make({
-            runtime: runtime
-        });
+            this.showOverlay = context.$root.showOverlay;
 
-        // STATUS
+            this.runtime = params.runtime;
+            this.initialParams = params.initialParams();
 
-        var status = ko.observable('none');
+            this.model = new Model({
+                runtime: this.runtime
+            });
+            this.status = ko.observable('none');
+            this.error = ko.observable();
+            this.jgiTermsAgreed = ko.observable(false);
 
-        // ERROR
+            this.search = new SearchViewModel({
+                error: this.error,
+                showError: this.showError,
+                initialQuery: this.initialParams.q
+            }, context);
 
-        var error = ko.observable();
-        function showError(err) {
+            // INIT
+
+            this.subscribe(this.jgiTermsAgreed, (newValue) => {
+                // save the agreed-to-state in the user's profile.
+                this.model.saveJgiAgreement(newValue)
+                    .spread((result, error) => {
+                        if (result) {
+                            if (newValue) {
+                                this.status('agreed');
+                            } else {
+                                this.status('needagreement');
+                            }
+                        } else {
+                            this.showError(error);
+                        }
+                    });
+            });
+
+            this.model.getJgiAgreement()
+                .spread((result, error) => {
+                    if (result) {
+                        if (result.agreed) {
+                            this.status('agreed');
+                        } else {
+                            this.status('needagreement');
+                        }
+                    } else {
+                        // show error...
+                        this.showError(error);
+                    }
+                });
+        }
+
+        showError(err) {
             var stackTrace = [];
             if (err.stack) {
                 stackTrace = err.stack.split('\n');
@@ -59,7 +97,7 @@ define([
 
             // Emitted by the search ui or the search backend. Well structured.
             if (err instanceof utils.JGISearchError || err.info) {
-                error({
+                this.error({
                     source: err.source,
                     code: err.code,
                     message: err.message,
@@ -69,11 +107,10 @@ define([
                 });
             // Emitted by the rpc library; also well structured but not idiomatic
             // for this plugin. Translate
-            // } else if (err instanceof RequestError) {
 
             // Some other error, but at least an error object.
             } else if (err instanceof Error) {
-                error({
+                this.error({
                     code: 'error',
                     message: err.name + ': ' + err.message,
                     detail: 'trace here',
@@ -84,7 +121,7 @@ define([
                 });
             // Some other object altogether
             } else {
-                error({
+                this.error({
                     code: 'unknown',
                     message: err.message || '',
                     detail: '',
@@ -92,7 +129,7 @@ define([
                     stackTrace: stackTrace
                 });
             }
-            showOverlay({
+            this.showOverlay({
                 name: SearchErrorComponent.name(),
                 type: 'error',
                 params: {
@@ -100,92 +137,10 @@ define([
                     hostVm: 'search'
                 },
                 viewModel: {
-                    error: error
+                    error: this.error
                 }
             });
         }
-
-
-        // TERMS AND AGREEMENT
-
-        var jgiTermsAgreed = ko.observable(false);
-
-        subscriptions.add(jgiTermsAgreed.subscribe(function (newValue) {
-            // save the agreed-to-state in the user's profile.
-            data.saveJgiAgreement(newValue)
-                .spread(function (result, error) {
-                    if (result) {
-                        if (newValue) {
-                            status('agreed');
-                        } else {
-                            status('needagreement');
-                        }
-                    } else {
-                        showError(error);
-                    }
-                });
-        }));
-
-        data.getJgiAgreement()
-            .spread(function (result, error) {
-                if (result) {
-                    if (result.agreed) {
-                        status('agreed');
-                    } else {
-                        status('needagreement');
-                    }
-                } else {
-                    // show error...
-                    showError(error);
-                }
-            });
-
-
-        // OVERLAY
-
-        // OVERLAY integration
-
-        var overlayComponent = ko.observable();
-
-        var showOverlay = ko.observable();
-
-        subscriptions.add(showOverlay.subscribe(function (newValue) {
-            overlayComponent(newValue);
-        }));
-
-        // SEARCH
-
-        // TODO: make better!
-        // console.log('params.initialParams', params.initialParams);
-        var initialParams = params.initialParams();
-        // if (params.initialParams.q) {
-        //     initialParams.query = initialParams.q;
-        // }
-
-        var searchVm = SearchVm.make({
-            runtime: runtime,
-            error: error,
-            showError: showError,
-            showOverlay: showOverlay,
-            initialQuery: initialParams.q
-        });
-
-        function dispose() {
-            searchVm.stop();
-            searchVm.dispose();
-            subscriptions.dispose();
-        }
-
-        searchVm.start();
-
-        var vm = {
-            search: searchVm,
-            overlayComponent: overlayComponent,
-            jgiTermsAgreed: jgiTermsAgreed,
-            dispose: dispose,
-            status: status
-        };
-        return vm;
     }
 
     function template() {
@@ -198,58 +153,48 @@ define([
                 paddingLeft: '12px'
             }
         }, [
-            '<!-- ko switch: status -->',
             // possible states:
             // awaiting agreement status
             // agreed
             // not agreed
             // error
-
-            '<!-- ko case: "none" -->',
-            // 'loading...',
-            '<!-- /ko -->',
-
-            '<!-- ko case: "needagreement" -->',
-            // '<!-- ko ifnot: $component.search.jgiTermsAgreed() -->',
-            ko.kb.komponent({
-                name: TermsComponent.name(),
-                params: {
-                    jgiTermsAgreed: 'jgiTermsAgreed'
-                }
-            }),
-            '<!-- /ko -->',
-
-            '<!-- ko case: "agreed" -->',
-            // '<!-- ko if: $component.search.jgiTermsAgreed() -->',
-            ko.kb.komponent({
-                name: SearchComponent.name(),
-                params: {
-                    search: 'search'
-                }
-            }),
-            '<!-- /ko -->',
-
-            '<!-- ko case: "sick" -->',
-            'SICK SICK SICK!!!',
-            '<!-- /ko -->',
-
-            '<!-- /ko -->',
-            ko.kb.komponent({
-                name: 'generic/overlay-panel-bootstrappish',
-                params: {
-                    component: 'overlayComponent',
-                    hostVm: 'search'
-                }
-            })
+            gen.switch('status', [
+                [
+                    '"none"',
+                    ''
+                ],
+                [
+                    '"needagreement"',
+                    gen.component({
+                        name: TermsComponent.name(),
+                        params: {
+                            jgiTermsAgreed: 'jgiTermsAgreed'
+                        }
+                    })
+                ],
+                [
+                    '"agreed"',
+                    gen.component({
+                        name: SearchComponent.name(),
+                        params: {
+                            search: 'search'
+                        }
+                    })
+                ],
+                [
+                    '"sick"',
+                    'SICK SICK SICK!!!'
+                ]
+            ])
         ]);
     }
 
     function component() {
         return {
-            viewModel: viewModel,
+            viewModelWithContext: ViewModel,
             template: template()
         };
     }
 
-    return ko.kb.registerComponent(component);
+    return reg.registerComponent(component);
 });

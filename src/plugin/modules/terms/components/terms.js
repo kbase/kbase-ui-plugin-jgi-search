@@ -1,33 +1,31 @@
 define([
-    'knockout-plus',
+    'kb_knockout/registry',
     'marked',
     'kb_common/html',
     'text!../jgiTerms.md'
 ], function (
-    ko,
+    reg,
     marked,
     html,
     jgiTerms
 ) {
     'use strict';
 
-    var t = html.tag,
+    const t = html.tag,
         h2 = t('h2'),
         div = t('div'),
         button = t('button'),
         p = t('p');
 
-    function viewModel(params) {
-        var termsContent= marked(jgiTerms);
-
-        function doAgree() {
-            params.jgiTermsAgreed(true);
+    class ViewModel {
+        constructor(params) {
+            this.termsContent= marked(jgiTerms);
+            this.jgiTermsAgreed = params.jgiTermsAgreed;
         }
 
-        return {
-            termsContent: termsContent,
-            doAgree: doAgree
-        };
+        doAgree() {
+            this.jgiTermsAgreed(true);
+        }
     }
 
     function template() {
@@ -63,22 +61,15 @@ define([
                         click: 'doAgree'
                     }
                 }, 'Agree')
-                // button({
-                //     type: 'button',
-                //     class: 'btn btn-danger',
-                //     dataBind: {
-                //         click: 'doCancel'
-                //     }
-                // }, 'Cancel')
             ])
         ]);
     }
     function component() {
         return {
-            viewModel: viewModel,
+            viewModel: ViewModel,
             template: template()
         };
     }
 
-    return ko.kb.registerComponent(component);
+    return reg.registerComponent(component);
 });

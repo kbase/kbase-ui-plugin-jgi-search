@@ -1,9 +1,11 @@
 define([
-    'knockout-plus',
+    'kb_knockout/registry',
+    'kb_knockout/lib/generators',
     'kb_common/html',
     './jobStatusFilter'
-], function(
-    ko,
+], function (
+    reg,
+    gen,
     html,
     JobStatusFilterComponent
 ) {
@@ -14,10 +16,10 @@ define([
         label = t('label'),
         div = t('div');
 
-    function viewModel(params) {      
-        return { 
-            jobStatusFilter: params.search.jobStatusFilter
-        };
+    class ViewModel {
+        constructor(params) {
+            this.jobStatusFilter = params.search.jobStatusFilter;
+        }
     }
 
     var styles = html.makeStyles({
@@ -55,8 +57,6 @@ define([
             span({
                 class: [styles.classes.filterLabel]
             }, 'Filters: '),
-            
-            
             div({
                 style: {
                     display: 'inline-block',
@@ -64,15 +64,15 @@ define([
                 }
             }, [
                 label('Job Status '),
-               
-                ko.kb.komponent({
+
+                gen.component({
                     name: JobStatusFilterComponent.name(),
                     params: {
                         jobStatusFilter: 'jobStatusFilter'
                     }
                 })
             ]),
-           
+
         ]);
     }
 
@@ -82,11 +82,11 @@ define([
 
     function component() {
         return {
-            viewModel: viewModel,
+            viewModel: ViewModel,
             template: template(),
             stylesheet: styles.sheet
         };
     }
 
-    return ko.kb.registerComponent(component);
+    return reg.registerComponent(component);
 });

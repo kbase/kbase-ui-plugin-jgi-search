@@ -6,11 +6,13 @@ Will be disabled with special icon if the status of the record indicates that th
 file is not importable to kbase.
 */
 define([
-    'knockout-plus',
+    'kb_knockout/registry',
+    'kb_knockout/lib/generators',
     'kb_common/html',
     '../../../stageFile/components/stageFileDialog'
 ], function (
-    ko,
+    reg,
+    gen,
     html,
     StageFileDialogComponent
 ) {
@@ -20,39 +22,46 @@ define([
         span = t('span'),
         div = t('div');
 
-    function viewModel(params) {
-        function doCopy() {
-            params.row.doTransfer();
+    class ViewModel {
+        constructor(params, context) {
+            this.row = params.row;
+            this.search = params.env.search;
+            this.field = params.field;
+            this.showOverlay = context.$root.showOverlay;
         }
 
-        function doStage() {
-            params.env.search.showOverlay({
+        doCopy() {
+            this.row.doTransfer();
+        }
+
+        doShowStage() {
+            this.showOverlay({
                 name: StageFileDialogComponent.name(),
                 // TODO: short this out ... I don't think we need all this
-                params: {
-                    id: 'id',
-                    doStage: 'doStage',
-                    transferJob: 'transferJob',
-                    getDetail: 'getDetail'
-                },
+                // params: {
+                //     id: 'id',
+                //     doStage: 'doStage',
+                //     transferJob: 'transferJob',
+                //     getDetail: 'getDetail'
+                // },
                 viewModel: {
-                    id: params.row.id,
-                    doStage: params.env.search.doStage,
-                    transferJob: params.row.transferJob,
-                    getDetail: params.env.search.getDetail,
-                    checkFilename: params.env.search.checkFilename,
-                    showStageJobViewer: params.env.search.showStageJobViewer
+                    id: this.row.id,
+                    doStage: (...args) => {
+                        return this.search.doStage.apply(this.search, args);
+                    },
+                    transferJob: this.transferJob,
+                    getDetail: (...args) => {
+                        return this.search.getDetail.apply(this.search, args);
+                    },
+                    checkFilename: (...args) => {
+                        return this.search.checkFilename.apply(this.search, args);
+                    },
+                    showStageJobViewer: (...args) => {
+                        return this.search.showStageJobViewer.apply(this.search, args);
+                    }
                 }
             });
         }
-
-        return {
-            field: params.field,
-            row: params.row,
-            // wow, after 5 days, this feels janky, but ... whatever ...
-            doCopy: doCopy,
-            doStage: doStage
-        };
     }
 
     var styles = html.makeStyles({
@@ -86,15 +95,14 @@ define([
                 backgroundColor: 'transparent',
                 textAlign: 'center',
                 color: 'rgba(150,150,150,1)'
-            }            
+            }
         }
     });
 
 
     function template() {
         return  div({
-        }, [
-            '<!-- ko if: row.fileType.error -->', 
+        }, gen.if('row.fileType.error',
             span({
                 class: styles.classes.disabledMiniButton,
                 dataBind: {
@@ -119,15 +127,10 @@ define([
                     }
                 })
             ])),
-            '<!-- /ko -->',
-
-            '<!-- ko ifnot: row.fileType.error -->', 
-
-            // '<!-- ko ifnot: row.transferJob() -->',
             span({
                 class: styles.classes.miniButton,
                 dataBind: {
-                    click: '$component.doStage', 
+                    click: '$component.doShowStage',
                     clickBubble: false,
                     attr: {
                         // Note: using character 13 below because knockout has a problem with
@@ -140,29 +143,16 @@ define([
                     cursor: 'pointer'
                 },
                 class: 'fa fa-download fa-rotate-270'
-            })),
-            // '<!-- /ko -->',
-
-            // '<!-- ko if: row.transferJob() -->',
-            // utils.komponent({
-            //     name: 'jgi-search/staging-status-indicator',
-            //     params: {
-            //         status: 'row.transferJob().status'
-            //     }
-            // }),
-            // '<!-- /ko -->',
-
-            '<!-- /ko -->'
-        ]);
+            }))));
     }
 
     function component() {
         return {
-            viewModel: viewModel,
+            viewModelWithContext: ViewModel,
             template: template(),
             stylesheet: styles.sheet
         };
     }
 
-    return ko.kb.registerComponent(component);
+    return reg.registerComponent(component);
 });

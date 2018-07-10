@@ -3,18 +3,31 @@ stageFileDialog
 
 */
 define([
-    'knockout-plus',
+    'knockout',
+    'kb_knockout/registry',
+    'kb_knockout/lib/generators',
+    'kb_knockout/lib/viewModelBase',
     'kb_common/html',
+    '../../lib/model',
+    '../../lib/appViewModel',
     '../../lib/ui',
-    './stageFileControl'
+    './stageFileControl',
+    '../../components/stagingStatusViewer'
 ], function (
     ko,
+    reg,
+    gen,
+    ViewModelBase,
     html,
+    Model,
+    AppViewModel,
     ui,
-    StageFileControlComponent
+    StageFileControlComponent,
+    StagingStatusViewerComponent
 ) {
     'use strict';
-    var t = html.tag,
+
+    const t = html.tag,
         div = t('div'),
         span = t('span'),
         p = t('p'),
@@ -27,184 +40,216 @@ define([
         th = t('th'),
         td = t('td');
 
+    class ViewModel extends ViewModelBase {
+        constructor(params, context) {
+            super(params);
 
-    function viewModel(params) {
-        var item = ko.observable();
-        var subscriptions = ko.kb.SubscriptionManager.make();
+            this.parent = context.$parent;
+            this.runtime = context.$root.runtime;
+            this.showOverlay = context.$root.showOverlay;
 
-        var destinationFileBaseName = ko.observable();
-        var destinationFileExtension = ko.observable();
-        var isImportable = ko.observable();
-        var error = ko.observable();
-        var fileName = ko.observable();
+            this.onClose = () => {
+                this.parent.bus.send('close');
+            };
 
-        var destinationFileName = ko.pureComputed(function () {
-            return destinationFileBaseName() + '.' + destinationFileExtension();
-        });
-        // var destinationFileName = ko.observable();
+            this.item = ko.observable();
 
+            this.id = params.id;
 
-        var filenameStatus = {
-            exists: ko.observable(),
-            identical: ko.observable(),
-            error: ko.observable(),
-            loading: ko.observable()
-        };
+            this.model = new Model({
+                runtime: this.runtime
+            });
 
-        destinationFileBaseName.extend({
-            rateLimit: {
-                timeout: 500,
-                method: 'notifyWhenChangesStop'
-            }
-        });
+            this.appViewModel = new AppViewModel({
+                runtime: this.runtime
+            });
 
-        var fileDetail;
+            this.destinationFileBaseName = ko.observable();
+            this.destinationFileExtension = ko.observable();
+            this.isImportable = ko.observable();
+            this.error = ko.observable();
+            this.fileName = ko.observable();
 
-        subscriptions.add(destinationFileBaseName.subscribe(function (newValue) {
+            this.destinationFileName = ko.pureComputed(() => {
+                return this.destinationFileBaseName() + '.' + this.destinationFileExtension();
+            });
 
-            // Check the basename. These are special conditions for just the base
-            // name to give somewhat better error messages for these conditions.
-            // The filename check would catch these too, so maybe we can ditch them.
-            // if (!newValue || newValue.length === 0) {
-            //     filenameStatus.error({
-            //         validationError: 'Cannot have empty filename'
-            //     });
-            //     return;
-            // }
-            // if (newValue.trim(' ').length === 0) {
-            //     filenameStatus.error({
-            //         validationError: 'Filename may not consist of just spaces'
-            //     });
-            //     return;
-            // }
+            this.filenameStatus = {
+                exists: ko.observable(),
+                identical: ko.observable(),
+                error: ko.observable(),
+                loading: ko.observable()
+            };
 
-            var actualFilename = [newValue, '.',  destinationFileExtension()].join('');
-
-            // detect duplicate filename here, and set status accordingly.
-            filenameStatus.loading(true);
-            params.checkFilename(actualFilename)
-                .then(function (result) {
-                    if (result.exists) {
-                        if (fileDetail.file.md5sum === result.exists.md5) {
-                            filenameStatus.identical(true);
-                        } else {
-                            filenameStatus.identical(false);
-                        }
-                        filenameStatus.exists(result.exists);
-                        filenameStatus.error(null);
-                    } else if (result.error) {
-                        filenameStatus.error(result.error);
-                    } else {
-                        // destinationFileName(actualFilename);
-                        filenameStatus.exists(null);
-                        filenameStatus.error(null);
-                    }
-                })
-                .catch(function (err) {
-                    // todo trigger error panel
-                    console.error('ERROR', err);
-                    filenameStatus.error({
-                        exception: err.message
-                    });
-                    // filenameStatus.error(err.message);
-                })
-                .finally(function () {
-                    filenameStatus.loading(false);
-                });
-        }));
-
-        var stageButtonEnabled = ko.pureComputed(function () {
-            if (filenameStatus.error()) {
-                return false;
-            }
-            if (filenameStatus.loading()) {
-                return false;
-            }
-            return true;
-        });
-
-
-        params.getDetail(params.id)
-            .then(function (result) {
-                item(result);
-
-                fileDetail = result;
-
-                destinationFileExtension(result.file.parts.extension);
-                destinationFileBaseName(result.file.parts.base);
-                fileName(result.file.parts.name);
-
-                if (result.file.typing.error) {
-                    isImportable(false);
-                    error(result.file.typing.error);
-                } else {
-                    isImportable(true);
+            this.destinationFileBaseName.extend({
+                rateLimit: {
+                    timeout: 500,
+                    method: 'notifyWhenChangesStop'
                 }
             });
 
-        var showDetail = ko.observable(false);
+            this.fileDetail;
 
-        var showDetailClass = ko.pureComputed(function () {
-            if (showDetail()) {
-                return styles.classes.textin;
-            }
-            return styles.classes.textout;
-        });
+            this.stageButtonEnabled = ko.pureComputed(() => {
+                if (this.filenameStatus.error()) {
+                    return false;
+                }
+                if (this.filenameStatus.loading()) {
+                    return false;
+                }
+                return true;
+            });
 
-        function doOpenJobsMonitor() {
-            params.showStageJobViewer();
+            // SUBSCRIPTIONS
+            this.subscribe(this.destinationFileBaseName, (newValue) => {
+                var actualFilename = [newValue, '.',  this.destinationFileExtension()].join('');
+
+                // detect duplicate filename here, and set status accordingly.
+                this.filenameStatus.loading(true);
+                this.model.checkFilename(actualFilename)
+                    .then((result) => {
+                        if (result.exists) {
+                            if (this.fileDetail.file.md5sum === result.exists.md5) {
+                                this.filenameStatus.identical(true);
+                            } else {
+                                this.filenameStatus.identical(false);
+                            }
+                            this.filenameStatus.exists(result.exists);
+                            this.filenameStatus.error(null);
+                        } else if (result.error) {
+                            this.filenameStatus.error(result.error);
+                        } else {
+                            this.filenameStatus.exists(null);
+                            this.filenameStatus.error(null);
+                        }
+                    })
+                    .catch((err) => {
+                        // todo trigger error panel
+                        console.error('ERROR', err);
+                        this.filenameStatus.error({
+                            exception: err.message
+                        });
+                    })
+                    .finally(() => {
+                        this.filenameStatus.loading(false);
+                    });
+            });
+
+            // MAIN +++
+            this.appViewModel.getDetail(params.id)
+                .then((result) => {
+                    this.item(result);
+
+                    this.fileDetail = result;
+
+                    this.destinationFileExtension(result.file.parts.extension);
+                    this.destinationFileBaseName(result.file.parts.base);
+                    this.fileName(result.file.parts.name);
+
+                    if (result.file.typing.error) {
+                        this.isImportable(false);
+                        this.error(result.file.typing.error);
+                    } else {
+                        this.isImportable(true);
+                    }
+                });
+
+            this.showDetail = ko.observable(false);
+
+            this.showDetailClass = ko.pureComputed(() => {
+                if (this.showDetail()) {
+                    return styles.classes.textin;
+                }
+                return styles.classes.textout;
+            });
+
+            this.transferJobMonitor = {
+                jobMonitoringId: ko.observable(),
+                jobId: ko.observable(),
+                status: ko.observable(),
+                error: ko.observable()
+            };
+
+            this.monitorTimerId = null;
+
+            this.actions = {
+                doStage: () => {
+                    this.doStage();
+                }
+            };
         }
 
-        var transferJobMonitor = {
-            jobId: ko.observable(),
-            status: ko.observable(),
-            error: ko.observable()
-        };
+        doOpenJobsMonitor() {
+            this.showOverlay({
+                name: StagingStatusViewerComponent.name(),
+                viewModel: {
+                    runtime: this.runtime
+                }
+            });
+        }
 
-        function doStage() {
-            // doStage call is passed in.
-            return params.doStage(params.id, destinationFileName())
-                // but our reaction to it is not!
-                .spread(function (result, error) {
+        checkTransferStatus() {
+            if (this.monitorTimerId) {
+                return;
+            }
+            var param = {
+                job_monitoring_id: this.transferJobMonitor.jobMonitoringId(),
+                job_id:  this.transferJobMonitor.jobId()
+            };
+            return this.model.getStageStatus(param)
+                .then((stageStatus) => {
+                    this.transferJobMonitor.status(stageStatus.status);
+                    if (['error', 'completed'].includes(stageStatus.status)) {
+                        return;
+                    }
+                    this.monitorTimerId = window.setTimeout(() => {
+                        this.monitorTimerId = null;
+                        this.checkTransferStatus();
+                    }, 1000);
+                });
+        }
+
+        doStage() {
+            return this.model.stageFile(this.id, this.destinationFileName())
+            // but our reaction to it is not!
+                .spread((result, error) => {
                     if (result) {
-                        transferJobMonitor.jobId(result.job_id);
-                        transferJobMonitor.status('submitted');
+                        this.transferJobMonitor.jobMonitoringId(result.job_monitoring_id);
+                        this.transferJobMonitor.jobId(result.job_id);
+                        this.transferJobMonitor.status('submitted');
 
                         // TODO: start the monitor!
+                        this.checkTransferStatus();
                     } else {
-                        error(error);
-                        transferJobMonitor.error(error);
+                        this.error(error);
+                        this.transferJobMonitor.error(error);
                     }
                 });
         }
 
-        function dispose() {
-            subscriptions.dispose();
-        }
+        // return {
+        //     item: item,
+        //     destinationFileBaseName: destinationFileBaseName,
+        //     destinationFileExtension: destinationFileExtension,
+        //     destinationFileName: destinationFileName,
+        //     isImportable: isImportable,
+        //     error: error,
+        //     showDetail: showDetail,
+        //     showDetailClass: showDetailClass,
 
-        return {
-            item: item,
-            destinationFileBaseName: destinationFileBaseName,
-            destinationFileExtension: destinationFileExtension,
-            destinationFileName: destinationFileName,
-            isImportable: isImportable,
-            error: error,
-            showDetail: showDetail,
-            showDetailClass: showDetailClass,
+        //     onClose: params.onClose,
+        //     doOpenJobsMonitor: doOpenJobsMonitor,
 
-            onClose: params.onClose,
-            doOpenJobsMonitor: doOpenJobsMonitor,
+        //     //  pass through...
+        //     id: params.id,
+        //     fileName: fileName,
+        //     filenameStatus: filenameStatus,
+        //     doStage: doStage,
+        //     transferJobMonitor: transferJobMonitor,
+        //     stageButtonEnabled: stageButtonEnabled,
 
-            //  pass through...
-            id: params.id,
-            fileName: fileName,
-            filenameStatus: filenameStatus,
-            doStage: doStage,
-            transferJobMonitor: transferJobMonitor,
-            stageButtonEnabled: stageButtonEnabled,
-
-            dispose: dispose
-        };
+        //     dispose: dispose
+        // };
     }
 
     var styles = html.makeStyles({
@@ -229,7 +274,6 @@ define([
                     animationDirection: 'normal',
                     opacity: '1',
                     height: 'auto'
-                    // maxHeight: '300px'
                 }
             },
             textout: {
@@ -239,10 +283,7 @@ define([
                     animationIterationCount: '1',
                     animationDirection: 'normal',
                     opacity: '0',
-                    // transformOrigin: 'top',
-                    // transform: 'scaleY(0)'
                     height: '0px'
-                    // maxHeight: '0px'
                 }
             },
         },
@@ -250,33 +291,21 @@ define([
             keyframes: {
                 appear: {
                     from: {
-                        // transform: 'scaleY(0)',
-                        // transformOrigin: 'top',
                         height: '0px',
-                        // maxHeight: '0px',
                         opacity: '0'
                     },
                     to: {
-                        // transform: 'scaleY(1)',
-                        // transformOrigin: 'top',
                         height: 'auto',
-                        // maxHeight: '300px',
                         opacity: '1'
                     }
                 },
                 disappear: {
                     from: {
-                        // transform: 'scaleY(1)',
-                        // transformOrigin: 'top',
                         height: 'auto',
-                        // maxHeight: '300px',
                         opacity: '1'
                     },
                     to: {
-                        // transform: 'scaleY(0)',
-                        // transformOrigin: 'top',
                         height: '0px',
-                        // maxHeight: '0px',
                         opactiy: '0'
                     }
                 }
@@ -285,267 +314,207 @@ define([
     });
 
     function buildSourceFileInfo() {
-        return div([
-            // div({
-            //     class: styles.classes.sectionHeader
-            // }, 'File info'),
-
-            '<!-- ko if: item -->',
-            '<!-- ko with: item -->',
-            table({
-                class: 'table',
-                dataBind: {
-                    with: 'file'
-                }
-            }, [
-                colgroup([
-                    col({
-                        style: {
-                            width: '30%'
-                        }
-                    }),
-                    col({
-                        style: {
-                            width: '70%'
-                        }
-                    })
-                ]),
-                tr([
-                    th({
-                        scope: 'row'
-                    }, 'Filename'),
-                    td({
-                        dataBind: {
-                            text: 'name'
-                        },
-                        style: {
-                            fontFamily: 'monospace',
-                            whiteSpace: 'pre'
-                        }
-                    })
-                ]),
-                tr([
-                    th({
-                        scope: 'row'
-                    }, 'Data type'),
-                    td({
-                        dataBind: {
-                            text: 'dataType'
-                        }
-                    })
-                ]),
-                tr([
-                    th({
-                        scope: 'row'
-                    }, 'Encoding'),
-                    td({
-                        dataBind: {
-                            text: 'encoding ? encoding : "-"'
-                        }
-                    })
-                ]),
-                tr([
-                    th({
-                        scope: 'row'
-                    }, 'Size'),
-                    td({
-                        dataBind: {
-                            text: 'size'
-                        }
-                    })
-                ]),
-                tr([
-                    th({
-                        scope: 'row'
-                    }, 'Date added'),
-                    td({
-                        dataBind: {
-                            text: 'added'
-                        }
-                    })
-                ])
-            ]),
-            '<!-- /ko -->',
-            '<!-- /ko -->',
-
-            '<!-- ko ifnot: item -->',
-            html.loading(),
-            '<!-- /ko -->'
-        ]);
-    }
-
-    // function buildProposedFilename() {
-    //     return [
-    //         '<!-- ko if: destinationFileName() !== fileName() -->',
-    //         div({
-    //             style: {
-    //                 marginTop: '4px'
-    //             }
-    //         }, 'New proposed filename: '),
-    //         div({
-    //             dataBind: {
-    //                 text: 'destinationFileName'
-    //             },
-    //             style: {
-    //                 fontFamily: 'monospace',
-    //                 fontWeith: 'bold'
-    //             }
-    //         }),
-    //         '<!-- /ko -->'
-    //     ];
-    // }
-
-    function buildFilenameStatusIndicator() {
-        return [
-            '<!-- ko ifnot: filenameStatus.loading -->',
-
-            '<!-- ko ifnot: filenameStatus.error -->',
-            div([
-                span({
-                    class: 'fa fa-check',
-                    style: {
-                        color: 'green'
-                    }
-                }),
-                ' This filename is ok :)'
-            ]),
-            '<!-- /ko -->',
-
-            '<!-- ko if: filenameStatus.exists -->',
-            div({
-                class: 'alert alert-warning',
-                style: {
-                    width: '100%',
-                    whiteSpace: 'normal'
-                },
-                dataBind: {
-                    with: 'filenameStatus'
-                }
-            }, [
-                p({style: {
-                    fontWeight: 'bold'
-                }}, 'A filename with this name already exists in your staging area.'),
-
+        return div(gen.if('item',
+            gen.with('item',
                 table({
-                    dataBind: {
-                        with: 'exists'
-                    },
                     class: 'table',
-                    style: {
-                        backgroundColor: 'transparent',
-                        marginTop: '6px'
+                    dataBind: {
+                        with: 'file'
                     }
                 }, [
-                    tr([
-                        th('Copied'),
-                        td({
-                            dataBind: {
-                                typedText: {
-                                    value: 'mtime',
-                                    type: '"date"',
-                                    format: '"elapsed"'
-                                    // format: '"YYYY/MM/DD"'
-                                }
+                    colgroup([
+                        col({
+                            style: {
+                                width: '30%'
+                            }
+                        }),
+                        col({
+                            style: {
+                                width: '70%'
                             }
                         })
                     ]),
                     tr([
-                        th('Size'),
+                        th({
+                            scope: 'row'
+                        }, 'Filename'),
                         td({
                             dataBind: {
-                                typedText: {
-                                    value: 'size',
-                                    type: '"number"',
-                                    format: '"0.0b"'
-                                }
+                                text: 'name'
+                            },
+                            style: {
+                                fontFamily: 'monospace',
+                                whiteSpace: 'pre'
+                            }
+                        })
+                    ]),
+                    tr([
+                        th({
+                            scope: 'row'
+                        }, 'Data type'),
+                        td({
+                            dataBind: {
+                                text: 'dataType'
+                            }
+                        })
+                    ]),
+                    tr([
+                        th({
+                            scope: 'row'
+                        }, 'Encoding'),
+                        td({
+                            dataBind: {
+                                text: 'encoding ? encoding : "-"'
+                            }
+                        })
+                    ]),
+                    tr([
+                        th({
+                            scope: 'row'
+                        }, 'Size'),
+                        td({
+                            dataBind: {
+                                text: 'size'
+                            }
+                        })
+                    ]),
+                    tr([
+                        th({
+                            scope: 'row'
+                        }, 'Date added'),
+                        td({
+                            dataBind: {
+                                text: 'added'
                             }
                         })
                     ])
+                ])),
+            html.loading()));
+    }
+
+    function buildFilenameExists() {
+        return div({
+            class: 'alert alert-warning',
+            style: {
+                width: '100%',
+                whiteSpace: 'normal'
+            },
+            dataBind: {
+                with: 'filenameStatus'
+            }
+        }, [
+            p({style: {
+                fontWeight: 'bold'
+            }}, 'A filename with this name already exists in your staging area.'),
+
+            table({
+                dataBind: {
+                    with: 'exists'
+                },
+                class: 'table',
+                style: {
+                    backgroundColor: 'transparent',
+                    marginTop: '6px'
+                }
+            }, [
+                tr([
+                    th('Copied'),
+                    td({
+                        dataBind: {
+                            typedText: {
+                                value: 'mtime',
+                                type: '"date"',
+                                format: '"elapsed"'
+                            }
+                        }
+                    })
                 ]),
-                '<!-- ko if: identical -->',
+                tr([
+                    th('Size'),
+                    td({
+                        dataBind: {
+                            typedText: {
+                                value: 'size',
+                                type: '"number"',
+                                format: '"0.0b"'
+                            }
+                        }
+                    })
+                ])
+            ]),
+            gen.if('identical',
                 p([
                     'It is ',
                     b('identical'),
                     ' to the file you are copying, so copying is unnecessary.'
                 ]),
-                '<!-- /ko -->',
-                '<!-- ko ifnot: identical -->',
                 p([
                     'It is ',
                     b('different'),
                     ' than the one you are copying.'
-                ]),
-                '<!-- /ko -->',
-                // p('You may still copy this file to your Staging Area, but it will overwrite the existing file.'),
-                p('You may change the filename above to create a unique filename.')
-            ]),
-            '<!-- /ko -->',
+                ])),
+            p('You may change the filename above to create a unique filename.')
+        ]);
+    }
 
-            '<!-- ko if: filenameStatus.error -->',
-            div({
-                class: 'alert alert-danger',
-                style: {
-                    width: '100%',
-                    whiteSpace: 'normal'
-                },
-                dataBind: {
-                    with: 'filenameStatus.error'
-                }
-            }, [
-                '<!-- ko if: $data.validationError -->',
-                p({
-                    dataBind: {
-                        text: '$data.validationError'
-                    }
-                }),
-                '<!-- /ko -->',
-
-                '<!-- ko if: $data.exception -->',
-                p({
-                    dataBind: {
-                        text: '$data.exception'
-                    }
-                }),
-                '<!-- /ko -->',
-
-                '<!-- ko if: $data.error -->',
-                p({
-                    dataBind: {
-                        text: '$data.error'
-                    }
-                }),
-                '<!-- /ko -->'
-
-            ]),
-            '<!-- /ko -->',
-
-            '<!-- /ko -->',
-
-            '<!-- ko if: filenameStatus.loading -->',
+    function buildFilenameStatusIndicator() {
+        return gen.if('filenameStatus.loading',
             span({
                 class: 'fa fa-spinner fa-pulse'
             }),
-            '<!-- /ko -->'
-        ];
+            [
+                gen.if('filenameStatus.exists',
+                    buildFilenameExists()),
+
+                gen.if('filenameStatus.error',
+                    div({
+                        class: 'alert alert-danger',
+                        style: {
+                            width: '100%',
+                            whiteSpace: 'normal'
+                        },
+                        dataBind: {
+                            with: 'filenameStatus.error'
+                        }
+                    }, [
+                        gen.if('$data.validationError',
+                            p({
+                                dataBind: {
+                                    text: '$data.validationError'
+                                }
+                            })),
+
+                        gen.if('$data.exception',
+                            p({
+                                dataBind: {
+                                    text: '$data.exception'
+                                }
+                            })),
+
+                        gen.if('$data.error',
+                            p({
+                                dataBind: {
+                                    text: '$data.error'
+                                }
+                            })),
+                    ]),
+                    div([
+                        span({
+                            class: 'fa fa-check',
+                            style: {
+                                color: 'green'
+                            }
+                        }),
+                        ' This filename is ok :)'
+                    ]))
+            ]);
     }
 
     function buildDestinationFileTable() {
         return div({
-            // dataBind: {
-            //     with: 'importSpec'
-            // }
         }, [
-            // div({
-            //     class: styles.classes.sectionHeader
-            // }, 'File Info'),
-            // p([
-            //     'Before copying the file to your staging area, you may reanme it.'
-            // ]),
             table({
                 class: 'table form',
-                // dataBind: {
-                //     with: 'stagingSpec'
-                // }
             }, [
                 colgroup([
                     col({
@@ -589,12 +558,6 @@ define([
                             textOverflow: 'ellipsis'
                         }
                     }, [
-                        // span({
-                        //     dataBind: {
-                        //         text: 'indexId'
-                        //     }
-                        // }),
-                        // '.',
                         div({
                             style: {
                                 display: 'flex',
@@ -613,30 +576,25 @@ define([
                                     whiteSpace: 'pre'
                                 }
                             }),
-                            '<!-- ko if: destinationFileExtension -->',
-                            '.',
-                            div({
-                                dataBind: {
-                                    text: 'destinationFileExtension'
-                                },
-                                style: {
-                                    flex: '0 0 auto',
-                                    fontFamily: 'monospace',
-                                    whiteSpace: 'pre'
-                                }
-                            }),
-                            '<!-- /ko -->',
-                            '<!-- ko ifnot: destinationFileExtension -->',
+                            gen.if('destinationFileExtension', [
+                                '.',
+                                div({
+                                    dataBind: {
+                                        text: 'destinationFileExtension'
+                                    },
+                                    style: {
+                                        flex: '0 0 auto',
+                                        fontFamily: 'monospace',
+                                        whiteSpace: 'pre'
+                                    }
+                                })],
                             div({
                                 style: {
                                     fontStyle: 'italic',
                                     flex: 'o o auto'
                                 }
-                            }, 'n/a'),
-                            '<!-- /ko -->'
-                        ]),
-
-
+                            }, 'n/a'))
+                        ])
                     ])
                 ]),
                 tr([
@@ -654,69 +612,37 @@ define([
                             }
                         }),
                         div({
-                        }, [
-                            buildFilenameStatusIndicator()
-                            // buildProposedilename()
-                        ])
+                        }, buildFilenameStatusIndicator())
                     ])
-                ]),
-                // tr([
-                //     th('Metadata file'),
-                //     td([
-                //         span({
-                //             dataBind: {
-                //                 text: 'indexId'
-                //             }
-                //         }),
-                //         '.metadata'
-                //     ])
-                // ])
+                ])
             ])
         ]);
     }
 
     function buildDestinationFileInfo() {
-        return div([
-            // div({
-            //     class: styles.classes.sectionHeader
-            // }, 'File info'),
-
-            '<!-- ko if: item -->',
-            // '<!-- ko with: item -->',
-            '<!-- ko if: isImportable -->',
-            buildDestinationFileTable(),
-            '<!-- /ko -->',
-            '<!-- ko ifnot: isImportable -->',
-            div({
-                style: {
-                    color: 'red'
-                }
-            }, [
-                p('sorry, not importable'),
-                p({
-                    dataBind: {
-                        text: 'error().message'
-                    }
-                })
-            ]),
-            '<!-- /ko -->',
-            // '<!-- /ko -->',
-            '<!-- /ko -->',
-
-            '<!-- ko ifnot: item -->',
-            html.loading(),
-            '<!-- /ko -->'
-        ]);
+        return div(
+            gen.if('item',
+                gen.if('isImportable',
+                    buildDestinationFileTable(),
+                    div({
+                        style: {
+                            color: 'red'
+                        }
+                    }, [
+                        p('sorry, not importable'),
+                        p({
+                            dataBind: {
+                                text: 'error().message'
+                            }
+                        })
+                    ])),
+                html.loading()));
     }
 
     function buildImportView() {
         return div({
             class: 'container-fluid',
-            // dataBind: {
-            //     with: 'item'
-            // }
         }, [
-
             div({
                 class: 'row'
             }, [
@@ -730,7 +656,6 @@ define([
                             marginRight: '4px'
                         }
                     }, 'Source - JGI'),
-                    // buildInfoLink('fromFile')
                 ]),
                 div({
                     class: 'col-md-6'
@@ -742,7 +667,6 @@ define([
                             marginRight: '4px'
                         }
                     }, 'Destination - KBase'),
-                    // buildInfoLink('toStaging')
                 ])
             ]),
 
@@ -805,31 +729,15 @@ define([
                                 params: {
                                     id: 'id',
                                     fileName: 'destinationFileName',
-                                    doStage: 'doStage',
                                     transferJobMonitor: 'transferJobMonitor',
-                                    enabled: 'stageButtonEnabled'
+                                    enabled: 'stageButtonEnabled',
+                                    actions: 'actions'
                                 }
                             }
                         }
                     })
                 ])
             ])
-            // div({
-            //     class: 'row'
-            // }, [
-            //     div({
-            //         class: 'col-md-6'
-            //     }, [
-            //         buildSourceImportMetadata()
-            //     ]),
-            //     div({
-            //         class: 'col-md-6'
-            //     }, [
-            //         buildDestImportInfo()
-            //     ])
-            // ]),
-
-
         ]);
     }
 
@@ -853,8 +761,6 @@ define([
             buildImportView()
         ]);
     }
-
-
 
     function buildTitle() {
         return div([
@@ -880,7 +786,6 @@ define([
 
     function template() {
         return div([
-            // buildDialog(buildTitle(), buildBody()),
             ui.buildDialog({
                 title: buildTitle(),
                 body: buildBody(),
@@ -900,11 +805,11 @@ define([
 
     function component() {
         return {
-            viewModel: viewModel,
+            viewModelWithContext: ViewModel,
             template: template(),
             stylesheet: styles.sheet
         };
     }
 
-    return ko.kb.registerComponent(component);
+    return reg.registerComponent(component);
 });

@@ -1,10 +1,12 @@
 define([
-    'knockout-plus',
+    'knockout',
     'moment',
     'kb_common/html',
-    '../../lib/utils',
+    'kb_knockout/registry',
+    'kb_knockout/lib/generators',
+    'kb_knockout/lib/viewModelBase',
     '../../lib/profile',
-    '../data',
+    '../../lib/model',
     '../schema',
     './searchBar',
     './filterBar',
@@ -13,9 +15,11 @@ define([
     ko,
     moment,
     html,
-    utils,
+    reg,
+    gen,
+    ViewModelBase,
     Profile,
-    Data,
+    Model,
     schema,
     SearchBarComponent,
     FilterBarComponent,
@@ -23,120 +27,206 @@ define([
 ) {
     'use strict';
 
-    var t = html.tag,
+    const t = html.tag,
         div = t('div');
 
-    function viewModel(params) {
-        var runtime = params.runtime;
-        var data = Data.make({runtime: runtime});
-        var subscriptions = ko.kb.SubscriptionManager.make();
+    class ViewModel extends ViewModelBase {
+        constructor(params, context) {
+            super(params);
 
-        // OVERLAY
+            this.runtime = context.$root.runtime;
+            this.showOverlay = context.$root.showOverlay;
 
-        // The overlayComponent is passed directly to the overlay panel.
-        // Updating this observable will cause the overlay panel to show the
-        // specified component.
-        var overlayComponent = ko.observable();
-        var showOverlay = ko.observable();
-        subscriptions.add(showOverlay.subscribe(function (newValue) {
-            // if a good component...
-            overlayComponent(newValue);
-        }));
+            this.model = new Model({
+                runtime: this.runtime
+            });
 
-        // SEARCH
-        var searchInput = ko.observable();
-        var searchResults = ko.observableArray();
-        var searchTotal = ko.observable();
-        var actualSearchTotal = ko.observable();
-        var searchElapsed = ko.observable();
-        var searching = ko.observable();
-        var page = ko.observable();
-        var pageSize = ko.observable();
+            // SEARCH
+            this.searchInput = ko.observable();
+            this.searchResults = ko.observableArray();
+            this.searchTotal = ko.observable();
+            this.actualSearchTotal = ko.observable();
+            this.searchElapsed = ko.observable();
+            this.searching = ko.observable();
+            this.page = ko.observable();
+            this.pageSize = ko.observable();
 
-        // Filters
-        var jobStatusFilter = ko.observableArray();
+            // Filters
+            this.jobStatusFilter = ko.observableArray();
 
-        // schema.columns.forEach(function (column) {
-        //     if (column.sort && column.sort.active()) {
-        //         search.sortBy(column);
-        //     }
-        // });
+            // ditch?
+            this.userSearch = ko.observable();
+            this.availableRowHeight = ko.observable();
 
-        // columns are copied and observables added.
-        // var columns = schema.columns.map(function (column) {
-        //     var col = JSON.parse(JSON.stringify(column));
-        //     if (!col.sort) {
-        //         col.sort = {
-        //             enabled: false
-        //         };
-        //     }
-        //     col.sort.active = ko.observable(false);
-        //     return col;
-        // });
+            // Computeds
+            this.searchQuery = ko.pureComputed(() => {
+                return this.searchInput();
+            });
 
-        // ditch?
-        var userSearch = ko.observable();
-        var availableRowHeight = ko.observable();
-
-        // Computeds
-        var searchQuery = ko.pureComputed(function () {
-            return searchInput();
-        });
-
-        var searchParams = ko.pureComputed(function () {
-            if (pageSize()) {
-                if (!page()) {
-                    page(1);
+            this.searchParams = ko.pureComputed(() => {
+                if (this.pageSize()) {
+                    if (!this.page()) {
+                        this.page(1);
+                    }
                 }
-            }
-            return {
-                query: searchQuery(),
-                page: page(),
-                pageSize: pageSize()
-            };
-        });
+                return {
+                    query: this.searchQuery(),
+                    page: this.page(),
+                    pageSize: this.pageSize()
+                };
+            });
 
-        var searchState = ko.pureComputed(function () {
-            if (searching()) {
-                return 'inprogress';
-            }
+            this.searchState = ko.pureComputed(() => {
+                if (this.searching()) {
+                    return 'inprogress';
+                }
 
-            // In the staging browser, we use filter logic.
-            // I.e., always showing something, filtered,
-            // so 'none' state does not exist.
-            if (!pageSize()) {
-                return 'pending';
-            }
-            if (searchResults().length === 0) {
-                return 'notfound';
-            } else {
-                return 'success';
-            }
-        });
+                // In the staging browser, we use filter logic.
+                // I.e., always showing something, filtered,
+                // so 'none' state does not exist.
+                if (!this.pageSize()) {
+                    return 'pending';
+                }
+                if (this.searchResults().length === 0) {
+                    return 'notfound';
+                } else {
+                    return 'success';
+                }
+            });
+
+            this.refreshTimer = null;
+
+
+            // Subscriptions
+
+            this.subscribe(this.searchParams, () => {
+                this.doSearch();
+            });
+
+            this.subscribe(this.searchQuery, () => {
+                // reset the page back to 1 because we do not konw if the
+                // new search will extend this far.
+                if (!this.page()) {
+                    this.page(1);
+                } else if (this.page() > 1) {
+                    this.page(1);
+                }
+            });
+
+            // The job here is to reset the page, if necessary, due to
+            // a change in page size.
+            this.subscribe(this.pageSize, (newValue, oldValue) => {
+                var currentPage = this.page();
+
+                if (!currentPage) {
+                    return;
+                }
+
+                var newPage = Math.floor((currentPage - 1) * oldValue / newValue) + 1;
+                this.page(newPage);
+            });
+
+
+
+            // sortColumns is the ordered list of all columns currently
+            // sorted. Each sort object is a reference to the actual column
+            // sort spec.
+            this.sortColumns = ko.observableArray();
+
+            // The sortSpec translates the sortColumns into a form which can be
+            // used by the search.
+            this.sortSpec = ko.pureComputed(() => {
+                return this.sortColumns().map((column) => {
+                    return {
+                        field: column.sort.keyName,
+                        descending: column.sort.direction() === 'descending'
+                    };
+                });
+            });
+
+            this.subscribe(this.sortSpec, () => {
+                this.doSearch();
+            });
+
+            this.filterSpec = ko.pureComputed(() => {
+                var filter = {};
+                // Search input
+
+                // Filter by job status
+                if (this.jobStatusFilter().length > 0) {
+                    filter.job_statuses = this.jobStatusFilter();
+                }
+
+                return filter;
+            });
+
+            this.subscribe(this.filterSpec, () => {
+                this.doSearch();
+            });
+
+            this.columns = schema.columns.map((column) => {
+                if (column.sort) {
+                    column.sort.active = ko.observable(false);
+                }
+                return column;
+            });
+            this.columnsMap = this.columns.reduce((acc, column) => {
+                acc[column.name] = column;
+                return acc;
+            }, {});
+
+            // TODO TODO TODO!!
+            this.showError = ko.observable();
+
+            // SEARCH HISTORY
+            this.searchHistory = ko.observableArray();
+
+            this.subscribe(this.searchHistory, (newValue) => {
+                this.saveSearchHistory(newValue);
+            });
+
+            this.clock = ko.observable();
+            this.clockInterval = window.setInterval(() => {
+                var time = new Date().getTime();
+                this.clock(time);
+            }, 1000);
+
+
+            // MAIN
+            this.getSearchHistory()
+                .then((history) => {
+                    this.searchHistory(history);
+                })
+                .catch((err) => {
+                    console.error('ERROR retrieving search history', err);
+                });
+            this.sortBy(this.columnsMap.started);
+            this.refreshLoop();
+        }
 
         // TODO: proper concurrency and cancellation...
 
         // Data fetch
 
-        function removeJob(jobMonitoringId) {
-            return data.deleteStagingJob(jobMonitoringId)
-                .then(function () {
+        removeJob(jobMonitoringId) {
+            return this.model.deleteStagingJob(jobMonitoringId)
+                .then(() => {
                     // console.log('job deleted...');
                 })
-                .catch(function (err) {
+                .catch((err) => {
                     console.error('ERROR!', err);
                 })
-                .finally(function () {
-                    refreshSearch();
+                .finally(() => {
+                    this.refreshSearch();
                 });
         }
 
 
-        function fetchData(page, pageSize, filterSpec, sortSpec) {
+        fetchData(page, pageSize, filterSpec, sortSpec) {
             var now = new Date().getTime();
-            return data.fetchStagingJobs(page, pageSize, filterSpec, sortSpec)
-                .then(function (result) {
-                    var rows = result.jobs.map(function (row) {
+            return this.model.fetchStagingJobs(page, pageSize, filterSpec, sortSpec)
+                .then((result) => {
+                    var rows = result.jobs.map((row) => {
                         var elapsed;
                         if (row.status === 'completed' || row.status === 'error') {
                             elapsed = row.updated - row.started;
@@ -177,144 +267,73 @@ define([
                 });
         }
 
-        function doSearch() {
-            if (!pageSize()) {
+        doSearch() {
+            if (!this.pageSize()) {
                 return;
             }
-            if (!page()) {
+            if (!this.page()) {
                 return;
             }
             // TODO: proper concurrency and cancellation...
 
-            if (searching()) {
+            if (this.searching()) {
                 return;
             }
-            searching(true);
+            this.searching(true);
             // only do this if the results are different, otherwise
             // just update the array.
-            return fetchData(page(), pageSize(), filterSpec(), sortSpec())
-                .then(function (result) {
-                    searchTotal(result.totalAvailable);
-                    actualSearchTotal(result.totalMatched);
+            return this.fetchData(this.page(), this.pageSize(), this.filterSpec(), this.sortSpec())
+                .then((result) => {
+                    this.searchTotal(result.totalAvailable);
+                    this.actualSearchTotal(result.totalMatched);
                     // TODO: smart updating of the result rows!
-                    searchResults.removeAll();
-                    result.rows.forEach(function (row) {
-                        searchResults.push(row);
+                    this.searchResults.removeAll();
+                    result.rows.forEach((row) => {
+                        this.searchResults.push(row);
                     });
                 })
-                .catch(function (err) {
+                .catch((err) => {
                     console.error('ERROR', err);
                 })
-                .finally(function () {
-                    searching(false);
+                .finally(() => {
+                    this.searching(false);
                 });
         }
 
-        function refreshSearch() {
-            if (refreshTimer) {
-                window.clearTimeout(refreshTimer);
-                refreshTimer = null;
+        refreshSearch() {
+            if (this.refreshTimer) {
+                window.clearTimeout(this.refreshTimer);
+                this.refreshTimer = null;
             }
-            doSearch()
-                .finally(function () {
-                    refreshLoop();
+            this.doSearch()
+                .finally(() => {
+                    this.refreshLoop();
                 });
         }
 
-        var refreshTimer;
-
-        function refreshLoop() {
-            refreshTimer = window.setTimeout(function () {
-                if (refreshTimer === null) {
+        refreshLoop() {
+            this.refreshTimer = window.setTimeout(() => {
+                if (this.refreshTimer === null) {
                     return;
                 }
-                doSearch();
-                refreshLoop();
+                this.doSearch();
+                this.refreshLoop();
             }, 10000);
         }
 
-        refreshLoop();
-
-
-        // Subscriptions
-
-        subscriptions.add(searchParams.subscribe(function () {
-            doSearch();
-        }));
-
-        subscriptions.add(searchQuery.subscribe(function () {
-            // reset the page back to 1 because we do not konw if the
-            // new search will extend this far.
-            if (!page()) {
-                page(1);
-            } else if (page() > 1) {
-                page(1);
-            }
-        }));
-
-        // The job here is to reset the page, if necessary, due to
-        // a change in page size.
-        subscriptions.add(pageSize.subscribeChanged(function (newValue, oldValue) {
-            var currentPage = page();
-
-            if (!currentPage) {
-                return;
-            }
-
-            var newPage = Math.floor((currentPage - 1) * oldValue / newValue) + 1;
-            page(newPage);
-        }));
-
-        // sortColumns is the ordered list of all columns currently
-        // sorted. Each sort object is a reference to the actual column
-        // sort spec.
-        var sortColumns = ko.observableArray();
-
-        // The sortSpec translates the sortColumns into a form which can be
-        // used by the search.
-        var sortSpec = ko.pureComputed(function () {
-            return sortColumns().map(function (column) {
-                return {
-                    field: column.sort.keyName,
-                    descending: column.sort.direction() === 'descending'
-                };
-            });
-        });
-
-        subscriptions.add(sortSpec.subscribe(function () {
-            doSearch();
-        }));
-
-        var filterSpec = ko.pureComputed(function () {
-            var filter = {};
-            // Search input
-
-            // Filter by job status
-            if (jobStatusFilter().length > 0) {
-                filter.job_statuses = jobStatusFilter();
-            }
-
-            return filter;
-        });
-
-        subscriptions.add(filterSpec.subscribe(function () {
-            doSearch();
-        }));
-
-
-        function sortBy(column) {
+        sortBy(column) {
             if (!column.sort) {
                 console.warn('Sort not implemented for this column, but sort by called anyway', column);
                 return;
             }
 
             // for now just single column sort.
-            if (sortColumns().length === 1) {
-                var currentSortColumn = sortColumns()[0];
+            if (this.sortColumns().length === 1) {
+                var currentSortColumn = this.sortColumns()[0];
                 if (currentSortColumn !== column) {
                     currentSortColumn.sort.active(false);
                 }
-                sortColumns.removeAll();
+                this.sortColumns.removeAll();
             }
 
             if (column.sort.active()) {
@@ -323,145 +342,48 @@ define([
                 column.sort.active(true);
             }
 
-            sortColumns.push(column);
+            this.sortColumns.push(column);
         }
 
-        var columns = schema.columns.map(function (column) {
-            if (column.sort) {
-                column.sort.active = ko.observable(false);
-            }
-            return column;
-        });
-        var columnsMap = columns.reduce(function (acc, column) {
-            acc[column.name] = column;
-            return acc;
-        }, {});
-
-        sortBy(columnsMap.started);
-
-        // TODO TODO TODO!!
-        var showError = ko.observable();
-
-        // SEARCH HISTORY
-
-        var searchHistory = ko.observableArray();
-
-        function getSearchHistory() {
-            var profile = Profile.make({
-                runtime: runtime
+        getSearchHistory() {
+            var profile = new Profile({
+                runtime: this.runtime
             });
             return profile.getHistory('jobsbrowser')
-                .spread(function (result, error) {
+                .spread((result, error) => {
                     if (result) {
                         return result;
                     } else {
-                        showError(error);
+                        this.showError(error);
                     }
                 });
         }
 
-        function saveSearchHistory(history) {
-            var profile = Profile.make({
-                runtime: runtime
+        saveSearchHistory(history) {
+            var profile = new Profile({
+                runtime: this.runtime
             });
             return profile.saveHistory('jobsbrowser', history)
-                .spread(function (result, error) {
+                .spread((result, error) => {
                     if (result) {
                         return result;
                     } else {
-                        showError(error);
+                        this.showError(error);
                     }
                 });
         }
 
-        subscriptions.add(searchHistory.subscribe(function (newValue) {
-            saveSearchHistory(newValue);
-        }));
-
-        getSearchHistory()
-            .then(function (history) {
-                searchHistory(history);
-            })
-            .catch(function (err) {
-                console.error('ERROR retrieving search history', err);
-            });
-
-        // CLOCK
-        // I know...
-        var clock = ko.observable();
-        var clockInterval = window.setInterval(function () {
-            var time = new Date().getTime();
-            clock(time);
-        }, 1000);
-
-        function dispose() {
-            if (clockInterval) {
-                window.clearInterval(clockInterval);
-                clockInterval = null;
+        dispose() {
+            if (this.clockInterval) {
+                window.clearInterval(this.clockInterval);
+                this.clockInterval = null;
             }
-            if (refreshTimer) {
-                window.clearTimeout(refreshTimer);
-                refreshTimer = null;
+            if (this.refreshTimer) {
+                window.clearTimeout(this.refreshTimer);
+                this.refreshTimer = null;
             }
-            subscriptions.dispose();
+            super.dispose();
         }
-
-        // INIT
-
-        function init() {
-            // fetchData();
-        }
-        try {
-            init();
-        } catch (ex) {
-            console.error('EXCEPTION', ex);
-        }
-
-        return {
-            overlayComponent: overlayComponent,
-
-            search: {
-                // INPUTS
-                searchInput: searchInput,
-                searchHistory: searchHistory,
-
-
-                // SYNTHESIZED INPUTS
-                searchQuery: searchQuery,
-                searchState: searchState,
-
-                // RESULTS
-                searchResults: searchResults,
-                searchTotal: searchTotal,
-                actualSearchTotal: actualSearchTotal,
-                searchElapsed: searchElapsed,
-                searching: searching,
-                userSearch: userSearch,
-
-                // FILTER
-                jobStatusFilter: jobStatusFilter,
-
-                // Sorting
-                sortBy: sortBy,
-
-                // computed
-                availableRowHeight: availableRowHeight,
-                pageSize: pageSize,
-
-                // Note, starts with 1.
-                page: page,
-
-                refreshSearch: refreshSearch,
-                showOverlay: showOverlay,
-                // error: error,
-
-                // actions
-                removeJob: removeJob,
-
-                columns: columns
-            },
-            dispose: dispose
-        };
     }
 
     var styles = html.makeStyles({
@@ -502,29 +424,20 @@ define([
         }
     });
 
-    // function buildInputArea() {
-    //     return ko.kb.komponent({
-    //         name: SearchBarComponent.name(),
-    //         params: {
-    //             search: 'search'
-    //         }
-    //     });
-    // }
-
     function buildFilterArea() {
-        return ko.kb.komponent({
+        return gen.component({
             name: FilterBarComponent.name(),
             params: {
-                search: 'search'
+                search: '$data'
             }
         });
     }
 
     function buildResultsArea() {
-        return ko.kb.komponent({
+        return gen.component({
             name: BrowserComponent.name(),
             params: {
-                search: 'search'
+                search: '$data'
             }
         });
     }
@@ -533,15 +446,9 @@ define([
         return div({
             class: styles.classes.component
         }, [
-            // The search input area
-            // div({
-            //     class: styles.classes.searchArea
-            // }, buildInputArea()),
-            // The search filter area
             div({
                 class: styles.classes.filterArea
             }, buildFilterArea()),
-            // The search results / error / message area
             div({
                 class: styles.classes.resultArea
             }, [
@@ -552,11 +459,11 @@ define([
 
     function component() {
         return {
-            viewModel: viewModel,
+            viewModelWithContext: ViewModel,
             template: template(),
             stylesheet: styles.sheet
         };
     }
 
-    return ko.kb.registerComponent(component);
+    return reg.registerComponent(component);
 });

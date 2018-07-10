@@ -1,30 +1,29 @@
 define([
-    'kb_ko/KO',
+    'knockout',
+    'kb_knockout/registry',
     'kb_common/html'
 ], function (
-    KO,
+    ko,
+    reg,
     html
 ) {
     'use strict';
-    const ko = KO.ko;
     const t = html.tag,
         div = t('div'),
         span = t('span'),
         a = t('a');
-
 
     /*
     params are:
         searchInput
         searchHistory
     */
-    function viewModel(params) {
-        const searchInputQueryValue = ko.pureComputed(function () {
-            return encodeURIComponent(params.searchInput() || '');
-        });
-        return {
-            searchInputQueryValue
-        };
+    class ViewModel {
+        constructor(params) {
+            this.searchInputQueryValue = ko.pureComputed(function () {
+                return encodeURIComponent(params.searchInput() || '');
+            });
+        }
     }
 
     var styles = html.makeStyles({
@@ -179,11 +178,11 @@ define([
 
     function component() {
         return {
-            viewModel: viewModel,
+            viewModel: ViewModel,
             template: template(),
             stylesheet: styles.sheet
         };
     }
 
-    return ko.kb.registerComponent(component);
+    return reg.registerComponent(component);
 });

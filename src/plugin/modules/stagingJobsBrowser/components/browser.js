@@ -1,214 +1,182 @@
 define([
-    'knockout-plus',
+    'knockout',
+    'kb_knockout/registry',
+    'kb_knockout/lib/generators',
+    'kb_knockout/lib/viewModelBase',
     'kb_common/html',
     './result'
 ], function (
     ko,
+    reg,
+    gen,
+    ViewModelBase,
     html,
     ResultComponent
 ) {
     'use strict';
 
-    var t = html.tag,
+    const t = html.tag,
         span = t('span'),
         div = t('div'),
         button = t('button'),
         input = t('input'),
         select = t('select');
 
-    ko.extenders.parsed = function (target, parseFun) {
-        target.parsed = ko.observable();
-        target.parseError = ko.observable();
+    // ko.extenders.parsed = function (target, parseFun) {
+    //     target.parsed = ko.observable();
+    //     target.parseError = ko.observable();
 
-        function parseit(newValue) {
-            try {
-                target.parsed(parseFun(newValue));
-            } catch (ex) {
-                target.parseError(ex.message);
-                console.error('Error parsing : ' + ex.message);
-            }
-        }
-        target.subscribe(function (newValue) {
-            parseit(newValue);
-        });
-        parseit(target());
-        return target;
-    };
+    //     function parseit(newValue) {
+    //         try {
+    //             target.parsed(parseFun(newValue));
+    //         } catch (ex) {
+    //             target.parseError(ex.message);
+    //             console.error('Error parsing : ' + ex.message);
+    //         }
+    //     }
+    //     target.subscribe(function (newValue) {
+    //         parseit(newValue);
+    //     });
+    //     parseit(target());
+    //     return target;
+    // };
 
     // NB: hmm, it looks like the params are those active in the tab which spawned
     // this component...
-    function viewModel(params) {
-        var subscriptions = ko.kb.SubscriptionManager.make();
-        // From parent search component.
-        var search = params.search;
-        var totalCount = search.searchTotal;
-        var actualTotalCount = search.actualSearchTotal;
-        var searching = search.searching;
-        var pageSize = search.pageSize;
-        var page = search.page;
+    class ViewModel extends ViewModelBase {
+        constructor(params) {
+            super(params);
+            // From parent search component.
+            this.search = params.search;
+            this.totalCount = this.search.searchTotal;
+            this.actualTotalCount = this.search.actualSearchTotal;
+            this.searching = this.search.searching;
+            this.pageSize = this.search.pageSize;
+            this.page = this.search.page;
 
-        var pageFrom = ko.pureComputed(function () {
-            if (!page()) {
-                return '';
-            }
+            this.pageFrom = ko.pureComputed(() => {
+                if (!this.page()) {
+                    return '';
+                }
 
-            return (page() - 1) * pageSize() + 1;
-        });
+                return (this.page() - 1) * this.pageSize() + 1;
+            });
 
-        var pageTo = ko.pureComputed(function () {
-            if (!page()) {
-                return '';
-            }
-            return Math.min(page() * pageSize(), totalCount());
-        });
+            this.pageTo = ko.pureComputed(() => {
+                if (!this.page()) {
+                    return '';
+                }
+                return Math.min(this.page() * this.pageSize(), this.totalCount());
+            });
 
 
 
-        var pageSizeInput = ko.pureComputed(function () {
-            return String(pageSize());
-        });
+            this.pageSizeInput = ko.pureComputed(() => {
+                return String(this.pageSize());
+            });
 
-        // Our own, for now. Since these are overall properties of the
-        // search capabilities, they should be foisted up to the search as well.
+            // Our own, for now. Since these are overall properties of the
+            // search capabilities, they should be foisted up to the search as well.
 
-        // SORTING
-        var sortBy = ko.observable();
+            // SORTING
+            this.sortBy = ko.observable();
 
-        // TODO: these need to come from the type
-        // var sortFields = typeDef.searchKeys;
-        var sortFields = [];
-        var sortFieldsMap = {};
-        sortFields.forEach(function (sortField) {
-            sortFieldsMap[sortField.key] = sortField;
-        });
+            // TODO: these need to come from the type
+            // var sortFields = typeDef.searchKeys;
+            this.sortFields = [];
+            this.sortFieldsMap = {};
+            this.sortFields.forEach((sortField) => {
+                this.sortFieldsMap[sortField.key] = sortField;
+            });
 
-        var sortDirection = ko.observable('ascending');
-        var sortDirections = [{
-            value: 'ascending',
-            label: 'Ascending'
-        }, {
-            value: 'descending',
-            label: 'Descending'
-        }];
+            this.sortDirection = ko.observable('ascending');
+            this.sortDirections = [{
+                value: 'ascending',
+                label: 'Ascending'
+            }, {
+                value: 'descending',
+                label: 'Descending'
+            }];
 
-        var totalPages = ko.pureComputed(function () {
-            if (!search.searchTotal()) {
-                return 0;
-            }
-            var size = search.searchTotal() / pageSize();
-            return Math.ceil(size);
-        });
+            this.totalPages = ko.pureComputed(() => {
+                if (!this.search.searchTotal()) {
+                    return 0;
+                }
+                var size = this.search.searchTotal() / this.pageSize();
+                return Math.ceil(size);
+            });
 
-        var pageInput = ko.observable(String(page()));
-        pageInput.extend({
-            rateLimit: {
-                timeout: 500,
-                method: 'notifyWhenChangesStop'
-            }
-        });
-        subscriptions.add(pageInput.subscribe(function (newValue) {
-            // If bad input, don't do anything.
-            if (newValue === '' || newValue === undefined || newValue === null) {
-                return;
-            } else if (isNaN(newValue)) {
-                return;
-            }
-            var value = parseInt(newValue);
-            if (value > totalPages()) {
-                value = totalPages();
-            }
-            if (value < 1) {
-                value = 1;
-            }
-            if (value !== page()) {
-                page(value);
-            }
-        }));
-        subscriptions.add(page.subscribe(function (newValue) {
-            if (newValue !== parseInt(pageInput())) {
-                pageInput(String(newValue));
-            }
-        }));
-        var pageValues = ko.pureComputed(function () {
-            var values = [];
-            if (totalPages() > 100) {
+            this.pageInput = ko.observable(String(this.page()));
+            this.pageInput.extend({
+                rateLimit: {
+                    timeout: 500,
+                    method: 'notifyWhenChangesStop'
+                }
+            });
+            this.subscribe(this.pageInput, (newValue) => {
+                // If bad input, don't do anything.
+                if (newValue === '' || newValue === undefined || newValue === null) {
+                    return;
+                } else if (isNaN(newValue)) {
+                    return;
+                }
+                var value = parseInt(newValue);
+                if (value > this.totalPages()) {
+                    value = this.totalPages();
+                }
+                if (value < 1) {
+                    value = 1;
+                }
+                if (value !== this.page()) {
+                    this.page(value);
+                }
+            });
+            this.subscribe(this.page, (newValue) => {
+                if (newValue !== parseInt(this.pageInput())) {
+                    this.pageInput(String(newValue));
+                }
+            });
+            this.pageValues = ko.pureComputed(() => {
+                var values = [];
+                if (this.totalPages() > 100) {
+                    return values;
+                }
+                for (var i = 0; i < this.totalPages(); i += 1) {
+                    values.push({
+                        value: String(i + 1),
+                        label: String(i + 1)
+                    });
+                }
                 return values;
-            }
-            for (var i = 0; i < totalPages(); i += 1) {
-                values.push({
-                    value: String(i + 1),
-                    label: String(i + 1)
-                });
-            }
-            return values;
-        });
-
-        function doFirst() {
-            page(1);
+            });
         }
 
-        function doLast() {
-            page(totalPages());
+        doFirst() {
+            this.page(1);
         }
 
-        function doPrevPage() {
-            if (page() > 1) {
-                page(page() - 1);
+        doLast() {
+            this.page(this.totalPages());
+        }
+
+        doPrevPage() {
+            if (this.page() > 1) {
+                this.page(this.page() - 1);
             }
         }
 
-        function doNextPage() {
-            if (page() < totalPages()) {
-                page(page() + 1);
+        doNextPage() {
+            if (this.page() < this.totalPages()) {
+                this.page(this.page() + 1);
             }
         }
 
-        function dispose() {
-            subscriptions.dispose();
-        }
-
-        function isSearchState(states) {
-            var s = search.searchState();
+        isSearchState(states) {
+            var s = this.search.searchState();
             return states.some(function (state) {
                 return (state === s);
             });
         }
-
-        return {
-            search: params.search,
-            // Search (shared)
-            totalCount: totalCount,
-            searching: searching,
-            actualTotalCount: actualTotalCount,
-
-            // Paging
-            page: page,
-            totalPages: totalPages,
-            pageInput: pageInput,
-            pageValues: pageValues,
-            pageSize: pageSize,
-            pageSizeInput: pageSizeInput,
-
-            pageFrom: pageFrom,
-            pageTo: pageTo,
-
-            doFirst: doFirst,
-            doLast: doLast,
-            doPrevPage: doPrevPage,
-            doNextPage: doNextPage,
-
-            // Sorting
-            sortBy: sortBy,
-            sortFields: sortFields,
-            sortDirection: sortDirection,
-            sortDirections: sortDirections,
-
-            // Queries
-            isSearchState: isSearchState,
-
-            // Knockout lifecycle
-            dispose: dispose
-        };
     }
 
     function buildIcon(type) {
@@ -281,27 +249,6 @@ define([
                         }
                     }, [
                         buildPageSelector(),
-                        // '<!-- ko if: actualTotalCount() > totalCount() -->',
-                        // span({
-                        //     style: {
-                        //         fontStyle: 'italic',
-                        //         color: 'brown'
-                        //     }
-                        // }, [
-                        //     ' (truncated from ',
-                        //     span({
-                        //         dataBind: {
-                        //             typedText: {
-                        //                 value: 'actualTotalCount',
-                        //                 type: '"number"',
-                        //                 format: '"0,0"'
-                        //             }
-                        //         }
-                        //     }),
-                        //     ')'
-                        // ]),
-                        // '<!-- /ko -->',
-                        // '<!-- /ko -->'
                     ])
                 ])
             ])
@@ -319,40 +266,36 @@ define([
                 overflow: 'hidden',
                 textOverflow: 'ellipsis'
             }
-        }, [
-            '<!-- ko if: totalPages() && totalPages() > 1 -->',
+        }, gen.if('totalPages() && totalPages() > 1', [
             span({
                 style: {
                     marginLeft: '6px'
                 }
             }, 'page '),
-            '<!-- ko if: totalPages() <= 100 -->',
-            select({
-                dataBind: {
-                    value: 'pageInput',
-                    options: 'pageValues',
-                    optionsValue: '"value"',
-                    optionsText: '"label"'
-                },
-                class: 'form-control',
-                style: {
-                    display: 'inline-block',
-                    width: '5em'
-                }
-            }),
-            '<!-- /ko -->',
-            '<!-- ko if: totalPages() > 100 -->',
-            input({
-                dataBind: {
-                    textInput: 'pageInput'
-                },
-                class: 'form-control',
-                style: {
-                    display: 'inline-block',
-                    width: '5em'
-                }
-            }),
-            '<!-- /ko -->',
+            gen.if('totalPages() <= 100',
+                select({
+                    dataBind: {
+                        value: 'pageInput',
+                        options: 'pageValues',
+                        optionsValue: '"value"',
+                        optionsText: '"label"'
+                    },
+                    class: 'form-control',
+                    style: {
+                        display: 'inline-block',
+                        width: '5em'
+                    }
+                }),
+                input({
+                    dataBind: {
+                        textInput: 'pageInput'
+                    },
+                    class: 'form-control',
+                    style: {
+                        display: 'inline-block',
+                        width: '5em'
+                    }
+                })),
             span({
                 style: {
                     marginLeft: '6px'
@@ -362,22 +305,19 @@ define([
                 dataBind: {
                     text: 'totalPages()'
                 }
-            }),
-            '<!-- /ko -->',
-        ]);
+            })
+        ]));
     }
 
     function buildPagingControls() {
         return div({
             class: 'btn-toolbar ' + styles.classes.toolbar
         }, [
-            buildPagingButtons(),
-            // buildPageSelector()
+            buildPagingButtons()
         ]);
     }
 
-
-    var styles = html.makeStyles({
+    const styles = html.makeStyles({
         component: {
             css: {
                 flex: '1 1 0px',
@@ -427,11 +367,11 @@ define([
 
     function component() {
         return {
-            viewModel: viewModel,
+            viewModel: ViewModel,
             template: template(),
             stylesheet: styles.sheet
         };
     }
 
-    return ko.kb.registerComponent(component);
+    return reg.registerComponent(component);
 });

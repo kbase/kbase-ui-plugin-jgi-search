@@ -1,17 +1,17 @@
 define([
-    'knockout-plus',
+    'knockout',
+    'kb_knockout/registry',
+    'kb_knockout/lib/generators',
     'kb_common/html',
-    'kb_common/ui',
-    '../../lib/utils',
     'kb_plugin_jgi-search',
     './navBar',
     './searchBar',
     './browser'
 ], function (
     ko,
+    reg,
+    gen,
     html,
-    ui,
-    utils,
     Plugin,
     NavBarComponent,
     SearchBarComponent,
@@ -37,82 +37,61 @@ define([
     sub components will be composed with direct references to any of these vm pieces
     they need to modify or use.
      */
-    function viewModel(params) {
+    class ViewModel {
+        constructor(params) {
+            // Unpack the Search VM.
+            this.runtime = params.runtime;
+            this.search = params.search;
 
-        // Unpack the Search VM.
-        var searchInput = params.search.searchInput;
-        var searchResults = params.search.searchResults;
-        var searchTotal = params.search.searchTotal;
-        var searching = params.search.searching;
-        var pageSize = params.search.pageSize;
-        var page = params.search.page;
+            this.searchInput = params.search.searchInput;
+            this.searchResults = params.search.searchResults;
+            this.searchTotal = params.search.searchTotal;
+            this.searching = params.search.searching;
+            this.pageSize = params.search.pageSize;
+            this.page = params.search.page;
+            this.doSearch = params.search.doSearch;
 
-        var typeFilterOptions = params.search.typeFilterOptions.map(function (option) {
-            return option;
-        });
-        typeFilterOptions.unshift({
-            label: 'Select one or more file types',
-            value: '_select_',
-            enabled: true
-        });
+            this.typeFilterOptions = params.search.typeFilterOptions.map((option) => {
+                return option;
+            });
+            this.typeFilterOptions.unshift({
+                label: 'Select one or more file types',
+                value: '_select_',
+                enabled: true
+            });
 
-        function doRemoveTypeFilter(data) {
-            params.search.typeFilter.remove(data);
+            this.piFilter = ko.observable().extend({
+                rateLimit: 300
+            }).syncWith(params.search.piFilter);
+
+            this.seqProjectFilter = ko.observable().extend({
+                rateLimit: 300
+            }).syncWith(params.search.seqProjectFilter);
+
+            this.proposalFilter = ko.observable().extend({
+                rateLimit: 300
+            }).syncWith(params.search.proposalFilter);
+
+            this.logo = Plugin.plugin.fullPath  + '/images/jgi-short-logo.jpg';
+
+            this.typeFilterInput = ko.observable('_select_');
         }
 
-        function doSelectTypeFilter(data) {
+        doRemoveTypeFilter(data) {
+            this.search.typeFilter.remove(data);
+        }
+
+        doSelectTypeFilter(data) {
             if (data.typeFilterInput() === '_select_') {
                 return;
             }
-            params.search.typeFilter.push(data.typeFilterInput());
+            this.search.typeFilter.push(data.typeFilterInput());
             data.typeFilterInput('_select_');
         }
-
-        var piFilter = ko.observable().extend({
-            rateLimit: 300
-        }).syncWith(params.search.piFilter);
-
-        var seqProjectFilter = ko.observable().extend({
-            rateLimit: 300
-        }).syncWith(params.search.seqProjectFilter);
-
-        var proposalFilter = ko.observable().extend({
-            rateLimit: 300
-        }).syncWith(params.search.proposalFilter);
-
-        return {
-            // The top level search is included so that it can be
-            // propagated.
-            search: params.search,
-            runtime: params.search.runtime,
-            // And we break out fields here for more natural usage (or not??)
-            searchInput: searchInput,
-            searchResults: searchResults,
-            searchTotal: searchTotal,
-            searching: searching,
-            pageSize: pageSize,
-            page: page,
-
-            logo: Plugin.plugin.fullPath  + '/images/jgi-short-logo.jpg',
-
-            // Type filter
-            typeFilterInput: ko.observable('_select_'),
-            typeFilterOptions: typeFilterOptions,
-
-            // Project filter
-            seqProjectFilter: seqProjectFilter,
-            proposalFilter: proposalFilter,
-            piFilter: piFilter,
-
-            // ACTIONS
-            doSearch: params.search.doSearch,
-            doRemoveTypeFilter: doRemoveTypeFilter,
-            doSelectTypeFilter: doSelectTypeFilter
-        };
     }
 
     function buildInputArea() {
-        return ko.kb.komponent({
+        return gen.component({
             name: SearchBarComponent.name(),
             params: {
                 logo: 'logo',
@@ -122,7 +101,7 @@ define([
     }
 
     function buildNavArea() {
-        return ko.kb.komponent({
+        return gen.component({
             name: NavBarComponent.name(),
             params: {
                 searchInput: 'searchInput'
@@ -150,17 +129,14 @@ define([
                 style: {
                     margin: '0 4px'
                 }
-            }, [
-                '<!-- ko if: enabled -->',
+            }, gen.if('enabled',
                 option({
                     dataBind: {
                         value: 'value',
                         text: 'label',
                         enable: 'enabled'
                     }
-                }),
-                '<!-- /ko -->'
-            ]),
+                }))),
 
             // selected types
             div({
@@ -181,10 +157,6 @@ define([
                         dataBind: {
                             text: '$data'
                         },
-                        // style: {
-                        //     backgroundColor: 'transparent',
-                        //     borderColor: 'transparent'
-                        // },
                         class: ['form-control', styles.classes.activeFilterInput]
                     })),
                     span({
@@ -224,24 +196,15 @@ define([
                 }
             }),
             // enable the clear button
-            '<!-- ko if: seqProjectFilter -->',
-            span({
-                dataBind: {
-                    click: 'function() {seqProjectFilter("");}'
-                },
-                class: 'kb-btn-mini -danger'
-            }, span({
-                class: 'fa fa-times'
-            })),
-            '<!-- /ko -->',
-            // disable the clear button
-            // '<!-- ko ifnot: seqProjectFilter -->',
-            // span({
-            //     class: 'kb-btn-mini -danger -hidden'
-            // }, span({
-            //     class: 'fa fa-times'
-            // })),
-            // '<!-- /ko -->'
+            gen.if('seqProjectFilter',
+                span({
+                    dataBind: {
+                        click: '() => {seqProjectFilter("");}'
+                    },
+                    class: 'kb-btn-mini -danger'
+                }, span({
+                    class: 'fa fa-times'
+                })))
         ]);
     }
 
@@ -269,24 +232,15 @@ define([
                 }
             }),
             // enable the clear button
-            '<!-- ko if: proposalFilter -->',
-            span({
-                dataBind: {
-                    click: 'function() {proposalFilter("");}'
-                },
-                class: 'kb-btn-mini -danger'
-            }, span({
-                class: 'fa fa-times'
-            })),
-            '<!-- /ko -->',
-            // disable the clear button
-            // '<!-- ko ifnot: proposalFilter -->',
-            // span({
-            //     class: 'kb-btn-mini -danger -hidden'
-            // }, span({
-            //     class: 'fa fa-times'
-            // })),
-            // '<!-- /ko -->'
+            gen.if('proposalFilter',
+                span({
+                    dataBind: {
+                        click: '() => {proposalFilter("");}'
+                    },
+                    class: 'kb-btn-mini -danger'
+                }, span({
+                    class: 'fa fa-times'
+                })))
         ]);
     }
 
@@ -314,24 +268,15 @@ define([
                 }
             }),
             // enable the clear button
-            '<!-- ko if: piFilter -->',
-            span({
-                dataBind: {
-                    click: 'function() {piFilter("");}'
-                },
-                class: 'kb-btn-mini -danger'
-            }, span({
-                class: 'fa fa-times'
-            })),
-            '<!-- /ko -->',
-            // disable the clear button
-            // '<!-- ko ifnot: piFilter -->',
-            // span({
-            //     class: 'kb-btn-mini -hidden'
-            // }, span({
-            //     class: 'fa fa-times'
-            // })),
-            // '<!-- /ko -->'
+            gen.if('piFilter',
+                span({
+                    dataBind: {
+                        click: 'function() {piFilter("");}'
+                    },
+                    class: 'kb-btn-mini -danger'
+                }, span({
+                    class: 'fa fa-times'
+                })))
         ]);
     }
 
@@ -357,7 +302,7 @@ define([
     }
 
     function buildResultsArea() {
-        return ko.kb.komponent({
+        return gen.component({
             name: SearchBrowserComponent.name(),
             params: {
                 search: 'search',
@@ -418,11 +363,11 @@ define([
 
     function component() {
         return {
-            viewModel: viewModel,
+            viewModel: ViewModel,
             template: template(),
             stylesheet: styles.sheet
         };
     }
 
-    return ko.kb.registerComponent(component);
+    return reg.registerComponent(component);
 });
