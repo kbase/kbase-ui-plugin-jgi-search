@@ -683,7 +683,6 @@ define([
         }
 
         var m = progressRe.exec(message);
-        // console.log('m', m, message, message.length, typeof message);
         if (!m) {
             var em = errorRe.test(message);
 

@@ -232,7 +232,6 @@ define([
             };
             return this.rpc.call('jgi_gateway', 'remove_staging_job', param)
                 .spread((result, error) => {
-                    // console.log('deletion result...', result, error);
                     if (result) {
                         // console.log('Yay!');
                     } else if (error) {
@@ -261,7 +260,6 @@ define([
             return this.rpc.call('jgi_gateway', 'staging_jobs', param)
                 .spread((result, error) => {
                     if (result) {
-                        // console.log('got staging jobs...', result);
                         var stagingJobs = result.jobs.map((job) => {
                             return {
                                 jobMonitoringId: job.job_monitoring_id,
