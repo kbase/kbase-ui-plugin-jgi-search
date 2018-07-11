@@ -2,12 +2,14 @@ define([
     'knockout',
     'kb_knockout/registry',
     'kb_knockout/lib/generators',
-    'kb_common/html'
+    'kb_common/html',
+    'kb_knockout/components/elapsedClock'
 ], function (
     ko,
     reg,
     gen,
-    html
+    html,
+    ElapsedClockComponent
 ) {
     'use strict';
     const t = html.tag,
@@ -19,11 +21,12 @@ define([
     class ViewModel {
         constructor(params) {
             this.startTime = unwrap(params.row.started.value);
+            this.endTime = params.row.updated.value;
             this.status = params.row.status.value;
             this.elapsed = unwrap(params.row.elapsed.value);
 
             this.showCurrentElapsed = ko.pureComputed(() => {
-                switch (unwrap(status)) {
+                switch (unwrap(this.status)) {
                 case 'completed':
                 case 'error':
                 case 'notfound':
@@ -36,11 +39,11 @@ define([
     }
 
     function template() {
-        return div(gen.if('showCurrentElapsed',
+        return div(gen.if('showCurrentElapsed()',
             span({
                 dataBind: {
                     component: {
-                        name: '"generic/elapsed-clock"',
+                        name: ElapsedClockComponent.quotedName(),
                         params: {
                             startTime: 'startTime'
                         }

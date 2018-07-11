@@ -22,25 +22,6 @@ define([
         input = t('input'),
         select = t('select');
 
-    // ko.extenders.parsed = function (target, parseFun) {
-    //     target.parsed = ko.observable();
-    //     target.parseError = ko.observable();
-
-    //     function parseit(newValue) {
-    //         try {
-    //             target.parsed(parseFun(newValue));
-    //         } catch (ex) {
-    //             target.parseError(ex.message);
-    //             console.error('Error parsing : ' + ex.message);
-    //         }
-    //     }
-    //     target.subscribe(function (newValue) {
-    //         parseit(newValue);
-    //     });
-    //     parseit(target());
-    //     return target;
-    // };
-
     // NB: hmm, it looks like the params are those active in the tab which spawned
     // this component...
     class ViewModel extends ViewModelBase {
@@ -237,9 +218,7 @@ define([
                             display: 'inline-block',
                             verticalAlign: 'middle',
                             textAlign: 'center',
-                            // margin: '6px 0 0 4px',
                             float: 'none',
-                            // height: '20px'
                         },
                         dataBind: {
                             style: {
@@ -259,7 +238,6 @@ define([
         return  div({
             style: {
                 display: 'inline-block',
-                // width: '50%',
                 verticalAlign: 'middle',
                 textAlign: 'center',
                 whiteSpace: 'nowrap',
