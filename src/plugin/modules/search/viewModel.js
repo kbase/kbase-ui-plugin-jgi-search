@@ -469,6 +469,14 @@ define([
         }
 
         addToSearchHistory(value) {
+            // Do not add empty search values.
+            if (!value) {
+                return;
+            }
+            if (value.trim().length === 0) {
+                return;
+            }
+
             // Remove the search input if it is already in the list
             this.searchHistory.remove(value);
 
