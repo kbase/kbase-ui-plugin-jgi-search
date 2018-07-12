@@ -324,14 +324,14 @@ define([
                         button({
                             dataBind: {
                                 click: 'doNextPage',
-                                disable: '!page() || page() === totalPages() || searching()'
+                                disable: '!page() || !totalPages() || page() === totalPages() || searching()'
                             },
                             class: 'btn btn-default'
                         }, buildIcon('chevron-right')),
                         button({
                             dataBind: {
                                 click: 'doLast',
-                                disable: '!page() || page() === totalPages() || searching()'
+                                disable: '!page() || !totalPages() || page() === totalPages() || searching()'
                             },
                             class: 'btn btn-default'
                         }, buildIcon('step-forward')),
