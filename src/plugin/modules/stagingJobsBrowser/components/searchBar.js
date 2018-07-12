@@ -68,6 +68,14 @@ define([
         }
 
         addToSearchHistory(value) {
+            // Do not add empty search values.
+            if (!value) {
+                return;
+            }
+            if (value.trim().length === 0) {
+                return;
+            }
+
             if (this.searchHistory.indexOf(value) !== -1) {
                 return;
             }
