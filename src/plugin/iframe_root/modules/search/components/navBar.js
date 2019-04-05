@@ -1,12 +1,4 @@
-define([
-    'knockout',
-    'kb_knockout/registry',
-    'kb_lib/html'
-], function (
-    ko,
-    reg,
-    html
-) {
+define(['knockout', 'kb_knockout/registry', 'kb_lib/html'], function (ko, reg, html) {
     'use strict';
     const t = html.tag,
         div = t('div'),
@@ -33,7 +25,7 @@ define([
             flexDirection: 'column'
         },
         searchArea: {
-            flex: '0 0 50px',
+            flex: '0 0 50px'
         },
         activeFilterInput: {
             backgroundColor: 'rgba(209, 226, 255, 1)',
@@ -143,37 +135,56 @@ define([
     });
 
     function buildNavBar() {
-        return div({
-            class:  styles.classes.navBar
-        }, [
-            span({
-                class: styles.classes.label
-            }, 'Search:'),
-            a({
-                class: styles.classes.navLink,
-                dataBind: {
-                    attr: {
-                        href: '"#search?q=" + searchInputQueryValue()'
-                    }
-                },
-            }, 'KBase - User Data, Genome Features, Reference Data'),
-            span({
-                class: styles.classes.selectedNavLink
-            }, 'JGI')
-        ]);
+        return div(
+            {
+                class: styles.classes.navBar
+            },
+            [
+                span(
+                    {
+                        class: styles.classes.label
+                    },
+                    'Search:'
+                ),
+                a(
+                    {
+                        class: styles.classes.navLink,
+                        dataBind: {
+                            attr: {
+                                href: '"/#search?q=" + searchInputQueryValue()',
+                                target: '"_parent"'
+                            }
+                        }
+                    },
+                    'KBase - User Data, Genome Features, Reference Data'
+                ),
+                span(
+                    {
+                        class: styles.classes.selectedNavLink
+                    },
+                    'JGI'
+                )
+            ]
+        );
     }
 
     function template() {
-        return div({
-            class: styles.classes.component,
-            dataKBTesthookComponent: 'nav-bar'
-        }, [
-            div({
-                styles: {
-                    flex: '1 1 0px'
-                }
-            }, buildNavBar())
-        ]);
+        return div(
+            {
+                class: styles.classes.component,
+                dataKBTesthookComponent: 'nav-bar'
+            },
+            [
+                div(
+                    {
+                        styles: {
+                            flex: '1 1 0px'
+                        }
+                    },
+                    buildNavBar()
+                )
+            ]
+        );
     }
 
     function component() {
