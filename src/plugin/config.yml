@@ -19,9 +19,10 @@ install:
     routes:
         - path: ['jgi-search']
           queryParams: {
+              q: {}
           }
           params: {
-              view: 'search'
+              view: search
           }
           widget: kb_plugin_jgi-search
           authorization: true
