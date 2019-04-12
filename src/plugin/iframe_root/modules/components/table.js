@@ -41,7 +41,8 @@ define([
             css: {
                 flex: '1 1 0px',
                 display: 'flex',
-                flexDirection: 'column'
+                flexDirection: 'column',
+                overflowY: 'hidden'
             }
         },
         itemRows: {
