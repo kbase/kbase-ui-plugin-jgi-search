@@ -137,6 +137,7 @@ define([
             this.hostNode = node;
             this.rootComponent = new RootComponent(this.runtime, MainComponent.name());
             this.container = this.hostNode.appendChild(this.rootComponent.node);
+            this.container.setAttribute('data-k-b-testhook-plugin', 'jgi-search');
         }
 
         start(params) {
