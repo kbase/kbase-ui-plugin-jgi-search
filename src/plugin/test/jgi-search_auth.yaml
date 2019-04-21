@@ -1,0 +1,15 @@
+---
+- description: JGI Search default view
+  specs:
+    - description: should ...
+      baseSelector: []
+      tasks:
+      - subtask: login
+      - action: navigate
+        path: jgi-search
+      - subtask: plugin
+      - wait: forElement
+        selector:
+        - type: plugin
+          value: jgi-search
+
