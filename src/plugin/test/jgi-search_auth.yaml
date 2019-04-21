@@ -1,15 +1,15 @@
 ---
-- description: JGI Search default view
+- description: Ensure main view appears
   specs:
-    - description: should ...
+    - description: should have main panel framing appear when hit the path
       baseSelector: []
       tasks:
-      - subtask: login
-      - action: navigate
-        path: jgi-search
-      - subtask: plugin
-      - wait: forElement
-        selector:
-        - type: plugin
-          value: jgi-search
+        - subtask: login
+        - action: navigate
+          path: jgi-search
+        - subtask: plugin
+        - wait: forElement
+          selector:
+          - type: plugin
+            value: jgi-search
 

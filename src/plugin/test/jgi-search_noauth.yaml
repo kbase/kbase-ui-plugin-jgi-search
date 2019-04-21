@@ -1,5 +1,5 @@
 ---
-- description: JGI Search requires authorization
+- description: Accessing jgi-search without authentication
   specs:
     - description: should get the signin page
       baseSelector: []
