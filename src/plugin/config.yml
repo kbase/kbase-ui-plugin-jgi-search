@@ -1,51 +1,34 @@
-# JGI Search Plugin Configuration
+## Plugin Configuration
 ---
 package:
-  author: Erik Pearson
-  name: jgi-search
-  description: Search and Import Tool for JGI Data
+    author: KBase Developer
+    name: jgi-search
+    description: The jgi-search panel and associated widgets
 source:
-  modules:
-  styles:
-    -
-      file: styles.css
+    ## sources are relative to build/plugins/PACKAGE/source/javascript
+    ## NB: need to quote file names, otherwise
+    modules:
+    styles:
+        # - file: styles.css
 install:
-  widgets:
-    -
-      module: panel
-      id: jgi-search_panel
-      type: es6
-    -
-      module: adminPanel
-      id: jgi-search_admin
-      type: factory
-      css: false
-  routes:
-    -
-      path: [jgi-search]
-      queryParams:
-        q: {}
-      widget: jgi-search_panel
-      authorization: true
-    -
-      path: [jgi-search, admin]
-      widget: jgi-search_admin
-      authorization: true
-      rolesRequired: [Admin]
-  menu:
-    -
-      name: jgi-search
-      definition:
-        path: jgi-search
-        label: JGI Search
-        icon: search
-    -
-      name: jgi-search-admin
-      definition:
-        path: jgi-search/admin
-        label: JGI Search Admin
-        icon: cog
-  schema:
-    -
-      name: jgi-search/query/input
-      path: schemas/query/input.json
+    widgets:
+        - module: ./panel
+          id: kb_plugin_jgi-search
+          type: es6
+
+    routes:
+        - path: ['jgi-search']
+          queryParams: {
+              q: {}
+          }
+          params: {
+              view: search
+          }
+          widget: kb_plugin_jgi-search
+          authorization: true
+    menu:
+        - name: jgi-search
+          definition:
+              path: ['jgi-search']
+              label: JGI Search
+              icon: search
