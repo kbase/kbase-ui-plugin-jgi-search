@@ -1,34 +1,19 @@
 ## Plugin Configuration
 ---
 package:
-    author: KBase Developer
-    name: jgi-search
-    description: The jgi-search panel and associated widgets
-source:
-    ## sources are relative to build/plugins/PACKAGE/source/javascript
-    ## NB: need to quote file names, otherwise
-    modules:
-    styles:
-        # - file: styles.css
+  name: jgi-search
+  description: The jgi-search panel and associated widgets
 install:
-    widgets:
-        - module: ./panel
-          id: kb_plugin_jgi-search
-          type: es6
-
-    routes:
-        - path: ['jgi-search']
-          queryParams: {
-              q: {}
-          }
-          params: {
-              view: search
-          }
-          widget: kb_plugin_jgi-search
-          authorization: true
-    menu:
-        - name: jgi-search
-          definition:
-              path: ['jgi-search']
-              label: JGI Search
-              icon: search
+  routes:
+    - path: ["jgi-search"]
+      queryParams: {q: {}}
+      params: {view: search}
+      # widget: kb_plugin_jgi-search
+      component: /pluginSupport/Plugin
+      authorization: true
+  menu:
+    - name: jgi-search
+      definition:
+        path: ["jgi-search"]
+        label: JGI Search
+        icon: search

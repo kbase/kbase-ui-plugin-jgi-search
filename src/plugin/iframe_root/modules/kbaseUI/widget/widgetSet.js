@@ -27,7 +27,7 @@ define(['bluebird', 'kb_lib/html'], function (Promise, html) {
             const widgetConfig = config || {};
             const widgetDef = this.widgetManager.getWidget(widgetId);
             const widgetMaker = this.widgetManager.makeWidget(widgetId, widgetConfig),
-                id = html.genId(),
+                id = widgetDef.name + '_' + html.genId(),
                 rec = {
                     id: id,
                     name: widgetDef.name || widgetDef.id,
@@ -87,7 +87,7 @@ define(['bluebird', 'kb_lib/html'], function (Promise, html) {
                             reason: 'MissingAttachmentNode',
                             message:
                                 'The widget ' +
-                                widgetWrapper.title +
+                                (widgetWrapper.title || widgetWrapper.name) +
                                 ' does not have a valid node at ' +
                                 widgetWrapper.id
                         };
