@@ -1,4 +1,9 @@
-define(['bluebird', './objectWidgetAdapter', 'kb_lib/merge'], function (Promise, ObjectWidgetAdapter, merge) {
+define(['bluebird', './adapters/objectWidget', './adapters/kbWidget', 'kb_lib/merge'], function (
+    Promise,
+    ObjectWidgetAdapter,
+    KBWidgetAdapter,
+    merge
+) {
     'use strict';
 
     class WidgetManager {
@@ -35,14 +40,19 @@ define(['bluebird', './objectWidgetAdapter', 'kb_lib/merge'], function (Promise,
                 require(required, (factory) => {
                     if (typeof factory === 'undefined') {
                         // TODO: convert to real Error object
-                        reject({
-                            message: 'Factory widget maker is undefined for ' + widget.module,
-                            data: { widget: widget }
-                        });
+                        // reject({
+                        //     message: 'Factory widget maker is undefined for ' + widget.module,
+                        //     data: { widget: widget }
+                        // });
+                        reject(new Error('Factory widget maker is undefined for ' + widget.module));
                         return;
                     }
                     if (factory.make === undefined) {
-                        reject('Factory widget does not have a "make" method: ' + widget.name + ', ' + widget.module);
+                        reject(
+                            new Error(
+                                'Factory widget does not have a "make" method: ' + widget.name + ', ' + widget.module
+                            )
+                        );
                         return;
                     }
                     try {
@@ -97,6 +107,22 @@ define(['bluebird', './objectWidgetAdapter', 'kb_lib/merge'], function (Promise,
             });
         }
 
+        // TODO: establish, document, the widget adapter API!!!
+        makeKBWidget(widgetDef, widgetConfig) {
+            return Promise.try(() => {
+                var adapterConfig = {
+                    runtime: widgetConfig.runtime,
+                    widget: {
+                        module: widgetDef.module,
+                        jquery_object: (widgetDef.config && widgetDef.config.jqueryName) || widgetConfig.jqueryName,
+                        panel: widgetDef.panel,
+                        title: widgetDef.title
+                    }
+                };
+                return new KBWidgetAdapter(adapterConfig);
+            });
+        }
+
         validateWidget(widget, name) {
             var message;
             if (typeof widget !== 'object') {
@@ -118,9 +144,15 @@ define(['bluebird', './objectWidgetAdapter', 'kb_lib/merge'], function (Promise,
 
             let widgetPromise;
 
+            // const configCopy = new merge.DeepMerger({}).mergeIn(config).value();
+            // const widgetConfig = new merge.DeepMerger(configCopy).mergeIn(this.baseWidgetConfig).value();
+
             const widgetConfig = Object.assign({}, config, this.baseWidgetConfig);
 
             config = config || {};
+            // config.runtime = this.runtime;
+            // TODO: this is not wonderful...
+            // config =
 
             // How we create a widget depends on what type it is.
             switch (widgetDef.type) {
@@ -132,6 +164,9 @@ define(['bluebird', './objectWidgetAdapter', 'kb_lib/merge'], function (Promise,
                 break;
             case 'object':
                 widgetPromise = this.makeObjectWidget(widgetDef, widgetConfig);
+                break;
+            case 'kbwidget':
+                widgetPromise = this.makeKBWidget(widgetDef, widgetConfig);
                 break;
             default:
                 throw new Error('Unsupported widget type ' + widgetDef.type);

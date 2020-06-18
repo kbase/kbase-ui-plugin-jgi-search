@@ -35,9 +35,18 @@ module.exports = function (grunt) {
                 src: 'node_modules/pure-uuid/uuid',
                 dest: '../src/plugin/iframe_root/js/vendor/pure-uuid'
             }
+        },
+        clean: {
+            options: {
+                force: true
+            },
+            vendor: '../src/plugin/iframe_root/modules/vendor/*',
+            bower: './bower_components/',
+            npm: './node_modules/'
         }
     });
 
     grunt.loadNpmTasks('grunt-contrib-copy');
+    grunt.loadNpmTasks('grunt-contrib-clean');
 
 };

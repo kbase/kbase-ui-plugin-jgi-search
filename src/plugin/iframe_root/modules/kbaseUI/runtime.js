@@ -1,26 +1,24 @@
-define(['bluebird', 'kb_lib/props', 'kb_lib/messenger', './widget/manager', './session'], (
-    Promise,
-    props,
-    Messenger,
-    WidgetManager,
-    Session
-) => {
+define([
+    'bluebird',
+    'kb_lib/props',
+    'kb_lib/messenger',
+    './services/session',
+    './services/widget',
+    './services/type',
+    './services/rpc'
+], (Promise, props, Messenger, SessionService, WidgetService, TypeService, RPCService) => {
     'use strict';
 
     class Runtime {
-        constructor({ token, username, config }) {
+        constructor({ authorization, token, username, config, pluginConfigDB }) {
+            this.authorization = authorization;
             this.token = token;
             this.username = username;
-            this.widgetManager = new WidgetManager({
-                baseWidgetConfig: {
-                    runtime: this
-                }
-            });
 
-            this.configDb = new props.Props({ data: config });
-
-            // TODO: replace this!
-            this.pluginPath = '/modules/plugins/jgi-search/iframe_root';
+            this.configDB = new props.Props({ data: config });
+            this.pluginConfigDB = pluginConfigDB;
+            // TODO: fix this!
+            this.pluginPath = '/modules/plugins/' + pluginConfigDB.getItem('package.name') + '/iframe_root';
             this.pluginResourcePath = this.pluginPath + '/resources';
 
             this.messenger = new Messenger();
@@ -28,12 +26,23 @@ define(['bluebird', 'kb_lib/props', 'kb_lib/messenger', './widget/manager', './s
             this.heartbeatTimer = null;
 
             this.services = {
-                session: new Session({ runtime: this })
+                session: new SessionService({ runtime: this }),
+                widget: new WidgetService({ runtime: this }),
+                // type: new TypeService({
+                //     runtime: this,
+                //     config: this.pluginConfigDB.getItem('install.types')
+                // }),
+                rpc: new RPCService({ runtime: this })
             };
+
+            this.featureSwitches = {};
+            this.configDB.getItem('ui.featureSwitches.available', []).forEach((featureSwitch) => {
+                this.featureSwitches[featureSwitch.id] = featureSwitch;
+            });
         }
 
         config(path, defaultValue) {
-            return this.configDb.getItem(path, defaultValue);
+            return this.configDB.getItem(path, defaultValue);
         }
 
         getConfig(path, defaultValue) {
@@ -41,15 +50,17 @@ define(['bluebird', 'kb_lib/props', 'kb_lib/messenger', './widget/manager', './s
         }
 
         service(name) {
-            switch (name) {
-            case 'session':
-                return this.services.session;
+            if (!(name in this.services)) {
+                throw new Error('The UI service "' + name + '" is not defined');
             }
+            return this.services[name];
         }
 
         getService(name) {
             return this.service(name);
         }
+
+        // COMM
 
         send(channel, message, data) {
             this.messenger.send({ channel, message, data });
@@ -66,6 +77,21 @@ define(['bluebird', 'kb_lib/props', 'kb_lib/messenger', './widget/manager', './s
         drop(subscription) {
             this.messenger.unreceive(subscription);
         }
+
+        // FEATURE SWITCHES
+
+        featureEnabled(id, defaultValue = false) {
+            const featureSwitch = this.featureSwitches[id];
+            if (!featureSwitch) {
+                throw new Error('Feature switch "' + id + '" not defined');
+            }
+
+            const enabledFeatureSwitches = this.configDB.getItem('ui.featureSwitches.enabled');
+            const enabled = enabledFeatureSwitches.includes(id);
+            return enabled || defaultValue;
+        }
+
+        // LIFECYCLE
 
         start() {
             return Promise.try(() => {
