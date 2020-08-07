@@ -1,5 +1,7 @@
 # JGI Search Plugin Configuration
 ---
+package:
+  name: jgi-search
 install:
   widgets:
     - module: panel
