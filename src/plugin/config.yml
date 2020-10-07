@@ -4,13 +4,12 @@ package:
   name: jgi-search
   description: The jgi-search panel and associated widgets
 install:
-  routes:
-    - path: ["jgi-search"]
-      queryParams: {q: {}}
-      params: {view: search}
-      # widget: kb_plugin_jgi-search
-      component: /pluginSupport/Plugin
-      authorization: true
+  route:
+    mode: auto
+    routes:
+      - path: "?:-q"
+        view: search
+        authorization: true
   menu:
     - name: jgi-search
       definition:
