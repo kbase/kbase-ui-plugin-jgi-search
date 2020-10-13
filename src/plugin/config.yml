@@ -3,16 +3,15 @@
 package:
   name: jgi-search
   description: The jgi-search panel and associated widgets
-install:
+services:
   route:
-    mode: auto
     routes:
-      - path: "?:-q"
+      - path: "{{plugin}}?:-q"
         view: search
         authorization: true
   menu:
-    - name: jgi-search
-      definition:
-        path: ["jgi-search"]
+    items:
+      - name: jgi-search
+        path: "{{plugin}}"
         label: JGI Search
         icon: search
