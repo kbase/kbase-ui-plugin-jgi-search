@@ -1,11 +1,13 @@
 // a wrapper for the help component, loads the search help.
 define([
     'kb_knockout/registry',
+    'kb_knockout/components/help',
     'kb_lib/html',
     '../../lib/ui',
     'yaml!../helpData.yml'
 ], function (
     reg,
+    HelpComponent,
     html,
     ui,
     helpDb
@@ -39,7 +41,7 @@ define([
         return div({
             dataBind: {
                 component: {
-                    name: '"generic/help"',
+                    name: HelpComponent.quotedName(),
                     params: {
                         helpDb: 'helpDb',
                         onClose: 'onClose'

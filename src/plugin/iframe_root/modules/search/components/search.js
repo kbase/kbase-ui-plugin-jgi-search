@@ -171,7 +171,7 @@ define([
                                 span(
                                     {
                                         dataBind: {
-                                            click: '$component.doRemoveTypeFilter'
+                                            click: '$component.doRemoveTypeFilter.bind($component)'
                                         },
                                         class: 'kb-btn-mini -danger'
                                     },

@@ -104,6 +104,33 @@ define([
 
             // SUBSCRIPTIONS
             this.subscribe(this.destinationFileBaseName, (newValue) => {
+
+                // Validate the filename
+                const noSpacesRegex = /\s/;
+                if (noSpacesRegex.test(newValue)) {
+                    this.filenameStatus.error({
+                        exception: 'File name may not contain spaces'
+                    });
+                    return;
+                }
+
+                const windowsReservedCharacters = /[<>:"/\\|?*\]^]/;
+                if (windowsReservedCharacters.test(newValue)) {
+                    this.filenameStatus.error({
+                        exception: 'File name may not contain the characters <>:"/\\|?*]'
+                    });
+                    return;
+                }
+
+                const noInitialDot = /^\./;
+                if (noInitialDot.test(newValue)) {
+                    this.filenameStatus.error({
+                        exception: 'File name may not begin with a .'
+                    });
+                    return;
+                }
+
+
                 var actualFilename = [newValue, '.', this.destinationFileExtension()].join('');
 
                 // detect duplicate filename here, and set status accordingly.

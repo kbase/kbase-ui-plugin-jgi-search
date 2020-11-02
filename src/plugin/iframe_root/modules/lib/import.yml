@@ -18,31 +18,29 @@ dataTypes:
     kbaseType:
       module: KBaseGenomeAnnotations
       name: Assembly
-      version: '6.0'
+      version: "6.0"
     parameters:
-      -
-        name: objectName
+      - name: objectName
         label: Assembly name
         description: An object name for this assembly which will be created by the upload
   fastq:
     name: fastq
     extensions: [fastq]
     description: A fastq file
-    kbaseType: ??
+    kbaseType: "??"
     kbaseTypes:
       pairedEnd:
         module: KBaseAssembly
         name: PairedEndLibrary
-        version: '2.0'
+        version: "2.0"
       singleEnd:
         module: KBaseAssembly
         name: SingleEndLibrary
-        version: '2.0'
+        version: "2.0"
     parameters:
-      -
-        name: objectName
+      - name: objectName
         label: Library object name
-        description: An object name for this library object which will be created by the upload        
+        description: An object name for this library object which will be created by the upload
   genbank:
     name: genbank
     extensions: [gbk, gb]
@@ -50,10 +48,9 @@ dataTypes:
     kbaseType:
       module: KBaseGenomes
       name: Genome
-      version: '12.3'
+      version: "12.3"
     parameters:
-      -
-        name: objectName
+      - name: objectName
         label: Genome name
         description: An object name for this genome which will be created by the upload
   genefeatures:
@@ -63,9 +60,8 @@ dataTypes:
     kbaseType:
       module: KBaseGenomes
       name: Genome
-      version: '12.3'
+      version: "12.3"
     parameters:
-      -
-        name: objectName
+      - name: objectName
         label: Genome name
-        description: An object name for this genome which will be created by the upload        
+        description: An object name for this genome which will be created by the upload
