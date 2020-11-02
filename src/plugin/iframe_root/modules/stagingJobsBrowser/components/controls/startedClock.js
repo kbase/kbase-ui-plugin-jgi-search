@@ -1,10 +1,12 @@
 define([
     'knockout',
     'kb_knockout/registry',
+    'kb_knockout/components/relativeClock',
     'kb_lib/html'
 ], function (
     ko,
     reg,
+    RelativeClock,
     html
 ) {
     'use strict';
@@ -26,7 +28,7 @@ define([
             span({
                 dataBind: {
                     component: {
-                        name: '"generic/relative-clock"',
+                        name: RelativeClock.quotedName(),
                         params: {
                             startTime: 'startTime'
                         }

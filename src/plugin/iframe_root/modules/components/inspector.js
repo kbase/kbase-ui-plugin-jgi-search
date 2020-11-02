@@ -3,12 +3,24 @@ define([
     'kb_knockout/registry',
     'kb_knockout/lib/generators',
     'kb_knockout/lib/viewModelBase',
+    'kb_knockout/components/jsonViewer',
     'kb_lib/html',
     'kb_lib/htmlBuilders',
     'kb_lib/htmlBootstrapBuilders',
     '../lib/ui',
     '../lib/appViewModel'
-], function (ko, reg, gen, ViewModelBase, html, htmlBuilders, BS, ui, AppViewModel) {
+], function (
+    ko,
+    reg,
+    gen,
+    ViewModelBase,
+    JSONViewerComponent,
+    html,
+    htmlBuilders,
+    BS,
+    ui,
+    AppViewModel
+) {
     'use strict';
 
     const t = html.tag,
@@ -315,7 +327,7 @@ define([
         return div({
             dataBind: {
                 component: {
-                    name: '"generic/json-viewer"',
+                    name: JSONViewerComponent.quotedName(),
                     params: {
                         value: 'details().source',
                         open: true
