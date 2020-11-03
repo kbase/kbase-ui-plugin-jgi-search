@@ -572,7 +572,7 @@ define([
                         return true;
                     }
 
-                    console.warn('jgi search elapsed', stats);
+                    // console.warn('jgi search elapsed', stats);
 
                     if (result.total > this.maxSearchResults) {
                         this.actualSearchTotal(result.total);

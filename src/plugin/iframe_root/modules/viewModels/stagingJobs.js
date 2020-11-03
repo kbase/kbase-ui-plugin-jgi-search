@@ -9,6 +9,8 @@ define([
 ) {
     'use strict';
 
+    const MONITOR_INTERVAL = 10000;
+
     class StagingJobsViewModel extends ViewModelBase {
         constructor(params) {
             super(params);
@@ -50,7 +52,7 @@ define([
 
             this.jobStatusLooper = {
                 timerId: null,
-                looping: false
+                looping: true
             };
 
             this.jobStatusLoop();
@@ -83,7 +85,7 @@ define([
 
         jobStatusLoop() {
             this.model.getStagingJobStatus()
-                .spread((result) => {
+                .then(([result]) => {
                     ['sent', 'submitted', 'queued', 'restoring', 'copying', 'completed', 'error'].forEach((state) => {
                         this.stagingJobStates[state](result.states[state]);
                     });
@@ -91,16 +93,20 @@ define([
                 })
                 .finally(() => {
                     if (this.jobStatusLooper.looping) {
-                        this.jobStatusLooper.timeoutId = window.setTimeout(() => {
+                        this.jobStatusLooper.timerId = window.setTimeout(() => {
+                            if (!this.jobStatusLooper.looping) {
+                                return;
+                            }
                             this.jobStatusLooper.timeoutId = null;
                             this.jobStatusLoop();
-                        }, 10000);
+                        }, MONITOR_INTERVAL);
                     }
                 });
         }
 
         dispose() {
             super.dispose();
+            this.jobStatusLooper.looping = false;
             if (this.jobStatusLooper.timerId) {
                 window.clearTimeout(this.jobStatusLooper.timerId);
             }

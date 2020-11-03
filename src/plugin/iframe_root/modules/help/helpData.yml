@@ -1,34 +1,31 @@
 # JGI Search Help Topics
 ---
 topics:
-  -
-    id: overview
+  - id: overview
     title: Overview
     content: |
       This is JGI Search, a tool which allows you to search through public JGI archived data and import
       it into a KBase Narrative.
-      
+
       To get started, simply type your search terms into the search box and press the search button or press the Return/Enter key.
 
-  -
-    id: basic-search
+  - id: basic-search
     title: Basic Searching
     content: |
       You may simply enter all search terms with which you wish to limit the search.
-      
+
       Searches are case insensitive.
 
       This is a free-text search, so terms will match any available field. Searching by a specific genus, for instance, will match not just the genus field, but may match a title, description, scientific name, or file name.
 
-  -
-    id: advanced-search-syntax
+  - id: advanced-search-syntax
     title: Advanced Search Syntax
     content: |
       The search query supports some basic extended search syntax as described below:
-     
+
         - ```-``` in front of a term negates it
         - ```*``` at the end of a term signifies a prefix query (wildcard)
-      
+
       In order to search for any of these special characters, they will need to be escaped with \\.
 
       For example:
@@ -40,10 +37,11 @@ topics:
   #   id: how-indexed
   #   title: What data is indexed?
   #   content: |
-  #       We are still trying to sort that out...  
+  #       We are still trying to sort that out...
 
 references:
-  -
-    url: http://kbase.us/help/jgi-search-and-import/
-    title: Help Page for JGI Search and Import
-    external: true
+  []
+  # -
+  #   url: http://kbase.us/help/jgi-search-and-import/
+  #   title: Help Page for JGI Search and Import
+  #   external: true

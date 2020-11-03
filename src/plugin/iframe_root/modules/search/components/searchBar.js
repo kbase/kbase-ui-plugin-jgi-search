@@ -78,7 +78,7 @@ define([
             });
         }
 
-        doHelp() {
+        doShowHelp() {
             this.showOverlay({
                 name: HelpComponent.name(),
                 params: {},
@@ -343,10 +343,25 @@ define([
         ]);
     }
 
+    function buildHelpButton() {
+        return button({
+            dataBind: {
+                click: 'doShowHelp',
+            },
+            class: 'btn btn-default',
+            style: {
+                float: 'none'
+            }
+        }, [
+            'Help'
+        ]);
+    }
+
     function buildButtonBar() {
         return div({
             class: 'btn-toolbar pull-right'
         }, [
+            buildHelpButton(),
             buildViewStagingButton()
         ]);
     }
