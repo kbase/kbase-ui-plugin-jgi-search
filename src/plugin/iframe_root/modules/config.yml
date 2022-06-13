@@ -3,14 +3,14 @@
 package:
   name: jgi-search
 install:
-  widgets:
-    - module: panel
-      id: jgi-search_panel
-      type: es6
-    - module: adminPanel
-      id: jgi-search_admin
-      type: factory
-      css: false
+  widgets: []
+    # - module: panel
+    #   id: jgi-search_panel
+    #   type: es6
+    # - module: adminPanel
+    #   id: jgi-search_admin
+    #   type: factory
+    #   css: false
   schema:
     - name: jgi-search/query/input
       path: schemas/query/input.json

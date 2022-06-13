@@ -1,6 +1,16 @@
-define(['bluebird', 'jquery', 'kb_lib/html', 'kb_lib/htmlBootstrapBuilders'], function (Promise, $, html, BS) {
-    'use strict';
-
+define([
+    'bluebird',
+    'jquery',
+    'kb_lib/html',
+    'kb_lib/htmlBootstrapBuilders',
+    'lib/domUtils'
+], function (
+    Promise,
+    $,
+    html,
+    BS,
+    {setInnerHTML}
+) {
     var t = html.tag,
         div = t('div'),
         button = t('button'),
@@ -24,7 +34,7 @@ define(['bluebird', 'jquery', 'kb_lib/html', 'kb_lib/htmlBootstrapBuilders'], fu
             }
             if (data instanceof Array) {
                 return table(
-                    { class: 'table table-striped' },
+                    {class: 'table table-striped'},
                     data
                         .map(function (datum, index) {
                             return tr([th(String(index)), td(buildPresentableJson(datum))]);
@@ -33,7 +43,7 @@ define(['bluebird', 'jquery', 'kb_lib/html', 'kb_lib/htmlBootstrapBuilders'], fu
                 );
             }
             return table(
-                { class: 'table table-striped' },
+                {class: 'table table-striped'},
                 Object.keys(data)
                     .map(function (key) {
                         return tr([th(key), td(buildPresentableJson(data[key]))]);
@@ -46,19 +56,19 @@ define(['bluebird', 'jquery', 'kb_lib/html', 'kb_lib/htmlBootstrapBuilders'], fu
     }
 
     function renderErrorDialog(title, content, okLabel) {
-        return div({ class: 'modal fade', tabindex: '-1', role: 'dialog' }, [
-            div({ class: 'modal-dialog  modal-lg kb-error-dialog' }, [
-                div({ class: 'modal-content' }, [
-                    div({ class: 'modal-header' }, [
-                        button({ type: 'button', class: 'close', dataDismiss: 'modal', ariaLabel: okLabel }, [
-                            span({ ariaHidden: 'true' }, '&times;')
+        return div({class: 'modal fade', tabindex: '-1', role: 'dialog'}, [
+            div({class: 'modal-dialog  modal-lg kb-error-dialog'}, [
+                div({class: 'modal-content'}, [
+                    div({class: 'modal-header'}, [
+                        button({type: 'button', class: 'close', dataDismiss: 'modal', ariaLabel: okLabel}, [
+                            span({ariaHidden: 'true'}, '&times;')
                         ]),
-                        span({ class: 'modal-title' }, title)
+                        span({class: 'modal-title'}, title)
                     ]),
-                    div({ class: 'modal-body' }, [content]),
-                    div({ class: 'modal-footer' }, [
+                    div({class: 'modal-body'}, [content]),
+                    div({class: 'modal-footer'}, [
                         button(
-                            { type: 'button', class: 'btn btn-default', dataDismiss: 'modal', dataElement: 'ok' },
+                            {type: 'button', class: 'btn btn-default', dataDismiss: 'modal', dataElement: 'ok'},
                             okLabel
                         )
                     ])
@@ -117,7 +127,7 @@ define(['bluebird', 'jquery', 'kb_lib/html', 'kb_lib/htmlBootstrapBuilders'], fu
             modalDialogNode;
 
         confirmNode.id = dialogId;
-        confirmNode.innerHTML = dialog;
+        setInnerHTML(confirmNode, dialog);
 
         // top level element for kbase usage
         kbaseNode = document.querySelector('[data-element="kbase"]');

@@ -1,5 +1,4 @@
-define([], function () {
-    'use strict';
+define([], () => {
     require.config({
         baseUrl: './modules',
         paths: {
@@ -7,6 +6,7 @@ define([], function () {
             bootstrap: 'vendor/bootstrap/bootstrap',
             bootstrap_css: 'vendor/bootstrap/css/bootstrap',
             css: 'vendor/require-css/css',
+            dompurify: 'vendor/dompurify/purify',
             datatables: 'vendor/datatables/jquery.dataTables',
             datatables_css: 'vendor/datatables/jquery.dataTables',
             datatables_bootstrap_css: 'vendor/datatables-bootstrap3-plugin/datatables-bootstrap3',

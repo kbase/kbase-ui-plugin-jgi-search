@@ -1,7 +1,7 @@
-require(['loader'], function () {
-    'use strict';
+require(['loader'], () => {
     require([
         'bluebird',
+        'dompurify',
         'kbaseUI/integration',
         'kbaseUI/dispatcher',
         'kb_knockout/load',
@@ -9,8 +9,11 @@ require(['loader'], function () {
         'yaml!./config.yml',
         'bootstrap',
         'css!font_awesome'
-    ], (Promise, Integration, Dispatcher, knockoutLoader, props, pluginConfig) => {
-        const pluginConfigDB = new props.Props({ data: pluginConfig });
+    ], (Promise, DOMPurify, Integration, Dispatcher, knockoutLoader, props, pluginConfig) => {
+
+        DOMPurify.setConfig({ADD_ATTR: ['target'], ADD_URI_SAFE_ATTR: ['target'], ADD_TAGS: ['#comment']});
+
+        const pluginConfigDB = new props.Props({data: pluginConfig});
         Promise.try(() => {
             const integration = new Integration({
                 rootWindow: window,
