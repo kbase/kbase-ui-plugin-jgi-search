@@ -4,14 +4,8 @@ define([
     'kb_knockout/lib/subscriptionManager',
     'kb_lib/html',
     'kb_lib/htmlBuilders'
-], function (ko, reg, SubscriptionManager, html, htmlBuilders) {
-    'use strict';
-
-    var t = html.tag,
-        div = t('div'),
-        span = t('span'),
-        p = t('p'),
-        a = t('a');
+], (ko, reg, SubscriptionManager, html, htmlBuilders) => {
+    var t = html.tag, div = t('div'), span = t('span'), p = t('p'), a = t('a');
 
     var styles = html.makeStyles({
         component: {
@@ -197,19 +191,18 @@ define([
         var sortDirection = ko.observable('descending');
 
         /*
-            Sorting is managed here in the table, and we
-            communicate changes via the table.sortColumn() call.
-             We don't know whether the implementation supports
-             single or multiple column sorts, etc.
-             In turn, the sorted property may be set to asending,
-             descending, or falsy.
-        */
+                Sorting is managed here in the table, and we
+                communicate changes via the table.sortColumn() call.
+                 We don't know whether the implementation supports
+                 single or multiple column sorts, etc.
+                 In turn, the sorted property may be set to asending,
+                 descending, or falsy.
+            */
         function doSort(column) {
             table.sortBy(column);
         }
 
         // AUTO SIZING
-
         // we hinge upon the height, which is updated when we start and when the ...
         var height = ko.observable();
 
@@ -271,7 +264,6 @@ define([
         }
 
         // LIFECYCLE
-
         function dispose() {
             if (resizeListener) {
                 window.removeEventListener('resize', resizer, false);
@@ -657,7 +649,6 @@ define([
 
             // Case of a column definition containing a link, but no corresponding
             // row value. E.g. a per-row action.
-
             // NO column value, show the column action label or icon
             '<!-- ko ifnot: row[column.name] -->',
 
@@ -910,7 +901,6 @@ define([
                 // '<!-- ko if: search.isError -->',
                 // buildError(),
                 // '<!-- /ko -->',
-
                 div(
                     {
                         class: styles.classes.tableBody
@@ -944,11 +934,10 @@ define([
                                 }
                             },
                             buildNoActiveSearch()
-                        ), // buildNoActiveSearch()),
+                        ),
                         '<!-- /ko -->',
 
                         // Handle case of a search being processed - "inprogress"
-
                         '<!-- ko case: $default -->',
 
                         div(

@@ -33,6 +33,19 @@ require(['loader'], () => {
                     // and in the past introduced problems which were resolved
                     // in knockout 3.5.0.
                     ko.options.deferUpdates = true;
+                    // replace the html binding handler.
+                    ko.bindingHandlers.html = {
+                        init(element, valueAccessor) {
+                            const value = ko.unwrap(valueAccessor()) || '';
+                            // xss safe
+                            element.innerHTML = DOMPurify.sanitize(value);
+                        },
+                        update(element, valueAccessor) {
+                            const value = ko.unwrap(valueAccessor()) || '';
+                            // xss safe
+                            element.innerHTML = DOMPurify.sanitize(value);
+                        }
+                    };
                 })
                 .then(() => {
                     return integration.start();
@@ -57,7 +70,7 @@ require(['loader'], () => {
                     return dispatcher.start();
                 })
                 .then((dispatcher) => {
-                    integration.onNavigate(({ path, params }) => {
+                    integration.onNavigate(({path, params}) => {
                         // TODO: ever
                         let view;
                         if (params.view) {
@@ -65,7 +78,7 @@ require(['loader'], () => {
                         } else {
                             view = path[0];
                         }
-                        dispatcher.dispatch({ view, path, params })
+                        dispatcher.dispatch({view, path, params})
                             .catch((ex) => {
                                 // TODO: this should trigger an error display
                                 console.error('Dispatch Error', ex.message);
