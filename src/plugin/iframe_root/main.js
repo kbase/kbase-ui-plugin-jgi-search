@@ -1,7 +1,7 @@
-require(['loader'], function () {
-    'use strict';
+require(['loader'], () => {
     require([
         'bluebird',
+        'dompurify',
         'kbaseUI/integration',
         'kbaseUI/dispatcher',
         'kb_knockout/load',
@@ -9,8 +9,11 @@ require(['loader'], function () {
         'yaml!./config.yml',
         'bootstrap',
         'css!font_awesome'
-    ], (Promise, Integration, Dispatcher, knockoutLoader, props, pluginConfig) => {
-        const pluginConfigDB = new props.Props({ data: pluginConfig });
+    ], (Promise, DOMPurify, Integration, Dispatcher, knockoutLoader, props, pluginConfig) => {
+
+        DOMPurify.setConfig({ADD_ATTR: ['target'], ADD_URI_SAFE_ATTR: ['target'], ADD_TAGS: ['#comment']});
+
+        const pluginConfigDB = new props.Props({data: pluginConfig});
         Promise.try(() => {
             const integration = new Integration({
                 rootWindow: window,
@@ -30,6 +33,19 @@ require(['loader'], function () {
                     // and in the past introduced problems which were resolved
                     // in knockout 3.5.0.
                     ko.options.deferUpdates = true;
+                    // replace the html binding handler.
+                    ko.bindingHandlers.html = {
+                        init(element, valueAccessor) {
+                            const value = ko.unwrap(valueAccessor()) || '';
+                            // xss safe
+                            element.innerHTML = DOMPurify.sanitize(value);
+                        },
+                        update(element, valueAccessor) {
+                            const value = ko.unwrap(valueAccessor()) || '';
+                            // xss safe
+                            element.innerHTML = DOMPurify.sanitize(value);
+                        }
+                    };
                 })
                 .then(() => {
                     return integration.start();
@@ -54,7 +70,7 @@ require(['loader'], function () {
                     return dispatcher.start();
                 })
                 .then((dispatcher) => {
-                    integration.onNavigate(({ path, params }) => {
+                    integration.onNavigate(({path, params}) => {
                         // TODO: ever
                         let view;
                         if (params.view) {
@@ -62,7 +78,7 @@ require(['loader'], function () {
                         } else {
                             view = path[0];
                         }
-                        dispatcher.dispatch({ view, path, params })
+                        dispatcher.dispatch({view, path, params})
                             .catch((ex) => {
                                 // TODO: this should trigger an error display
                                 console.error('Dispatch Error', ex.message);

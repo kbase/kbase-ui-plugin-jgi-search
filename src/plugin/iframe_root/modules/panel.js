@@ -5,13 +5,21 @@ define([
     'kb_lib/httpUtils',
     'kb_lib/html',
     'kb_knockout/components/overlayPanel',
+    'lib/domUtils',
     './components/main',
     './help/components/searchHelp'
-], function (ko, gen, ViewModelBase, httpUtils, html, OverlayPanelComponent, MainComponent, SearchHelpComponent) {
-    'use strict';
-
-    const t = html.tag,
-        div = t('div');
+], (
+    ko,
+    gen,
+    ViewModelBase,
+    httpUtils,
+    html,
+    OverlayPanelComponent,
+    {setInnerHTML},
+    MainComponent,
+    SearchHelpComponent
+) => {
+    const t = html.tag, div = t('div');
 
     class RootViewModel extends ViewModelBase {
         constructor(params) {
@@ -48,7 +56,7 @@ define([
 
         render() {
             const temp = document.createElement('div');
-            temp.innerHTML = div(
+            setInnerHTML(temp, div(
                 {
                     style: {
                         flex: '1 1 0px',
@@ -75,13 +83,12 @@ define([
                         }
                     })
                 ]
-            );
+            ));
             this.node = temp.firstChild;
         }
 
         start(params) {
             // this.render();
-
             ko.applyBindings(this.vm, this.node, (context) => {
                 context.runtime = this.runtime;
             });
@@ -103,8 +110,7 @@ define([
         }
 
         googleFormLink(arg) {
-            const baseUrl =
-                'https://docs.google.com/forms/d/e/1FAIpQLScfZEQlO2Zq1ZgYQkn0pEIlXJapEOxrdeZmHY4PqvIyy7sugw/viewform';
+            const baseUrl = 'https://docs.google.com/forms/d/e/1FAIpQLScfZEQlO2Zq1ZgYQkn0pEIlXJapEOxrdeZmHY4PqvIyy7sugw/viewform';
             const query = {
                 usp: 'pp_url',
                 'entry.45112532': arg.username,

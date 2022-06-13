@@ -1,20 +1,15 @@
 define(['knockout', 'kb_lib/html'], (ko, html) => {
-    'use strict';
-
     const t = html.tag,
         div = t('div');
 
     function komponent(componentDef) {
+        const params = Object.keys(componentDef.params)
+            .map(function (key) {
+                return key + ':' + componentDef.params[key];
+            })
+            .join(',');
         return (
-            '<!-- ko component: {name: "' +
-            componentDef.name +
-            '", params: {' +
-            Object.keys(componentDef.params)
-                .map(function (key) {
-                    return key + ':' + componentDef.params[key];
-                })
-                .join(',') +
-            '}}--><!-- /ko -->'
+            `<!-- ko component: {name: "${componentDef.name}", params: {${params}}}--><!-- /ko -->`
         );
     }
 
@@ -24,6 +19,7 @@ define(['knockout', 'kb_lib/html'], (ko, html) => {
             running: ko.observable(false)
         };
         var temp = document.createElement('div');
+        // xss safe
         temp.innerHTML = div(
             {
                 style: {
@@ -35,7 +31,7 @@ define(['knockout', 'kb_lib/html'], (ko, html) => {
             [
                 '<!-- ko if: running -->',
                 komponent({
-                    name: name,
+                    name,
                     params: {
                         runtime: 'runtime'
                     }
@@ -57,10 +53,10 @@ define(['knockout', 'kb_lib/html'], (ko, html) => {
         }
 
         return {
-            vm: vm,
-            node: node,
-            start: start,
-            stop: stop
+            vm,
+            node,
+            start,
+            stop
         };
     }
 

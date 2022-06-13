@@ -1,26 +1,26 @@
 {
-    "name": "kbase-ui-plugin-jgi-search",
-    "version": "0.1.0",
-    "description": "JGI Search and Import Tool",
-    "main": "index.js",
-    "scripts": {
-        "build": "bash scripts/build-plugin.bash",
-        "build-dev": "bash scripts/build-plugin-dev.bash",
-        "watch": "nodemon --watch ./src --ext js,css,yml,yaml,json --exec 'yarn build-dev'"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/kbase/kbase-ui-plugin-jgi-search.git"
-    },
-    "author": "",
-    "license": "SEE LICENSE IN LICENSE.md",
-    "bugs": {
-        "url": "https://github.com/kbase/kbase-ui-plugin-jgi-search/issues"
-    },
-    "homepage": "https://github.com/kbase/kbase-ui-plugin-jgi-search#readme",
-    "dependencies": {
-        "eslint": "7.12.1",
-        "standard": "16.0.1",
-        "nodemon": "2.0.6"
-    }
+  "name": "kbase-ui-plugin-jgi-search",
+  "version": "0.1.0",
+  "description": "JGI Search and Import Tool",
+  "main": "index.js",
+  "scripts": {
+    "build": "bash scripts/build-plugin.bash",
+    "build-dev": "bash scripts/build-plugin-dev.bash",
+    "watch": "nodemon --watch ./src --ext js,css,yml,yaml,json --exec 'npm run build-dev'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kbase/kbase-ui-plugin-jgi-search.git"
+  },
+  "author": "",
+  "license": "SEE LICENSE IN LICENSE.md",
+  "bugs": {
+    "url": "https://github.com/kbase/kbase-ui-plugin-jgi-search/issues"
+  },
+  "homepage": "https://github.com/kbase/kbase-ui-plugin-jgi-search#readme",
+  "dependencies": {
+    "eslint": "8.17.0",
+    "standard": "16.0.1",
+    "nodemon": "2.0.16"
+  }
 }
