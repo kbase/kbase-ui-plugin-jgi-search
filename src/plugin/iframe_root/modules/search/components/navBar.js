@@ -151,8 +151,8 @@ define(['knockout', 'kb_knockout/registry', 'kb_lib/html'], function (ko, reg, h
                         class: styles.classes.navLink,
                         dataBind: {
                             attr: {
-                                href: '"/#search?q=" + searchInputQueryValue()',
-                                target: '"_parent"'
+                                href: '"/#search&q=" + searchInputQueryValue()',
+                                target: '"_top"'
                             }
                         }
                     },
