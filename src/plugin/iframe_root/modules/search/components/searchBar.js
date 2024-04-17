@@ -15,8 +15,6 @@ define([
     HelpComponent,
     StagingStatusViewerComponent
 ) {
-    'use strict';
-
     const t = html.tag,
         p = t('p'),
         img = t('img'),

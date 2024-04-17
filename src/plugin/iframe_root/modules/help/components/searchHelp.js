@@ -16,8 +16,6 @@ define([
     ui,
     helpDb
 ) {
-    'use strict';
-
     var t = html.tag,
         div = t('div'),
         span = t('span');

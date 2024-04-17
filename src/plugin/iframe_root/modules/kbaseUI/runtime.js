@@ -3,20 +3,21 @@ define([
     'kb_lib/props',
     'kb_lib/messenger',
     './services/session',
+    './services/type',
     './services/rpc'
-], (Promise, props, Messenger, SessionService, RPCService) => {
-    'use strict';
-
+], (Promise, props, Messenger, SessionService,  TypeService, RPCService) => {
     class Runtime {
-        constructor({ authorization, token, username, config, pluginConfigDB }) {
+        constructor({authorization, token, username, config, pluginConfig}) {
             this.authorization = authorization;
             this.token = token;
             this.username = username;
 
-            this.configDB = new props.Props({ data: config });
-            this.pluginConfigDB = pluginConfigDB;
+            this.configDB = new props.Props({data: config});
+            this.pluginConfigDB = new props.Props({data: pluginConfig});
+
             // TODO: fix this!
-            this.pluginPath = '/modules/plugins/' + pluginConfigDB.getItem('package.name') + '/iframe_root';
+            console.log('runtime...', pluginConfig);
+            this.pluginPath = '/modules/plugins/' + this.pluginConfigDB.getItem('package.name') + '/iframe_root';
             this.pluginResourcePath = this.pluginPath + '/resources';
 
             this.messenger = new Messenger();
@@ -24,8 +25,12 @@ define([
             this.heartbeatTimer = null;
 
             this.services = {
-                session: new SessionService({ runtime: this }),
-                rpc: new RPCService({ runtime: this })
+                session: new SessionService({runtime: this}),
+                type: new TypeService({
+                    runtime: this,
+                    config: this.pluginConfigDB.getItem('install.types')
+                }),
+                rpc: new RPCService({runtime: this})
             };
 
             this.featureSwitches = {};
@@ -56,11 +61,11 @@ define([
         // COMM
 
         send(channel, message, data) {
-            this.messenger.send({ channel, message, data });
+            this.messenger.send({channel, message, data});
         }
 
         receive(channel, message, handler) {
-            return this.messenger.receive({ channel, message, handler });
+            return this.messenger.receive({channel, message, handler});
         }
 
         recv(channel, message, handler) {
@@ -89,7 +94,7 @@ define([
         start() {
             return Promise.try(() => {
                 this.heartbeatTimer = window.setInterval(() => {
-                    this.send('app', 'heartbeat', { time: new Date().getTime() });
+                    this.send('app', 'heartbeat', {time: new Date().getTime()});
                 }, 1000);
                 return this.services.session.start();
             });

@@ -9,7 +9,7 @@
       "eapearson@lbl.gov"
     ],
     "install": {
-      "path": "../src/plugin/iframe_root/modules/vendor",
+      "path": "./src/plugin/iframe_root/modules/vendor",
       "sources": {
         "bootstrap": [
           {

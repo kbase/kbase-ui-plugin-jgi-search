@@ -11,8 +11,6 @@ define([
     ui,
     ErrorComponent
 ) {
-    'use strict';
-
     const t = html.tag,
         div = t('div'),
         span = t('span');
@@ -59,7 +57,7 @@ define([
                 }
                 return this.error().stackTrace;
             });
-            this.parent = context.$root.parent;
+            this.parent = context.$parent;
         }
 
         onClose() {

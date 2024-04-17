@@ -5,3 +5,5 @@ bower_components
 /_attic/
 /dist/
 vendor/
+__xdg__/
+dist.tgz

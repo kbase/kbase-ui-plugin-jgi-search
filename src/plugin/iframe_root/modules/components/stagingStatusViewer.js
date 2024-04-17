@@ -13,8 +13,6 @@ define([
     ui,
     StagingJobsBrowserComponent
 ) {
-    'use strict';
-
     var t = html.tag,
         div = t('div');
 
