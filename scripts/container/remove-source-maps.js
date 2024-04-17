@@ -70,7 +70,6 @@ async function removeSourceMappingJS(rootDir) {
 
 function main() {
     const cwd = process.cwd().split('/');
-    cwd.push('..');
     const projectPath = path.normalize(cwd.join('/'));
     removeSourceMappingCSS(projectPath);
     removeSourceMappingJS(projectPath);

@@ -1,5 +1,4 @@
-define(['knockout', 'kb_knockout/registry', 'kb_lib/html'], function (ko, reg, html) {
-    'use strict';
+define(['knockout', 'kb_knockout/registry', 'kb_lib/html', 'lib/europaSupport'], function (ko, reg, html, {kbaseUIURL}) {
     const t = html.tag,
         div = t('div'),
         span = t('span'),
@@ -135,6 +134,7 @@ define(['knockout', 'kb_knockout/registry', 'kb_lib/html'], function (ko, reg, h
     });
 
     function buildNavBar() {
+        const url = kbaseUIURL('search').toString();
         return div(
             {
                 class: styles.classes.navBar
@@ -151,12 +151,12 @@ define(['knockout', 'kb_knockout/registry', 'kb_lib/html'], function (ko, reg, h
                         class: styles.classes.navLink,
                         dataBind: {
                             attr: {
-                                href: '"/#search&q=" + searchInputQueryValue()',
-                                target: '"_top"'
+                                href: `"${url}$q=" + searchInputQueryValue()`,
+                                target: '"_parent"'
                             }
                         }
                     },
-                    'KBase - User Data, Genome Features, Reference Data'
+                    'KBase - User Data &amp; Reference Data'
                 ),
                 span(
                     {

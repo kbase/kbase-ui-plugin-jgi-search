@@ -29,8 +29,6 @@ define([
     TermsComponent,
     SearchErrorComponent
 ) {
-    'use strict';
-
     const t = html.tag,
         div = t('div');
 

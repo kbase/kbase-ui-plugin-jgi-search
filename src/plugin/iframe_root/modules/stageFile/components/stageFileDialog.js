@@ -27,8 +27,6 @@ define([
     StageFileControlComponent,
     StagingStatusViewerComponent
 ) {
-    'use strict';
-
     const t = html.tag,
         div = t('div'),
         span = t('span'),

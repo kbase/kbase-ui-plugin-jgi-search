@@ -3,9 +3,7 @@ define([
 ], function (
     html
 ) {
-    'use strict';
-
-    var t = html.tag,
+    const t = html.tag,
         button = t('button'),
         span = t('span'),
         div = t('div');
@@ -24,7 +22,7 @@ define([
             iconClass = 'frown-o';
             titleColor = '#a94442';
             break;
-        case 'succcess':
+        case 'success':
             iconClass = 'thumbs-up-o';
             titleColor = '##3c763d;';
             break;
@@ -125,7 +123,7 @@ define([
         case 'error':
             color = '#a94442';
             break;
-        case 'succcess':
+        case 'success':
             color = '##3c763d;';
             break;
         case 'primary':
@@ -155,7 +153,7 @@ define([
             iconClass = 'frown-o';
             titleColor = '#a94442';
             break;
-        case 'succcess':
+        case 'success':
             iconClass = 'thumbs-up-o';
             titleColor = '##3c763d;';
             break;
